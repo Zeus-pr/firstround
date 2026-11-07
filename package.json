@@ -1,0 +1,25 @@
+{
+  "name": "firstround",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@fontsource-variable/google-sans": "^5.2.8",
+    "@gsap/react": "^2.1.2",
+    "gsap": "^3.13.0",
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.17.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.2"
+  }
+}

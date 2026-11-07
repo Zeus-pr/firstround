@@ -1,0 +1,10 @@
+node_modules
+.kombai
+.next
+out
+.DS_Store
+*.log
+.env
+.env.*
+data/
+tsconfig.tsbuildinfo
