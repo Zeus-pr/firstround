@@ -179,20 +179,19 @@ export function AuthScreen({ mode }: { mode: Mode }) {
 
   if (!ready) {
     return (
-      <main className="auth-shell">
-        <section className="auth-panel">
+      <main className="auth-shell auth-shell-boot">
+        <section className="auth-panel auth-panel-boot">
           <h1>{signingUp ? 'Create an account' : 'Sign in'}</h1>
           <p className="note">Opening sign-in.</p>
         </section>
-        <AuthStage />
       </main>
     );
   }
 
   if (user) {
     return (
-      <main className="auth-shell">
-        <section className="auth-panel">
+      <main className="auth-shell auth-shell-boot">
+        <section className="auth-panel auth-panel-boot">
           <h1>Opening your desk</h1>
           <p>You are signed in as {user.email ?? 'this account'}.</p>
           <p className="note" role="status">
@@ -212,7 +211,6 @@ export function AuthScreen({ mode }: { mode: Mode }) {
             Sign out
           </button>
         </section>
-        <AuthStage />
       </main>
     );
   }

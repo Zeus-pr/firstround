@@ -759,6 +759,28 @@ h1 {
   color: var(--ink);
 }
 
+.auth-shell-boot {
+  grid-template-columns: 1fr;
+  place-items: center;
+  background: var(--blotter);
+  color: var(--sheet);
+}
+
+.auth-panel-boot {
+  text-align: center;
+  align-items: center;
+  width: min(28rem, 100%);
+  margin: 0;
+}
+
+.auth-panel-boot h1 {
+  max-width: none;
+}
+
+.auth-panel-boot > p {
+  max-width: 28rem;
+}
+
 .auth-panel {
   display: flex;
   flex-direction: column;
@@ -1270,12 +1292,30 @@ h1 {
   padding: clamp(1.5rem, 5vh, 3rem) 0 4rem;
 }
 
+.desk-shell-center {
+  display: grid;
+  place-items: center;
+  padding-inline: 1.25rem;
+  text-align: center;
+}
+
+.desk-boot-copy {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--sheet) 72%, transparent);
+}
+
 .desk-sheet {
   width: min(42rem, calc(100% - 2rem));
   margin: 0 auto;
   background: var(--sheet);
   color: var(--ink);
   padding: clamp(1.75rem, 5vw, 3rem);
+}
+
+.desk-sheet-center {
+  text-align: left;
 }
 
 .desk-top {
