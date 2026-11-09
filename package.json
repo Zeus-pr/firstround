@@ -11,7 +11,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
@@ -24,7 +24,7 @@
     "firebase": "^13.2.0",
     "gsap": "^3.13.0",
     "next": "^15.5.4",
-    "postgres": "^4.1.0",
+    "postgres": "^3.4.7",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "three": "^0.180.0"

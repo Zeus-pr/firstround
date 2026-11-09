@@ -9,11 +9,13 @@ export async function GET() {
     return NextResponse.json({ ok: false, database: 'unconfigured' }, { status: 503 });
   }
 
+  const { db, client } = createDb();
   try {
-    const db = createDb();
     await db.execute(sql`select 1 as ok`);
     return NextResponse.json({ ok: true, database: 'up' });
   } catch {
     return NextResponse.json({ ok: false, database: 'down' }, { status: 503 });
+  } finally {
+    await client.end({ timeout: 5 });
   }
 }
