@@ -14,4 +14,6 @@ public/brand
 *.ttf
 data
 .impeccable
-db/migrations/meta
+packages/db/migrations/meta
+pnpm-lock.yaml
+docs/plans

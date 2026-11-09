@@ -1,0 +1,89 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  NotFoundException,
+  Post,
+  Req,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import { WaitlistRequest } from '@firstround/contracts';
+import { WaitlistService } from './waitlist.service.js';
+
+const hits = new Map<string, number[]>();
+
+function allowed(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((at) => now - at < 60 * 60 * 1000);
+  if (recent.length >= 8) {
+    hits.set(ip, recent);
+    return false;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  return true;
+}
+
+function clientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0]?.trim() || 'local';
+  }
+  return req.ip || 'local';
+}
+
+@Controller('waitlist')
+export class WaitlistController {
+  constructor(private readonly waitlist: WaitlistService) {}
+
+  @Post()
+  @HttpCode(200)
+  async create(
+    @Req() req: Request,
+    @Body() body: unknown,
+    @Headers('content-type') contentType?: string,
+  ) {
+    if (!allowed(clientIp(req))) {
+      throw new ServiceUnavailableException({
+        error: 'Too many tries. Wait a while, then send it again.',
+      });
+    }
+
+    let raw: unknown = '';
+    let intent: 'signup' | 'login' = 'signup';
+
+    if (contentType?.includes('application/json')) {
+      const parsed = WaitlistRequest.safeParse(body);
+      if (!parsed.success) {
+        throw new BadRequestException({ error: 'Use a full email address.' });
+      }
+      raw = parsed.data.email;
+      if (parsed.data.intent === 'login') intent = 'login';
+    } else if (body && typeof body === 'object') {
+      raw = (body as { email?: unknown }).email;
+      if ((body as { intent?: unknown }).intent === 'login') intent = 'login';
+    }
+
+    const email = this.waitlist.normalizeEmail(raw);
+    if (!email) {
+      throw new BadRequestException({ error: 'Use a full email address.' });
+    }
+
+    if (intent === 'login') {
+      const found = await this.waitlist.findSeat(email);
+      if (!found) {
+        throw new NotFoundException({ error: 'No seat under that address yet.' });
+      }
+      return { ok: true as const, already: true };
+    }
+
+    const saved = await this.waitlist.saveSeat(email);
+    if (saved.ok && saved.already) {
+      return { ok: true as const, already: true };
+    }
+    return { ok: true as const };
+  }
+}
