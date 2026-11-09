@@ -5,7 +5,7 @@ import type { ReadinessResult } from '@/lib/cv';
 import { AnalysisOrbs } from './AnalysisOrbs';
 import { ReadinessReveal } from './ReadinessReveal';
 
-export type CvModalStage = 'upload' | 'analyzing' | 'result';
+export type CvModalStage = 'upload' | 'analyzing' | 'supercharging' | 'result';
 
 type Props = {
   open: boolean;
@@ -13,10 +13,13 @@ type Props = {
   fileName?: string;
   note: string;
   readiness: ReadinessResult | null;
+  creditBalance?: number | null;
+  rewrittenText?: string | null;
+  primaryBusy?: boolean;
   onClose: () => void;
   onPickFile: (file: File | undefined) => void;
   onPrimary: () => void;
-  primaryBusy?: boolean;
+  onSkip?: () => void;
 };
 
 export function CvModal({
@@ -25,41 +28,57 @@ export function CvModal({
   fileName,
   note,
   readiness,
+  creditBalance,
+  rewrittenText,
+  primaryBusy,
   onClose,
   onPickFile,
   onPrimary,
-  primaryBusy,
+  onSkip,
 }: Props) {
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const busy = stage === 'analyzing' || stage === 'supercharging';
 
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && stage !== 'analyzing') onClose();
+      if (event.key === 'Escape' && !busy) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, stage]);
+  }, [open, onClose, busy]);
 
   if (!open) return null;
 
   return (
     <div className="desk-modal-root" role="presentation">
-      <button className="desk-modal-scrim" type="button" aria-label="Close" onClick={onClose} />
+      <button
+        className="desk-modal-scrim"
+        type="button"
+        aria-label="Close"
+        onClick={() => {
+          if (!busy) onClose();
+        }}
+      />
       <div className="desk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="desk-modal-top">
           <p className="desk-kicker" id={titleId}>
             LetterProof
           </p>
-          {stage !== 'analyzing' ? (
+          {!busy ? (
             <button className="text-button" type="button" onClick={onClose}>
               Close
             </button>
           ) : null}
         </header>
 
-        {stage === 'analyzing' ? <AnalysisOrbs fileName={fileName} /> : null}
+        {stage === 'analyzing' || stage === 'supercharging' ? (
+          <AnalysisOrbs
+            fileName={fileName}
+            mode={stage === 'supercharging' ? 'supercharge' : 'analyze'}
+          />
+        ) : null}
 
         {stage === 'upload' ? (
           <div className="desk-upload">
@@ -90,7 +109,21 @@ export function CvModal({
         ) : null}
 
         {stage === 'result' && readiness ? (
-          <ReadinessReveal readiness={readiness} onPrimary={onPrimary} />
+          <>
+            <ReadinessReveal
+              readiness={readiness}
+              onPrimary={onPrimary}
+              onSkip={onSkip}
+              primaryBusy={primaryBusy}
+              creditBalance={creditBalance}
+              rewrittenText={rewrittenText}
+            />
+            {note ? (
+              <p className="note" role="status">
+                {note}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>

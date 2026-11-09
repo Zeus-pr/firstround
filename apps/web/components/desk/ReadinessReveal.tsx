@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import type { ReadinessResult } from '@/lib/cv';
+import { SUPERCHARGE_CREDIT_COST } from '@/lib/cv';
 
 const DIMENSIONS: { key: keyof ReadinessResult['dimensions']; label: string }[] = [
   { key: 'evidenceCompleteness', label: 'Evidence' },
@@ -12,13 +13,23 @@ const DIMENSIONS: { key: keyof ReadinessResult['dimensions']; label: string }[] 
   { key: 'communicationClarity', label: 'Clarity' },
 ];
 
+type Props = {
+  readiness: ReadinessResult;
+  onPrimary: () => void;
+  onSkip?: () => void;
+  primaryBusy?: boolean;
+  creditBalance?: number | null;
+  rewrittenText?: string | null;
+};
+
 export function ReadinessReveal({
   readiness,
   onPrimary,
-}: {
-  readiness: ReadinessResult;
-  onPrimary: () => void;
-}) {
+  onSkip,
+  primaryBusy,
+  creditBalance,
+  rewrittenText,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { recommendation, band, total } = readiness;
 
@@ -66,7 +77,11 @@ export function ReadinessReveal({
   }, [total]);
 
   const primaryLabel =
-    band === 'ready' ? 'Continue' : band === 'supercharge' ? 'Supercharge CV' : 'Strengthen CV';
+    band === 'ready'
+      ? 'Continue'
+      : band === 'supercharge'
+        ? `Supercharge (${SUPERCHARGE_CREDIT_COST} credits)`
+        : 'Show suggestions';
 
   return (
     <div className="desk-reveal" ref={rootRef}>
@@ -116,14 +131,38 @@ export function ReadinessReveal({
         </section>
       ) : null}
 
+      {rewrittenText ? (
+        <section className="desk-rewrite desk-reveal-in">
+          <div className="desk-suggestions-top">
+            <h2>Rewritten sheet</h2>
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => void navigator.clipboard.writeText(rewrittenText)}
+            >
+              Copy
+            </button>
+          </div>
+          <pre className="desk-rewrite-body">{rewrittenText}</pre>
+        </section>
+      ) : null}
+
       <p className="desk-meta desk-reveal-in">
         {readiness.parse.visionUsed ? 'Hard PDF path used (vision). ' : null}
         First Round LetterProof · {readiness.algorithmVersion}. Not a universal ATS score.
+        {typeof creditBalance === 'number' ? ` · ${creditBalance} credits on the desk.` : null}
       </p>
 
-      <button className="wax desk-reveal-in" type="button" onClick={onPrimary}>
-        {primaryLabel}
-      </button>
+      <div className="desk-reveal-actions desk-reveal-in">
+        <button className="wax" type="button" disabled={primaryBusy} onClick={onPrimary}>
+          {primaryBusy ? 'Working…' : primaryLabel}
+        </button>
+        {band === 'supercharge' && onSkip ? (
+          <button className="text-button" type="button" disabled={primaryBusy} onClick={onSkip}>
+            Not now — show suggestions
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
