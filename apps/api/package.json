@@ -19,6 +19,7 @@
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "drizzle-orm": "^0.45.4",
+    "firebase-admin": "^13.10.0",
     "helmet": "^8.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

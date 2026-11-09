@@ -36,6 +36,13 @@ export const ProdEnv = z.object({
   R2_SECRET_ACCESS_KEY: nonEmpty,
   R2_BUCKET: nonEmpty,
   R2_ENDPOINT: z.string().url().optional(),
+  FIREBASE_PROJECT_ID: nonEmpty,
+  FIREBASE_CLIENT_EMAIL: z.string().email(),
+  FIREBASE_PRIVATE_KEY: z
+    .string()
+    .refine((v) => v.includes('BEGIN PRIVATE KEY') || v.includes('BEGIN RSA PRIVATE KEY'), {
+      message: 'must be a PEM private key (use \\n for newlines in env)',
+    }),
 });
 
 export type ProdEnv = z.infer<typeof ProdEnv>;

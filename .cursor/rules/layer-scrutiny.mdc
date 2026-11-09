@@ -1,0 +1,23 @@
+---
+description: After each build layer, apply full security and robustness before moving on
+alwaysApply: true
+---
+
+# Layer-by-layer scrutiny
+
+First Round ships in layers (monorepo, API, web split, R2, auth, …). After finishing a layer, harden **that layer’s surface** before starting the next. Do not leave “auth later” or “rate limit later” holes on endpoints or data paths introduced in the current layer.
+
+## Checklist for every layer
+
+- Authn/authz for any new non-public endpoint (or explicit public justification)
+- Input validation (Zod/contracts), size/type limits, no client-trusted identity fields
+- CORS / Helmet / headers already in bootstrap still apply; extend if the layer adds new origins or cookie/credential needs
+- Abuse controls where relevant (rate limits, TTLs, signed URLs)
+- Prod env validation for new secrets; document required Railway/Cloudflare vars without printing values
+- Tests for the security boundary (reject missing/invalid token, wrong owner, bad body)
+- Docs updated for the layer’s contract and ops setup
+- Healthchecks and deploys still green after the layer
+
+## PR discipline
+
+Keep `(api)` and `(web)` PRs separate. A layer’s security fixes belong in the same-side PR that introduces the surface, not deferred to a future “security” PR unless Prajesh explicitly scopes that.

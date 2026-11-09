@@ -96,7 +96,10 @@ export class StorageService {
     }
   }
 
-  async uploadUrl(req: UploadUrlRequest, now = new Date()): Promise<UploadUrlResponse> {
+  async uploadUrl(
+    req: UploadUrlRequest & { ownerId: string },
+    now = new Date(),
+  ): Promise<UploadUrlResponse> {
     return this.presignPut(req.ownerId, req.purpose, req.contentType, req.sizeBytes, now);
   }
 
@@ -152,8 +155,14 @@ export class StorageService {
     fileKey: string,
     now = new Date(),
   ): Promise<DownloadUrlResponse> {
-    const prefix = fileKey.split('/')[1];
-    if (prefix !== ownerId || fileKey.includes('..')) {
+    // Keys are purpose/ownerId/yyyy/mm/uuid.ext — never trust a client-owned path.
+    if (
+      !ownerId ||
+      fileKey.includes('..') ||
+      fileKey.includes('\\') ||
+      fileKey.startsWith('/') ||
+      fileKey.split('/')[1] !== ownerId
+    ) {
       throw new NotFoundException('File not found');
     }
     const { client, bucket } = this.ready();

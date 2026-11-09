@@ -1,6 +1,22 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["NODE_ENV", "DATABASE_URL", "WEB_ORIGIN", "LOCAL_KEK_BASE64", "LOCAL_KEK_VERSION"],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "WEB_ORIGIN",
+    "LOCAL_KEK_BASE64",
+    "LOCAL_KEK_VERSION",
+    "FIREBASE_PROJECT_ID",
+    "FIREBASE_CLIENT_EMAIL",
+    "FIREBASE_PRIVATE_KEY",
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET",
+    "R2_ENDPOINT",
+    "TRUST_PROXY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

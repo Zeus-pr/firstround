@@ -8,7 +8,8 @@ export const isProd = () => process.env.NODE_ENV === 'production';
 /** Shared app configuration used by main.ts and tests. */
 export function configureApp(app: INestApplication) {
   const server = app.getHttpAdapter().getInstance() as Express;
-  server.set('trust proxy', process.env.TRUST_PROXY ?? 'loopback');
+  // Railway sits behind a reverse proxy; trust one hop in production so rate limits see real client IPs.
+  server.set('trust proxy', process.env.TRUST_PROXY ?? (isProd() ? 1 : 'loopback'));
   server.disable('x-powered-by');
 
   app.use(
