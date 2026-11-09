@@ -11,6 +11,8 @@
     "test": "sh ../../scripts/vitest.sh run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.913.0",
+    "@aws-sdk/s3-request-presigner": "^3.913.0",
     "@firstround/contracts": "workspace:*",
     "@firstround/db": "workspace:*",
     "@nestjs/common": "^11.1.6",

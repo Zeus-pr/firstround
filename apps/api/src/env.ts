@@ -31,6 +31,11 @@ export const ProdEnv = z.object({
   PORT: intStr.optional(),
   LOCAL_KEK_BASE64: nonEmpty.optional(),
   LOCAL_KEK_VERSION: intStr.optional(),
+  R2_ACCOUNT_ID: nonEmpty,
+  R2_ACCESS_KEY_ID: nonEmpty,
+  R2_SECRET_ACCESS_KEY: nonEmpty,
+  R2_BUCKET: nonEmpty,
+  R2_ENDPOINT: z.string().url().optional(),
 });
 
 export type ProdEnv = z.infer<typeof ProdEnv>;
