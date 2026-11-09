@@ -15,3 +15,6 @@ tsconfig.tsbuildinfo
 .continue/
 .wrangler/
 GoogleSans-Variable.ttf
+.turbo
+**/dist
+package-lock.json

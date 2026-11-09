@@ -1,0 +1,12 @@
+{
+  "extends": "@firstround/config/tsconfig/node.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": false,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

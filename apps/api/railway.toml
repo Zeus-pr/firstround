@@ -1,0 +1,14 @@
+# Config applied when this service's Root Directory is the repo root.
+# Railway service "api" should use these commands via the dashboard / MCP,
+# with watchPatterns scoped to apps/api and packages/{db,contracts,config}.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @firstround/api... build"
+
+[deploy]
+startCommand = "node apps/api/dist/main.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

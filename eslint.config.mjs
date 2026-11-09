@@ -3,31 +3,25 @@ import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import prettier from 'eslint-config-prettier';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 const compat = new FlatCompat({
-  baseDirectory: __dirname,
+  baseDirectory: dirname(fileURLToPath(import.meta.url)),
 });
 
-const config = [
+export default [
   {
     ignores: [
-      '.next/**',
-      'dist/**',
-      '.vinext/**',
-      '.cloudflare/**',
-      '.wrangler/**',
-      'node_modules/**',
-      'public/**',
-      'brand/**',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/dist/**',
+      '**/.vinext/**',
+      '**/.wrangler/**',
+      '**/.cloudflare/**',
+      'apps/**',
+      'packages/**',
       'hosting/**',
-      'db/migrations/**',
-      'next-env.d.ts',
+      'data/**',
     ],
   },
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...compat.extends('next/core-web-vitals'),
   prettier,
 ];
-
-export default config;
