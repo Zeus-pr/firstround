@@ -51,11 +51,11 @@ Contact email, location, and links are a separate sendability checklist outside 
 
 ## Supercharge credits
 
-| Item      | Value                                                                       |
-| --------- | --------------------------------------------------------------------------- |
-| Cost      | 5 credits per Supercharge                                                   |
-| Ledger    | `credit_ledger`                                                             |
-| Test mode | `CREDITS_TEST_MODE=1` or non-production auto-grants 100 when balance is low |
+| Item      | Value                                                                                           |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| Cost      | 5 credits per Supercharge (production)                                                          |
+| Ledger    | `credit_ledger`                                                                                 |
+| Test mode | `CREDITS_TEST_MODE=1` (or non-production): free Supercharge, no debit, auto-top balance to 1000 |
 
 Skip Supercharge on the web: show `genuineGaps` / `underEmphasised` suggestions; no debit.
 
