@@ -1,44 +1,60 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
-import { ensureAppSession } from '@/lib/session';
+import { ensureAppSession, type SessionPayload } from '@/lib/session';
 import { acceptCvFile, uploadAndAnalyzeCv, type ReadinessResult } from '@/lib/cv';
-import { AnalysisOrbs } from './AnalysisOrbs';
-import { ReadinessReveal } from './ReadinessReveal';
+import { CvModal, type CvModalStage } from './CvModal';
+import { DeskDashboard } from './DeskDashboard';
 
-type Stage = 'boot' | 'auth' | 'upload' | 'analyzing' | 'result' | 'next';
+function needsCvModal(step: string) {
+  return step === 'account' || step === 'cv';
+}
 
 export function DeskOnboarding() {
   const [user, setUser] = useState<User | null>(null);
-  const [stage, setStage] = useState<Stage>('boot');
+  const [session, setSession] = useState<SessionPayload['user'] | null>(null);
+  const [boot, setBoot] = useState(true);
   const [note, setNote] = useState('');
   const [fileName, setFileName] = useState<string>();
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalStage, setModalStage] = useState<CvModalStage>('upload');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [prefsOpen, setPrefsOpen] = useState(false);
 
   useEffect(() => {
     const auth = firebaseAuth();
     if (!auth) {
-      setStage('auth');
+      setBoot(false);
       setNote('Sign-in is not configured in this build.');
       return;
     }
     return onAuthStateChanged(auth, (next) => {
       setUser(next);
       if (!next) {
-        setStage('auth');
+        setSession(null);
+        setBoot(false);
+        setModalOpen(false);
         return;
       }
       void ensureAppSession(next)
-        .then(() =>
-          setStage((current) => (current === 'result' || current === 'next' ? current : 'upload')),
-        )
+        .then((payload) => {
+          const step = payload?.user.onboardingStep ?? 'account';
+          setSession(payload?.user ?? null);
+          setBoot(false);
+          if (needsCvModal(step)) {
+            setModalOpen(true);
+            setModalStage('upload');
+          }
+        })
         .catch(() => {
           setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
-          setStage('upload');
+          setBoot(false);
+          setModalOpen(true);
+          setModalStage('upload');
         });
     });
   }, []);
@@ -52,18 +68,39 @@ export function DeskOnboarding() {
     }
     setNote('');
     setFileName(file.name);
-    setStage('analyzing');
+    setModalStage('analyzing');
     try {
       const result = await uploadAndAnalyzeCv(user, file);
       setReadiness(result.readiness);
-      setStage('result');
+      setSession((prev) => (prev ? { ...prev, onboardingStep: result.onboardingStep } : prev));
+      setModalStage('result');
     } catch (error) {
       setNote(error instanceof Error ? error.message : 'Analysis did not finish. Try again.');
-      setStage('upload');
+      setModalStage('upload');
     }
   }
 
-  if (stage === 'boot') {
+  function onReadinessPrimary() {
+    if (!readiness) return;
+    if (readiness.band === 'ready') {
+      setModalOpen(false);
+      setSuggestions([]);
+      setPrefsOpen(true);
+      return;
+    }
+    if (readiness.band === 'supercharge') {
+      // Slice 3 wires real Supercharge; for now offer suggestions skip path.
+      setSuggestions(
+        [...readiness.genuineGaps, ...readiness.underEmphasised].filter(Boolean).slice(0, 8),
+      );
+      setModalOpen(false);
+      return;
+    }
+    setSuggestions(readiness.gaps.slice(0, 8));
+    setModalOpen(false);
+  }
+
+  if (boot) {
     return (
       <main className="desk-shell">
         <p className="note">Opening your desk.</p>
@@ -71,12 +108,12 @@ export function DeskOnboarding() {
     );
   }
 
-  if (stage === 'auth' || !user) {
+  if (!user) {
     return (
       <main className="desk-shell">
         <section className="desk-sheet">
           <h1>Your desk</h1>
-          <p className="desk-lead">Sign in to upload a CV and see LetterProof.</p>
+          <p className="desk-lead">Sign in to open the desk and LetterProof.</p>
           <p className="note" role="status">
             {note}
           </p>
@@ -89,81 +126,64 @@ export function DeskOnboarding() {
   }
 
   return (
-    <main className="desk-shell">
-      <section className="desk-sheet">
-        <header className="desk-top">
-          <p className="desk-kicker">Signed in as {user.email ?? 'this account'}</p>
+    <main className="desk-shell desk-shell-dash">
+      <DeskDashboard
+        email={user.email}
+        onboardingStep={session?.onboardingStep ?? 'account'}
+        readiness={readiness}
+        suggestions={suggestions}
+        onOpenCv={() => {
+          setNote('');
+          setModalStage(readiness ? 'result' : 'upload');
+          setModalOpen(true);
+        }}
+        onOpenPreferences={() => setPrefsOpen(true)}
+        onSignOut={() => {
+          const auth = firebaseAuth();
+          if (auth) void signOut(auth);
+        }}
+        onDismissSuggestions={() => setSuggestions([])}
+      />
+
+      <CvModal
+        open={modalOpen}
+        stage={modalStage === 'result' && !readiness ? 'upload' : modalStage}
+        fileName={fileName}
+        note={note}
+        readiness={readiness}
+        onClose={() => {
+          if (modalStage === 'analyzing') return;
+          setModalOpen(false);
+        }}
+        onPickFile={(file) => void onFile(file)}
+        onPrimary={onReadinessPrimary}
+      />
+
+      {prefsOpen ? (
+        <div className="desk-modal-root" role="presentation">
           <button
-            className="text-button"
+            className="desk-modal-scrim"
             type="button"
-            onClick={() => {
-              const auth = firebaseAuth();
-              if (auth) void signOut(auth);
-            }}
-          >
-            Sign out
-          </button>
-        </header>
-
-        {stage === 'analyzing' ? <AnalysisOrbs fileName={fileName} /> : null}
-
-        {stage === 'upload' ? (
-          <div className="desk-upload">
-            <p className="desk-kicker">Step one</p>
-            <h1>Place your CV on the desk</h1>
-            <p className="desk-lead">
-              PDF or Word. We read hard layouts, normalize skills, and score LetterProof. Ordinary
-              CVs are coached, not failed.
-            </p>
-            <input
-              ref={inputRef}
-              className="desk-file"
-              type="file"
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={(event) => void onFile(event.target.files?.[0])}
-            />
-            <button className="wax" type="button" onClick={() => inputRef.current?.click()}>
-              Choose CV
-            </button>
-            <p className="note" role="status">
-              {note}
-            </p>
-          </div>
-        ) : null}
-
-        {stage === 'result' && readiness ? (
-          <ReadinessReveal
-            readiness={readiness}
-            onPrimary={() => {
-              if (readiness.band === 'ready') setStage('next');
-              else {
-                setReadiness(null);
-                setFileName(undefined);
-                setStage('upload');
-                setNote(
-                  readiness.band === 'supercharge'
-                    ? 'Edit the CV, then upload again for a fresh LetterProof.'
-                    : 'Strengthen the gaps, then upload again.',
-                );
-              }
-            }}
+            aria-label="Close preferences"
+            onClick={() => setPrefsOpen(false)}
           />
-        ) : null}
-
-        {stage === 'next' ? (
-          <div className="desk-upload">
-            <p className="desk-kicker">Next</p>
-            <h1>Preferences, then Gmail</h1>
+          <div className="desk-modal" role="dialog" aria-modal="true" aria-label="Preferences">
+            <header className="desk-modal-top">
+              <p className="desk-kicker">Preferences</p>
+              <button className="text-button" type="button" onClick={() => setPrefsOpen(false)}>
+                Close
+              </button>
+            </header>
             <p className="desk-lead">
-              Readiness is set. Next layers add role preferences and Gmail connect so letters leave
-              from your inbox.
+              Role families, locations, and level land in the next preferences slice. The desk seat
+              is ready.
             </p>
-            <Link className="wax desk-link-btn" href="/">
-              Back to the letter
-            </Link>
+            <button className="wax" type="button" onClick={() => setPrefsOpen(false)}>
+              Back to desk
+            </button>
           </div>
-        ) : null}
-      </section>
+        </div>
+      ) : null}
     </main>
   );
 }
