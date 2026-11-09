@@ -83,7 +83,11 @@ export class CvController {
   async latest(@Req() req: Request, @CurrentUser() auth: AuthUser) {
     this.assertRate(req);
     const user = await this.sessions.ensureUser(auth);
-    const row = await this.cv.latestReadiness(user.id);
-    return { ok: true as const, readiness: row };
+    const latest = await this.cv.latestReadiness(user.id);
+    return {
+      ok: true as const,
+      readiness: latest?.readiness ?? null,
+      cvDocumentId: latest?.cvDocumentId ?? null,
+    };
   }
 }
