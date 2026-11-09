@@ -15,6 +15,7 @@ type Props = {
   readiness: ReadinessResult | null;
   creditBalance?: number | null;
   rewrittenText?: string | null;
+  replacing?: boolean;
   primaryBusy?: boolean;
   onClose: () => void;
   onPickFile: (file: File | undefined) => void;
@@ -30,6 +31,7 @@ export function CvModal({
   readiness,
   creditBalance,
   rewrittenText,
+  replacing,
   primaryBusy,
   onClose,
   onPickFile,
@@ -82,17 +84,24 @@ export function CvModal({
 
         {stage === 'upload' ? (
           <div className="desk-upload">
-            <h2 className="desk-modal-heading">Place your CV on the desk</h2>
+            <h2 className="desk-modal-heading">
+              {replacing ? 'Replace the CV on the desk' : 'Place your CV on the desk'}
+            </h2>
             <p className="desk-lead">
-              PDF or Word. We read hard layouts, normalize skills, and score LetterProof. Ordinary
-              CVs are coached, not failed.
+              {replacing
+                ? 'PDF or Word. The new file is scored on its own and becomes the score on the desk.'
+                : 'PDF or Word. We read hard layouts, normalize skills, and score LetterProof. Ordinary CVs are coached, not failed.'}
             </p>
             <input
               ref={inputRef}
               className="desk-file"
               type="file"
               accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={(event) => onPickFile(event.target.files?.[0])}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                onPickFile(file);
+              }}
             />
             <button
               className="wax"
