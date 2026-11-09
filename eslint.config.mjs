@@ -22,6 +22,7 @@ const config = [
       'public/**',
       'brand/**',
       'hosting/**',
+      'db/migrations/**',
       'next-env.d.ts',
     ],
   },
