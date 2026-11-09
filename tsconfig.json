@@ -1,19 +1,9 @@
 {
-  "extends": "@firstround/config/tsconfig/nextjs.json",
+  "extends": "@firstround/config/tsconfig/base.json",
   "compilerOptions": {
-    "paths": { "@/*": ["./*"] },
-    "types": ["node"],
-    "noUncheckedIndexedAccess": false
+    "noEmit": true,
+    "types": ["node"]
   },
-  "include": [
-    "next-env.d.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "components/**/*.ts",
-    "components/**/*.tsx",
-    "lib/**/*.ts",
-    "lib/**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": ["node_modules", ".next", "hosting", "apps", "packages", "dist"]
+  "include": [],
+  "exclude": ["node_modules", "apps", "packages", "hosting", "dist"]
 }

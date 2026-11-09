@@ -1,0 +1,38 @@
+{
+  "name": "@firstround/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "sh ../../scripts/vitest.sh run --passWithNoTests"
+  },
+  "dependencies": {
+    "@firstround/contracts": "workspace:*",
+    "@fontsource-variable/google-sans": "^5.2.8",
+    "@gsap/react": "^2.1.2",
+    "@yogesharc/thinking-orbs": "^0.1.2",
+    "firebase": "^13.2.0",
+    "gsap": "^3.13.0",
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@firstround/config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.180.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.4",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

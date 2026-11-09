@@ -1,0 +1,13 @@
+# Railway service "web" should build from the repo root with watchPatterns
+# scoped to apps/web and packages/{contracts,config}.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @firstround/web... build"
+
+[deploy]
+startCommand = "pnpm --filter @firstround/web start"
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

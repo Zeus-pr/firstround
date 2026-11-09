@@ -6,13 +6,20 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "turbo run dev --filter=@firstround/web --filter=@firstround/api",
     "dev:api": "turbo run dev --filter=@firstround/api",
-    "build": "turbo run build --filter=@firstround/api... && next build",
+    "dev:web": "turbo run dev --filter=@firstround/web",
+    "build": "turbo run build",
     "build:api": "turbo run build --filter=@firstround/api...",
+<<<<<<< HEAD
     "start": "node apps/api/dist/main.js",
     "lint": "turbo run lint && eslint .",
     "typecheck": "turbo run typecheck && tsc --noEmit",
+=======
+    "build:web": "turbo run build --filter=@firstround/web...",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+>>>>>>> d4224dd ((web) Move Next app to apps/web and call the API origin.)
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,27 +31,9 @@
     "start:api": "node apps/api/dist/main.js",
     "start:web": "next start"
   },
-  "dependencies": {
-    "@fontsource-variable/google-sans": "^5.2.8",
-    "@gsap/react": "^2.1.2",
-    "@yogesharc/thinking-orbs": "^0.1.2",
-    "firebase": "^13.2.0",
-    "gsap": "^3.13.0",
-    "next": "^15.5.4",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "three": "^0.180.0"
-  },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
     "@firstround/config": "workspace:*",
-    "@types/node": "^22.20.5",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@types/three": "^0.180.0",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^15.5.4",
-    "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
     "turbo": "^2.5.8",
     "typescript": "~5.9.3"

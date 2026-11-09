@@ -7,62 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@fontsource-variable/google-sans':
-        specifier: ^5.2.8
-        version: 5.3.2
-      '@gsap/react':
-        specifier: ^2.1.2
-        version: 2.1.2(gsap@3.15.1)(react@19.3.1)
-      '@yogesharc/thinking-orbs':
-        specifier: ^0.1.2
-        version: 0.1.2(react@19.3.1)
-      firebase:
-        specifier: ^13.2.0
-        version: 13.2.0(@types/react@19.3.0)(next@15.5.29(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
-      gsap:
-        specifier: ^3.13.0
-        version: 3.15.1
-      next:
-        specifier: ^15.5.4
-        version: 15.5.29(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react:
-        specifier: ^19.1.1
-        version: 19.3.1
-      react-dom:
-        specifier: ^19.1.1
-        version: 19.3.1(react@19.3.1)
-      three:
-        specifier: ^0.180.0
-        version: 0.180.0
     devDependencies:
-      '@eslint/eslintrc':
-        specifier: ^3.3.1
-        version: 3.3.7
       '@firstround/config':
         specifier: workspace:*
         version: link:packages/config
-      '@types/node':
-        specifier: ^22.20.5
-        version: 22.20.5
-      '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: ^19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@types/three':
-        specifier: ^0.180.0
-        version: 0.180.0
       eslint:
         specifier: ^9.39.5
         version: 9.39.5
-      eslint-config-next:
-        specifier: ^15.5.4
-        version: 15.5.29(eslint@9.39.5)(typescript@5.9.3)
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@9.39.5)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -134,6 +85,73 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15))
 
+  apps/web:
+    dependencies:
+      '@firstround/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@fontsource-variable/google-sans':
+        specifier: ^5.2.8
+        version: 5.3.2
+      '@gsap/react':
+        specifier: ^2.1.2
+        version: 2.1.2(gsap@3.15.1)(react@19.3.1)
+      '@yogesharc/thinking-orbs':
+        specifier: ^0.1.2
+        version: 0.1.2(react@19.3.1)
+      firebase:
+        specifier: ^13.2.0
+        version: 13.2.0(@types/react@19.3.0)(next@15.5.29(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
+      gsap:
+        specifier: ^3.13.0
+        version: 3.15.1
+      next:
+        specifier: ^15.5.4
+        version: 15.5.29(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: ^19.1.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.3.1(react@19.3.1)
+      three:
+        specifier: ^0.180.0
+        version: 0.180.0
+    devDependencies:
+      '@eslint/eslintrc':
+        specifier: ^3.3.1
+        version: 3.3.7
+      '@firstround/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@types/three':
+        specifier: ^0.180.0
+        version: 0.180.0
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5
+      eslint-config-next:
+        specifier: ^15.5.4
+        version: 15.5.29(eslint@9.39.5)(typescript@5.9.3)
+      eslint-config-prettier:
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@9.39.5)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15))
+
   packages/config:
     devDependencies:
       '@eslint/js':
@@ -178,7 +196,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15))
+        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.27.7)(terser@5.51.2)(tsx@4.23.15))
 
   packages/db:
     dependencies:
@@ -215,7 +233,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.27.7)(terser@5.51.2)(tsx@4.23.15))
+        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(vite@8.3.7(@types/node@22.20.5)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15))
 
 packages:
 
