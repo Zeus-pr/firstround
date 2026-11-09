@@ -20,7 +20,8 @@
     "db:seed": "pnpm --filter @firstround/db db:seed",
     "db:ci": "pnpm --filter @firstround/db db:ci",
     "db:generate": "pnpm --filter @firstround/db db:generate",
-    "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run db:ci && pnpm run build"
+    "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run db:ci && pnpm run build",
+    "start:api": "node apps/api/dist/main.js"
   },
   "dependencies": {
     "@fontsource-variable/google-sans": "^5.2.8",
