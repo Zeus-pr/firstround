@@ -21,6 +21,19 @@ function needsCvModal(step: string) {
   return step === 'account' || step === 'cv';
 }
 
+function isReadiness(value: unknown): value is ReadinessResult {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Partial<ReadinessResult>;
+  return (
+    typeof row.total === 'number' &&
+    typeof row.band === 'string' &&
+    Boolean(row.recommendation) &&
+    typeof row.recommendation?.headline === 'string' &&
+    Array.isArray(row.genuineGaps) &&
+    Array.isArray(row.underEmphasised)
+  );
+}
+
 function suggestionLines(readiness: ReadinessResult): string[] {
   const soft = [...readiness.genuineGaps, ...readiness.underEmphasised].filter(Boolean);
   if (soft.length > 0) return soft.slice(0, 8);
@@ -59,6 +72,7 @@ export function DeskOnboarding() {
         setCreditBalance(null);
         setCvDocumentId(null);
         setRewrittenText(null);
+        setReadiness(null);
         return;
       }
       void (async () => {
@@ -66,16 +80,24 @@ export function DeskOnboarding() {
           const payload = await ensureAppSession(next);
           const step = payload?.user.onboardingStep ?? 'account';
           setSession(payload?.user ?? null);
+          // Show the desk immediately; credits / readiness load in the background.
+          setBoot(false);
+          if (needsCvModal(step)) {
+            setModalOpen(true);
+            setModalStage('upload');
+          }
+
           const [credits, latest] = await Promise.all([
             fetchCredits(next).catch(() => null),
             fetchLatestReadiness(next).catch(() => null),
           ]);
           if (credits) setCreditBalance(credits.balance);
-          if (latest?.readiness) setReadiness(latest.readiness);
-          setBoot(false);
-          if (needsCvModal(step) && !latest?.readiness) {
-            setModalOpen(true);
-            setModalStage('upload');
+          if (isReadiness(latest?.readiness)) {
+            setReadiness(latest.readiness);
+            if (latest.cvDocumentId) setCvDocumentId(latest.cvDocumentId);
+            if (needsCvModal(step)) {
+              setModalOpen(false);
+            }
           }
         } catch {
           setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
@@ -156,16 +178,16 @@ export function DeskOnboarding() {
 
   if (boot) {
     return (
-      <main className="desk-shell">
-        <p className="note">Opening your desk.</p>
+      <main className="desk-shell desk-shell-center">
+        <p className="note desk-boot-copy">Opening your desk.</p>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="desk-shell">
-        <section className="desk-sheet">
+      <main className="desk-shell desk-shell-center">
+        <section className="desk-sheet desk-sheet-center">
           <h1>Your desk</h1>
           <p className="desk-lead">Sign in to open the desk and LetterProof.</p>
           <p className="note" role="status">

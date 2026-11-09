@@ -162,13 +162,16 @@ export async function fetchCredits(user: User): Promise<CreditsBalanceResponse> 
 
 export async function fetchLatestReadiness(
   user: User,
-): Promise<{ readiness: ReadinessResult | null }> {
+): Promise<{ readiness: ReadinessResult | null; cvDocumentId: string | null }> {
   const headers = await authHeaders(user);
   const res = await fetch(apiUrl('/cv/readiness/latest'), { headers });
   if (!res.ok) {
     throw new Error(`Could not load readiness (${res.status})`);
   }
-  return (await res.json()) as { readiness: ReadinessResult | null };
+  return (await res.json()) as {
+    readiness: ReadinessResult | null;
+    cvDocumentId: string | null;
+  };
 }
 
 export async function superchargeCv(

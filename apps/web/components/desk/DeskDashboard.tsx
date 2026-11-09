@@ -70,7 +70,7 @@ export function DeskDashboard({
         <aside className="desk-rail" aria-label="Desk side">
           <section className="desk-pane">
             <p className="desk-kicker">LetterProof</p>
-            {readiness ? (
+            {readiness?.recommendation ? (
               <>
                 <p className="desk-stat">{readiness.total}</p>
                 <p className="desk-pane-copy">{readiness.recommendation.headline}</p>
