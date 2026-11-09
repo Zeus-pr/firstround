@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { Orb } from '@yogesharc/thinking-orbs';
 import { firebaseAuth } from '@/lib/firebase';
+import { ensureAppSession } from '@/lib/session';
 
 type Mode = 'signin' | 'signup';
 
@@ -103,6 +104,10 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     return onAuthStateChanged(auth, (next) => {
       setUser(next);
       setReady(true);
+      if (!next) return;
+      void ensureAppSession(next).catch(() => {
+        setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
+      });
     });
   }, []);
 
