@@ -49,6 +49,26 @@ export type AnalyzeCvResponse = {
   onboardingStep: string;
 };
 
+export type SuperchargeCvResponse = {
+  ok: true;
+  cvDocumentId: string;
+  extractionId: string;
+  readiness: ReadinessResult;
+  rewrittenText: string;
+  creditsCharged: number;
+  creditBalance: number;
+  onboardingStep: string;
+};
+
+export type CreditsBalanceResponse = {
+  ok: true;
+  balance: number;
+  superchargeCost: 5;
+  testMode: boolean;
+};
+
+export const SUPERCHARGE_CREDIT_COST = 5;
+
 async function authHeaders(user: User): Promise<HeadersInit> {
   const token = await user.getIdToken();
   return {
@@ -129,4 +149,48 @@ export async function uploadAndAnalyzeCv(user: User, file: File): Promise<Analyz
     throw new Error(body?.message ?? `Analysis failed (${analyzeRes.status})`);
   }
   return (await analyzeRes.json()) as AnalyzeCvResponse;
+}
+
+export async function fetchCredits(user: User): Promise<CreditsBalanceResponse> {
+  const headers = await authHeaders(user);
+  const res = await fetch(apiUrl('/credits'), { headers });
+  if (!res.ok) {
+    throw new Error(`Could not load credits (${res.status})`);
+  }
+  return (await res.json()) as CreditsBalanceResponse;
+}
+
+export async function fetchLatestReadiness(
+  user: User,
+): Promise<{ readiness: ReadinessResult | null }> {
+  const headers = await authHeaders(user);
+  const res = await fetch(apiUrl('/cv/readiness/latest'), { headers });
+  if (!res.ok) {
+    throw new Error(`Could not load readiness (${res.status})`);
+  }
+  return (await res.json()) as { readiness: ReadinessResult | null };
+}
+
+export async function superchargeCv(
+  user: User,
+  cvDocumentId: string,
+): Promise<SuperchargeCvResponse> {
+  const headers = await authHeaders(user);
+  const res = await fetch(apiUrl('/cv/supercharge'), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ cvDocumentId }),
+  });
+  if (res.status === 503) {
+    throw new Error('Analysis is not configured yet. Ask ops to set XAI_API_KEY on the API.');
+  }
+  if (res.status === 402 || res.status === 400) {
+    const body = (await res.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(body?.message ?? 'Not enough credits for Supercharge.');
+  }
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(body?.message ?? `Supercharge failed (${res.status})`);
+  }
+  return (await res.json()) as SuperchargeCvResponse;
 }
