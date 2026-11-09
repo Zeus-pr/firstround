@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from './audit/audit.module.js';
+import { AuthModule } from './auth/auth.module.js';
 import { CampaignModule } from './campaign/campaign.module.js';
 import { CryptoModule } from './crypto/crypto.module.js';
 import { DbModule } from './db/db.module.js';
@@ -10,6 +11,7 @@ import { WaitlistModule } from './waitlist/waitlist.module.js';
 
 @Module({
   imports: [
+    AuthModule,
     DbModule,
     CryptoModule,
     HealthModule,

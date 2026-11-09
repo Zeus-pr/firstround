@@ -19,8 +19,6 @@ export const UploadUrlRequest = z.object({
   purpose: FilePurpose,
   contentType: z.enum(ALLOWED_CONTENT_TYPES),
   sizeBytes: z.number().int().min(1).max(MAX_UPLOAD_BYTES),
-  /** Tenant/user prefix until Nest Firebase auth is wired. */
-  ownerId: z.string().trim().min(1).max(128),
 });
 export type UploadUrlRequest = z.infer<typeof UploadUrlRequest>;
 
@@ -33,9 +31,9 @@ export const UploadUrlResponse = z.object({
 });
 export type UploadUrlResponse = z.infer<typeof UploadUrlResponse>;
 
+/** ownerId always comes from the verified Firebase uid, never the body. */
 export const DownloadUrlRequest = z.object({
   fileKey: z.string().min(1).max(400),
-  ownerId: z.string().trim().min(1).max(128),
 });
 export type DownloadUrlRequest = z.infer<typeof DownloadUrlRequest>;
 

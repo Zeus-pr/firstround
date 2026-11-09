@@ -11,29 +11,10 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { WaitlistRequest } from '@firstround/contracts';
+import { clientIp, createIpRateLimiter } from '../auth/rate-limit.js';
 import { WaitlistService } from './waitlist.service.js';
 
-const hits = new Map<string, number[]>();
-
-function allowed(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((at) => now - at < 60 * 60 * 1000);
-  if (recent.length >= 8) {
-    hits.set(ip, recent);
-    return false;
-  }
-  recent.push(now);
-  hits.set(ip, recent);
-  return true;
-}
-
-function clientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0]?.trim() || 'local';
-  }
-  return req.ip || 'local';
-}
+const allowed = createIpRateLimiter(8, 60 * 60 * 1000);
 
 @Controller('waitlist')
 export class WaitlistController {

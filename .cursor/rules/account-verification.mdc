@@ -1,0 +1,23 @@
+---
+description: Stop and instruct when the wrong cloud account is logged in
+alwaysApply: true
+---
+
+# Account verification (hard stop)
+
+Before any Firebase, Cloudflare, Railway, GitHub, Gmail, R2, or similar cloud action, verify the logged-in account matches First Round ownership. If it does not, **stop**. Do not proceed, invent workarounds, or use the wrong project.
+
+## Expected accounts
+
+| Surface | Account / owner | Project |
+|---|---|---|
+| Firebase | `prajeshchoudhury42@gmail.com` | `firstround-space` |
+| Railway | `zeus-pr` / `prajeshchoudhury42@gmail.com` | hopeful-surprise / firstround |
+| GitHub | `Zeus-pr` | `Zeus-pr/firstround` |
+| Cloudflare | `www.omkartwqthousands@gmail.com` | firstround.space + R2 `firstround-cv` |
+
+## What to do when wrong
+
+Tell Prajesh clearly: which tool is wrong, which account/project it showed, which account/project is required, and the exact fix commands (for example `npx firebase logout` then `npx firebase login`, or Cloudflare/Railway account switch). Wait for confirmation before continuing that surface.
+
+Never paste secrets into chat. Never create resources under the wrong account.

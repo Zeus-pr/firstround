@@ -4,11 +4,13 @@ Bucket: **`firstround-cv`** (APAC, private). The Nest API never proxies bytes. C
 
 ## Endpoints
 
-- `GET /files/status` — whether R2 env is configured and the bucket is reachable
-- `POST /files/upload-url` — `{ purpose, contentType, sizeBytes, ownerId }` → `{ fileKey, uploadUrl, method, headers, expiresAt }`
-- `POST /files/download-url` — `{ fileKey, ownerId }` → `{ downloadUrl, expiresAt }`
+All `/files/*` routes require `Authorization: Bearer <Firebase ID token>`. `ownerId` is the verified Firebase `uid`, never accepted from the body. See `docs/FIREBASE-AUTH-API.md`.
 
-Key layout: `<purpose>/<ownerId>/<yyyy>/<mm>/<uuid>.<ext>` (`purpose`: `cv` | `avatar` | `attachment`).
+- `GET /files/status` — whether R2 env is configured and the bucket is reachable
+- `POST /files/upload-url` — `{ purpose, contentType, sizeBytes }` → `{ fileKey, uploadUrl, method, headers, expiresAt }`
+- `POST /files/download-url` — `{ fileKey }` → `{ downloadUrl, expiresAt }`
+
+Key layout: `<purpose>/<uid>/<yyyy>/<mm>/<uuid>.<ext>` (`purpose`: `cv` | `avatar` | `attachment`).
 
 ## Env
 
