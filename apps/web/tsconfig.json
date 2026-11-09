@@ -1,0 +1,11 @@
+{
+  "extends": "@firstround/config/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "paths": { "@/*": ["./*"] },
+    "types": ["node"],
+    "noUncheckedIndexedAccess": false,
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}

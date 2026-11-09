@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { Pile } from '@/components/Pile';
 import { WaveMesh } from '@/components/wave-mesh/WaveMesh';
+import { apiUrl } from '@/lib/api-url';
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const heroMesh = ['#f4efe6', '#1c1916', '#9d3b28'] as [string, string, string];
@@ -86,7 +87,7 @@ function SeatForm({
     setTone('idle');
     setNote('');
     try {
-      const response = await fetch('/api/waitlist', {
+      const response = await fetch(apiUrl('/waitlist'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -113,7 +114,7 @@ function SeatForm({
   }
 
   return (
-    <form className="seat" action="/api/waitlist" method="post" onSubmit={onSubmit}>
+    <form className="seat" action={apiUrl('/waitlist')} method="post" onSubmit={onSubmit}>
       <label htmlFor={id}>Email</label>
       <div className="row">
         <input
