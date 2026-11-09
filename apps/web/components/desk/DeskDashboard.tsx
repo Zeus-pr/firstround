@@ -9,6 +9,7 @@ type Props = {
   suggestions: string[];
   creditBalance?: number | null;
   onOpenCv: () => void;
+  onReviewScore: () => void;
   onOpenPreferences: () => void;
   onSignOut: () => void;
   onDismissSuggestions?: () => void;
@@ -21,6 +22,7 @@ export function DeskDashboard({
   suggestions,
   creditBalance,
   onOpenCv,
+  onReviewScore,
   onOpenPreferences,
   onSignOut,
   onDismissSuggestions,
@@ -74,7 +76,7 @@ export function DeskDashboard({
               <>
                 <p className="desk-stat">{readiness.total}</p>
                 <p className="desk-pane-copy">{readiness.recommendation.headline}</p>
-                <button className="text-button" type="button" onClick={onOpenCv}>
+                <button className="text-button" type="button" onClick={onReviewScore}>
                   Review score
                 </button>
               </>

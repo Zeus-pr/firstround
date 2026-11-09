@@ -211,6 +211,13 @@ export function DeskOnboarding() {
         creditBalance={creditBalance}
         onOpenCv={() => {
           setNote('');
+          setFileName(undefined);
+          setRewrittenText(null);
+          setModalStage('upload');
+          setModalOpen(true);
+        }}
+        onReviewScore={() => {
+          setNote('');
           setModalStage(readiness ? 'result' : 'upload');
           setModalOpen(true);
         }}
@@ -235,6 +242,7 @@ export function DeskOnboarding() {
         readiness={readiness}
         creditBalance={creditBalance}
         rewrittenText={rewrittenText}
+        replacing={Boolean(readiness)}
         primaryBusy={primaryBusy}
         onClose={() => {
           if (modalStage === 'analyzing' || modalStage === 'supercharging') return;
