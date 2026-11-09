@@ -66,6 +66,9 @@ importers:
         specifier: ^4.1.12
         version: 4.6.7
     devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.16
+        version: 0.5.16
       '@firstround/config':
         specifier: workspace:*
         version: link:../../packages/config
