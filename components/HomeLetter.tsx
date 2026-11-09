@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import dynamic from "next/dynamic";
+import dynamic from 'next/dynamic';
 
-const Letter = dynamic(() => import("@/components/Letter").then((mod) => mod.Letter), {
+const Letter = dynamic(() => import('@/components/Letter').then((mod) => mod.Letter), {
   ssr: false,
 });
 

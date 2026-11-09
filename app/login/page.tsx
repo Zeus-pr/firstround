@@ -1,4 +1,4 @@
-import { AuthScreen } from "@/components/AuthScreen";
+import { AuthScreen } from '@/components/AuthScreen';
 
 export default function LoginPage() {
   return <AuthScreen mode="signin" />;

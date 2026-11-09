@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { firebaseAuth } from '@/lib/firebase';
 
 export function AccountNav() {
   const [user, setUser] = useState<User | null>(null);
@@ -33,10 +34,10 @@ export function AccountNav() {
 
   return (
     <nav className="mast-nav" aria-label="Account">
-      <a href="/login">Log in</a>
-      <a className="mast-signup" href="/signup">
+      <Link href="/login">Log in</Link>
+      <Link className="mast-signup" href="/signup">
         Sign up
-      </a>
+      </Link>
     </nav>
   );
 }

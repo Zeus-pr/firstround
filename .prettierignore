@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+dist
+.vinext
+.cloudflare
+.wrangler
+.continue
+package-lock.json
+brand
+public/brand
+*.png
+*.woff2
+*.ttf
+data

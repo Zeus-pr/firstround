@@ -2,49 +2,49 @@
 name: First Round
 description: One sheet on a dark blotter. The letter is the page.
 colors:
-  blotter: "#171614"
-  lamp: "#2a241c"
-  sheet: "#f4efe6"
-  ink: "#1c1916"
-  quiet: "#3f382f"
-  rule: "#ddd4c6"
-  wax: "#9d3b28"
-  wax-ink: "#f6f1e8"
-  wax-hover: "#862f1f"
-  colophon: "#cfc6b8"
+  blotter: '#171614'
+  lamp: '#2a241c'
+  sheet: '#f4efe6'
+  ink: '#1c1916'
+  quiet: '#3f382f'
+  rule: '#ddd4c6'
+  wax: '#9d3b28'
+  wax-ink: '#f6f1e8'
+  wax-hover: '#862f1f'
+  colophon: '#cfc6b8'
 typography:
   display:
-    fontFamily: "Google Sans Variable, Google Sans, sans-serif"
-    fontSize: "clamp(2.7rem, 7.4vw, 5.15rem)"
+    fontFamily: 'Google Sans Variable, Google Sans, sans-serif'
+    fontSize: 'clamp(2.7rem, 7.4vw, 5.15rem)'
     fontWeight: 520
     lineHeight: 0.96
-    letterSpacing: "-0.035em"
+    letterSpacing: '-0.035em'
   body:
-    fontFamily: "Google Sans Variable, Google Sans, sans-serif"
-    fontSize: "1.2rem"
+    fontFamily: 'Google Sans Variable, Google Sans, sans-serif'
+    fontSize: '1.2rem'
     fontWeight: 450
     lineHeight: 1.45
-    letterSpacing: "-0.015em"
+    letterSpacing: '-0.015em'
 rounded:
-  none: "0px"
-  mark: "999px"
+  none: '0px'
+  mark: '999px'
 spacing:
-  sheet: "clamp(1.5rem, 4vw, 2.75rem)"
-  beat: "4.5rem"
+  sheet: 'clamp(1.5rem, 4vw, 2.75rem)'
+  beat: '4.5rem'
 components:
   button-seat:
-    backgroundColor: "{colors.wax}"
-    textColor: "{colors.wax-ink}"
-    rounded: "{rounded.none}"
-    padding: "0.75rem 1.1rem"
+    backgroundColor: '{colors.wax}'
+    textColor: '{colors.wax-ink}'
+    rounded: '{rounded.none}'
+    padding: '0.75rem 1.1rem'
   button-seat-hover:
-    backgroundColor: "{colors.wax-hover}"
-    textColor: "{colors.wax-ink}"
+    backgroundColor: '{colors.wax-hover}'
+    textColor: '{colors.wax-ink}'
   field:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.none}"
-    padding: "0.7rem 0.1rem"
+    backgroundColor: 'transparent'
+    textColor: '{colors.ink}'
+    rounded: '{rounded.none}'
+    padding: '0.7rem 0.1rem'
 ---
 
 # First Round

@@ -8,7 +8,7 @@
   --wax: #9d3b28;
   --wax-ink: #f6f1e8;
   --shadow: 0 28px 60px -28px rgba(0, 0, 0, 0.72);
-  --sans: "Google Sans Variable", "Google Sans", sans-serif;
+  --sans: 'Google Sans Variable', 'Google Sans', sans-serif;
 }
 
 * {
@@ -27,8 +27,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse 70rem 40rem at 50% 0%, var(--lamp), transparent 68%),
-    var(--blotter);
+    radial-gradient(ellipse 70rem 40rem at 50% 0%, var(--lamp), transparent 68%), var(--blotter);
 }
 
 ::selection {
@@ -141,7 +140,9 @@ button {
   width: 100%;
   background: var(--sheet);
   color: var(--ink);
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
   padding: clamp(1.5rem, 5vw, 4.5rem);
 }
 
@@ -592,7 +593,7 @@ h1 {
   font-size: 0.95rem;
 }
 
-.note[data-tone="bad"] {
+.note[data-tone='bad'] {
   color: var(--ink);
 }
 

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 
 type PileProps = {
   progressRef: React.RefObject<number>;
@@ -11,16 +11,16 @@ const COUNT = 36;
 const KEPT = 16;
 
 function applicationTexture() {
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 1360;
-  const draw = canvas.getContext("2d");
+  const draw = canvas.getContext('2d');
   if (!draw) return null;
-  draw.fillStyle = "#f4efe6";
+  draw.fillStyle = '#f4efe6';
   draw.fillRect(0, 0, canvas.width, canvas.height);
-  draw.fillStyle = "#1c1916";
+  draw.fillStyle = '#1c1916';
   draw.fillRect(88, 112, 360, 28);
-  draw.fillStyle = "#5c564e";
+  draw.fillStyle = '#5c564e';
   for (let i = 0; i < 8; i += 1) {
     draw.fillRect(88, 230 + i * 112, i % 3 === 2 ? 480 : 820, 14);
   }
@@ -45,14 +45,14 @@ export function Pile({ progressRef }: PileProps) {
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
-      powerPreference: "high-performance",
+      powerPreference: 'high-performance',
       premultipliedAlpha: false,
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x171614, 1);
     renderer.sortObjects = false;
-    renderer.domElement.style.width = "100%";
-    renderer.domElement.style.height = "100%";
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();

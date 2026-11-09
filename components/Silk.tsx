@@ -301,7 +301,7 @@ const Silk = ({
   paused = false,
   dpr,
   className = '',
-  style
+  style,
 }: SilkProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -327,7 +327,7 @@ const Silk = ({
     fade: clamp(fade, 0, 1),
     lightMode,
     paused,
-    dpr
+    dpr,
   };
 
   useEffect(() => {
@@ -339,7 +339,7 @@ const Silk = ({
       antialias: false,
       depth: false,
       stencil: false,
-      powerPreference: 'high-performance'
+      powerPreference: 'high-performance',
     });
     if (!container || !canvas || !gl) return undefined;
 
@@ -403,13 +403,19 @@ const Silk = ({
       dragX: 0,
       dragY: 0,
       lightX: DEFAULT_LIGHT[0],
-      lightY: DEFAULT_LIGHT[1]
+      lightY: DEFAULT_LIGHT[1],
     };
     let raf = 0;
     let last = 0;
     let visible = true;
 
-    const setShared = (uniforms: Uniforms, width: number, height: number, s: Settings, unfold: number) => {
+    const setShared = (
+      uniforms: Uniforms,
+      width: number,
+      height: number,
+      s: Settings,
+      unfold: number,
+    ) => {
       const [shiftX, shiftY] = variationShift(s.variation);
       gl.uniform2f(uniforms.uView, width, height);
       gl.uniform1f(uniforms.uScale, s.scale);
@@ -424,7 +430,7 @@ const Silk = ({
         state.x / view.width,
         1 - state.y / view.height,
         state.touch * s.interactionStrength,
-        0.32
+        0.32,
       );
       gl.uniform2f(uniforms.uDrag, state.dragX, state.dragY);
       gl.uniform4fv(uniforms.uWaves, waveData);
@@ -438,11 +444,17 @@ const Silk = ({
 
       waveData.fill(0);
       waves.slice(-4).forEach((item, index) => {
-        waveData.set([item.x, item.y, item.age * 0.6, Math.exp(-item.age / (WAVE_LIFE * 0.45))], index * 4);
+        waveData.set(
+          [item.x, item.y, item.age * 0.6, Math.exp(-item.age / (WAVE_LIFE * 0.45))],
+          index * 4,
+        );
       });
 
       if (s.glow > 0) {
-        sizeTarget(Math.max(1, Math.round(canvas.width / 4)), Math.max(1, Math.round(canvas.height / 4)));
+        sizeTarget(
+          Math.max(1, Math.round(canvas.width / 4)),
+          Math.max(1, Math.round(canvas.height / 4)),
+        );
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
         gl.viewport(0, 0, target.width, target.height);
         gl.useProgram(fieldProgram.program);
@@ -500,7 +512,8 @@ const Silk = ({
       const dragBlend = 1 - Math.exp(-dt * 4);
       state.dragX += (clamp(velX * 0.03, -0.06, 0.06) - state.dragX) * dragBlend;
       state.dragY += (clamp(-velY * 0.03, -0.06, 0.06) - state.dragY) * dragBlend;
-      state.touch += ((engaged ? 1 : 0) - state.touch) * (1 - Math.exp(-dt * (engaged ? 3.5 : 1.4)));
+      state.touch +=
+        ((engaged ? 1 : 0) - state.touch) * (1 - Math.exp(-dt * (engaged ? 3.5 : 1.4)));
 
       let lightGoalX = DEFAULT_LIGHT[0];
       let lightGoalY = DEFAULT_LIGHT[1];
@@ -593,8 +606,8 @@ const Silk = ({
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
-    const intersection = new IntersectionObserver(entries => {
-      visible = entries.some(entry => entry.isIntersecting);
+    const intersection = new IntersectionObserver((entries) => {
+      visible = entries.some((entry) => entry.isIntersecting);
       if (visible) {
         last = 0;
         wake();
@@ -643,7 +656,11 @@ const Silk = ({
   });
 
   return (
-    <div ref={containerRef} className={`silk-container${className ? ` ${className}` : ''}`} style={style}>
+    <div
+      ref={containerRef}
+      className={`silk-container${className ? ` ${className}` : ''}`}
+      style={style}
+    >
       <canvas ref={canvasRef} className="silk-canvas" aria-hidden="true" />
     </div>
   );

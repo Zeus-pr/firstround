@@ -1,10 +1,7 @@
-import { HomeLetter } from "@/components/HomeLetter";
+import Link from 'next/link';
+import { HomeLetter } from '@/components/HomeLetter';
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ seat?: string }>;
-}) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ seat?: string }> }) {
   const params = await searchParams;
 
   return (
@@ -22,8 +19,8 @@ export default async function Page({
             <p className="foot-line">No letter leaves without you.</p>
           </div>
           <nav className="foot-nav" aria-label="Footer">
-            <a href="/login">Log in</a>
-            <a href="/signup">Sign up</a>
+            <Link href="/login">Log in</Link>
+            <Link href="/signup">Sign up</Link>
           </nav>
           <p className="foot-year">2026</p>
         </div>

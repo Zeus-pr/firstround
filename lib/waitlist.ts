@@ -1,11 +1,9 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-const file = path.join(process.cwd(), "data", "waitlist.ndjson");
+const file = path.join(process.cwd(), 'data', 'waitlist.ndjson');
 
-export type SeatResult =
-  | { ok: true; already: boolean }
-  | { ok: false; error: string };
+export type SeatResult = { ok: true; already: boolean } | { ok: false; error: string };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -21,14 +19,14 @@ function enqueue<T>(job: () => Promise<T>): Promise<T> {
 }
 
 export function normalizeEmail(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+  if (typeof value !== 'string') return null;
   const email = value.trim().toLowerCase();
   if (email.length > 254 || !emailPattern.test(email)) return null;
   return email;
 }
 
 function listed(raw: string, email: string) {
-  return raw.split("\n").some((line) => {
+  return raw.split('\n').some((line) => {
     if (!line) return false;
     try {
       return (JSON.parse(line) as { email?: string }).email === email;
@@ -40,11 +38,11 @@ function listed(raw: string, email: string) {
 
 async function readList() {
   try {
-    return await readFile(file, "utf8");
+    return await readFile(file, 'utf8');
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
-    if (code !== "ENOENT") throw error;
-    return "";
+    if (code !== 'ENOENT') throw error;
+    return '';
   }
 }
 
@@ -60,10 +58,7 @@ export function saveSeat(email: string): Promise<SeatResult> {
 
     if (already) return { ok: true, already: true };
 
-    await appendFile(
-      file,
-      `${JSON.stringify({ email, at: new Date().toISOString() })}\n`,
-    );
+    await appendFile(file, `${JSON.stringify({ email, at: new Date().toISOString() })}\n`);
     return { ok: true, already: false };
   });
 }

@@ -14,13 +14,13 @@ It does not claim to auto-submit every employer application form. The primary jo
 
 A job proceeds only when every gate below passes, in this order. Each gate is an independent decision with its own stored score. A strong score on one gate never compensates for a weak score on another.
 
-| Gate | Minimum | Meaning |
-|---|---:|---|
-| 1. Job trust | 75/100 | The posting is real, fresh, and safe to send a CV to |
-| 2. Job match | 78/100 | The candidate fits the live role |
-| 3. Person-job match | 80/100 | The contact likely owns or recruits for that role |
-| 4. Address identity | 75/100 | The address plausibly belongs to that person |
-| 5. Mailbox confidence | 90/100 | The selected work email is safe to send |
+| Gate                  | Minimum | Meaning                                              |
+| --------------------- | ------: | ---------------------------------------------------- |
+| 1. Job trust          |  75/100 | The posting is real, fresh, and safe to send a CV to |
+| 2. Job match          |  78/100 | The candidate fits the live role                     |
+| 3. Person-job match   |  80/100 | The contact likely owns or recruits for that role    |
+| 4. Address identity   |  75/100 | The address plausibly belongs to that person         |
+| 5. Mailbox confidence |  90/100 | The selected work email is safe to send              |
 
 This prevents a valid address from being used when it belongs to the wrong person, and prevents a relevant person from being used when their address is uncertain.
 
@@ -48,20 +48,20 @@ Scale note: this document stores scores on 0 to 100. The algorithm specification
 
 The CV score is Firstround's readiness score. It must never be presented as a universal ATS result.
 
-| Dimension | Weight | What it checks |
-|---|---:|---|
-| Evidence completeness | 20 | Roles, dates, tools, scope, and responsibilities |
-| Outcome quality | 25 | Numbers, scale, impact, before/after, delivery, quality, revenue, conversion, or time saved when provided |
-| Target-role coverage | 25 | Evidence that supports the selected job family and level |
-| Career consistency | 15 | Chronology errors, contradictions, and implausible claims. Gaps, career breaks, lateral moves, and non-linear paths are never penalised |
-| Communication clarity | 15 | Specific, parseable, concise bullets with clear headings |
+| Dimension             | Weight | What it checks                                                                                                                          |
+| --------------------- | -----: | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence completeness |     20 | Roles, dates, tools, scope, and responsibilities                                                                                        |
+| Outcome quality       |     25 | Numbers, scale, impact, before/after, delivery, quality, revenue, conversion, or time saved when provided                               |
+| Target-role coverage  |     25 | Evidence that supports the selected job family and level                                                                                |
+| Career consistency    |     15 | Chronology errors, contradictions, and implausible claims. Gaps, career breaks, lateral moves, and non-linear paths are never penalised |
+| Communication clarity |     15 | Specific, parseable, concise bullets with clear headings                                                                                |
 
 These weights mirror algorithm specification section 1.3, which is the canonical definition (version 1.x of the two documents disagreed). Contact details, location, and working profile links are a pass/fail **sendability checklist** that blocks sending but is not scored.
 
-| Score | Product response |
-|---|---|
-| 85–100 | Profile is ready for outreach |
-| 70–84 | Show exact missing evidence and offer Supercharge or a self-service checklist |
+| Score    | Product response                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| 85–100   | Profile is ready for outreach                                                                        |
+| 70–84    | Show exact missing evidence and offer Supercharge or a self-service checklist                        |
 | Below 70 | Explain that match and outreach quality will be limited; offer Supercharge without blocking the user |
 
 ### 3.2 Supercharge workflow
@@ -85,12 +85,12 @@ No fine-tuning should be used at launch. A structured candidate fact bank, accep
 
 Google classifies Gmail scopes in three tiers. `gmail.send` is **sensitive**: it needs app verification but no annual security assessment. `gmail.readonly`, `gmail.modify`, `gmail.compose`, `gmail.insert`, `gmail.metadata`, and `https://mail.google.com/` are **restricted**: they need verification plus an annual third-party security assessment (CASA). An app's tier is set by its most restrictive scope. `gmail.labels` is non-sensitive but only edits label definitions; applying a label to a message needs `gmail.modify`.
 
-| Need | Scope | Tier |
-|---|---|---|
-| Send the outreach message | `gmail.send` | Sensitive |
+| Need                                                                         | Scope            | Tier       |
+| ---------------------------------------------------------------------------- | ---------------- | ---------- |
+| Send the outreach message                                                    | `gmail.send`     | Sensitive  |
 | Detect replies, bounces, and auto-replies in campaign threads; Pub/Sub watch | `gmail.readonly` | Restricted |
-| Create drafts inside the user's Gmail | `gmail.compose` | Restricted |
-| Apply a label to messages | `gmail.modify` | Restricted |
+| Create drafts inside the user's Gmail                                        | `gmail.compose`  | Restricted |
+| Apply a label to messages                                                    | `gmail.modify`   | Restricted |
 
 **Recommended launch scope set: `gmail.send` + `gmail.readonly`.** It is the narrowest set that supports the product promise, and it removes the ability to modify, trash, or relabel the user's mail, which `gmail.modify` would grant for no product benefit. Two earlier design elements change as a result:
 
@@ -102,6 +102,7 @@ Google classifies Gmail scopes in three tiers. `gmail.send` is **sensitive**: it
 **Timing risk.** Restricted-scope verification plus the security assessment has a multi-week lead time and a recurring cost. Until verification completes, the Google Cloud project is limited to test users (Google documents a cap of 100), and refresh tokens for apps left in Testing status can expire after seven days **[verify in the Cloud console]**. A launch to 100 paying customers is therefore gated on verification, not only on engineering. Plan a closed pilot of at most 100 named testers first, and start verification in Phase 0.
 
 Sources:
+
 - [Google Gmail scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)
 - [Gmail API overview](https://developers.google.com/workspace/gmail/api/guides)
 
@@ -209,6 +210,7 @@ These carry higher trust, give canonical company domains (which strengthens emai
 ### 5.6 Poster type and invited channel
 
 Classify every posting as direct employer, staffing/consultancy posting for an unnamed client, confidential employer, or aggregator repost. Consultancy and confidential postings are legitimate and common in India, but the right contact is the poster, the client company cannot be verified, and trust and contact rules differ (algorithm specification sections 2.2 and 4.5). Capture, with the exact source span, any address or instruction telling applicants where to send a CV. De-obfuscate forms such as "name [at] company dot com" with a strict parser, never a model. A captured address is the strongest contact evidence available (section 7.1).
+
 ## 6. Job normalization and score
 
 ### 6.1 Canonical job
@@ -240,13 +242,13 @@ Reject before semantic scoring when:
 
 ### 6.3 Score
 
-| Signal | Points |
-|---|---:|
-| Function fit | 28 |
-| Requirement evidence (must-have and preferred, weighted by evidence quality) | 27 |
-| Scope and seniority | 18 |
-| Location and working preferences | 12 |
-| Career direction (goals, industry, optional compensation) | 15 |
+| Signal                                                                       | Points |
+| ---------------------------------------------------------------------------- | -----: |
+| Function fit                                                                 |     28 |
+| Requirement evidence (must-have and preferred, weighted by evidence quality) |     27 |
+| Scope and seniority                                                          |     18 |
+| Location and working preferences                                             |     12 |
+| Career direction (goals, industry, optional compensation)                    |     15 |
 
 Use AI for job-description extraction and semantic comparison. Deterministic rules decide eligibility. Store the evidence spans and human-readable reasons behind every score.
 
@@ -267,14 +269,14 @@ Also: skip previously contacted canonical jobs, and do not pay for person or ema
 
 ### 7.1 Contact hierarchy
 
-| Priority | Contact | Use when |
-|---:|---|---|
-| 0 | Address or instruction in the posting itself telling applicants where to send a CV | Source text captured verbatim. The employer has invited this contact. Role-based addresses are allowed on this path only |
-| 1 | Named hiring manager or hiring-team person | Explicitly shown with role |
-| 2 | Job poster or named recruiter | Source shows a current person |
-| 3 | Relevant internal recruiter | Company, function, and location align |
-| 4 | Likely role owner | Current manager/director/VP for team |
-| 5 | Founder or executive | Small company or leadership-owned role |
+| Priority | Contact                                                                            | Use when                                                                                                                 |
+| -------: | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+|        0 | Address or instruction in the posting itself telling applicants where to send a CV | Source text captured verbatim. The employer has invited this contact. Role-based addresses are allowed on this path only |
+|        1 | Named hiring manager or hiring-team person                                         | Explicitly shown with role                                                                                               |
+|        2 | Job poster or named recruiter                                                      | Source shows a current person                                                                                            |
+|        3 | Relevant internal recruiter                                                        | Company, function, and location align                                                                                    |
+|        4 | Likely role owner                                                                  | Current manager/director/VP for team                                                                                     |
+|        5 | Founder or executive                                                               | Small company or leadership-owned role                                                                                   |
 
 A LinkedIn job poster can be a selected recruiter and their email is not shown to candidates, so it is useful but not proof that they own the job.
 
@@ -294,15 +296,15 @@ Every fact needs source URL, source type, timestamp, and evidence text. Firstrou
 
 ### 7.3 Person-job score
 
-| Signal | Points |
-|---|---:|
-| Explicitly named in job or hiring team | 35 |
-| Current employment at company | 20 |
-| Function/team alignment | 20 |
-| Suitable seniority | 10 |
-| Location/workforce alignment | 5 |
-| Recent hiring/team evidence | 5 |
-| Freshness and cross-source agreement | 5 |
+| Signal                                 | Points |
+| -------------------------------------- | -----: |
+| Explicitly named in job or hiring team |     35 |
+| Current employment at company          |     20 |
+| Function/team alignment                |     20 |
+| Suitable seniority                     |     10 |
+| Location/workforce alignment           |      5 |
+| Recent hiring/team evidence            |      5 |
+| Freshness and cross-source agreement   |      5 |
 
 Select a person only at 80 or more, and only if they lead the next candidate by at least 10 points unless they were explicitly named. Keep up to two fallbacks but email one recipient only.
 
@@ -360,15 +362,15 @@ Hunter currently documents 0.5 credits per verifier call. It can return valid, i
 
 Source: [Hunter API v2](https://hunter.io/api-documentation/v2.md)
 
-| Result | Firstround decision |
-|---|---|
-| valid and score 90+ | Eligible if person score 80+ |
-| valid and score 80–89 | Not sendable at launch. May go to second-verifier arbitration (section 8.5); otherwise hold |
-| valid and score below 80 | Reject |
-| accept_all | Treat as uncertain; skip by default (exception: invited channel, section 1) |
-| unknown or SMTP blocked | Hold/skip; do not repeat immediately |
-| invalid, disposable, webmail | Reject |
-| claimed email/privacy error | Permanently suppress |
+| Result                       | Firstround decision                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| valid and score 90+          | Eligible if person score 80+                                                                |
+| valid and score 80–89        | Not sendable at launch. May go to second-verifier arbitration (section 8.5); otherwise hold |
+| valid and score below 80     | Reject                                                                                      |
+| accept_all                   | Treat as uncertain; skip by default (exception: invited channel, section 1)                 |
+| unknown or SMTP blocked      | Hold/skip; do not repeat immediately                                                        |
+| invalid, disposable, webmail | Reject                                                                                      |
+| claimed email/privacy error  | Permanently suppress                                                                        |
 
 If the first candidate fails, verify one fallback only if it was nearly as strong. Cap verification at two candidates per job. If neither passes, mark the job No safe contact found.
 
@@ -442,34 +444,34 @@ Use a model critic for language quality, but deterministic validators decide cit
 
 ## 10. Daily campaign process
 
-| Time in candidate timezone | Action |
-|---|---|
-| 06:00–07:30 | Refresh shared corpus |
-| 07:30–09:30 | Score jobs, research contact, verify email, draft ten maximum |
-| 09:30 | Notify candidate |
-| 19:00 (default) | Review-mode approval cut-off |
+| Time in candidate timezone         | Action                                                                                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 06:00–07:30                        | Refresh shared corpus                                                                                                                   |
+| 07:30–09:30                        | Score jobs, research contact, verify email, draft ten maximum                                                                           |
+| 09:30                              | Notify candidate                                                                                                                        |
+| 19:00 (default)                    | Review-mode approval cut-off                                                                                                            |
 | From 19:30 (default, configurable) | Send approved drafts one at a time with random spacing. Send all fully eligible drafts only if Autopilot is on, after the cancel notice |
-| Next business morning | Process replies and scheduled follow-ups |
+| Next business morning              | Process replies and scheduled follow-ups                                                                                                |
 
 The evening window is a starting hypothesis, not a finding. Recruiters often triage mail in the morning, and a message sent the previous evening arrives among overnight mail. Test "queue in the evening, send in the recipient's next morning window" against evening sending in the experiment framework (section 21.20) before fixing a default. Sends are never a burst: one at a time per mailbox, spaced with jitter.
 
 Campaign state:
 
-| Event | Action |
-|---|---|
-| Day 0 | Initial message |
-| Business day 2 without reply | Follow-up one in the same thread, only if the job is still live and no stop condition exists |
-| Business day 5 without reply | Follow-up two in the same thread, then close |
-| Human reply | Stop and notify immediately |
-| Out-of-office with a return date | Defer the next follow-up until after that date; do not stop |
-| Auto-acknowledgement ("application received") | Stop follow-ups; not positive contact evidence |
-| Opt-out or "do not contact" | Stop; suppress the recipient globally |
-| Wrong person or redirect | Stop; record the new contact as evidence; tell the candidate who to try next |
-| Hard bounce | Stop and suppress the address |
-| Temporary failure | No new initial message; bounded status check |
-| Candidate replies in the thread themselves | Stop automation for that thread |
-| Candidate marks "hired" or pauses the search | Cancel all queued campaigns |
-| Gmail token revoked | Pause all campaigns |
+| Event                                         | Action                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Day 0                                         | Initial message                                                                              |
+| Business day 2 without reply                  | Follow-up one in the same thread, only if the job is still live and no stop condition exists |
+| Business day 5 without reply                  | Follow-up two in the same thread, then close                                                 |
+| Human reply                                   | Stop and notify immediately                                                                  |
+| Out-of-office with a return date              | Defer the next follow-up until after that date; do not stop                                  |
+| Auto-acknowledgement ("application received") | Stop follow-ups; not positive contact evidence                                               |
+| Opt-out or "do not contact"                   | Stop; suppress the recipient globally                                                        |
+| Wrong person or redirect                      | Stop; record the new contact as evidence; tell the candidate who to try next                 |
+| Hard bounce                                   | Stop and suppress the address                                                                |
+| Temporary failure                             | No new initial message; bounded status check                                                 |
+| Candidate replies in the thread themselves    | Stop automation for that thread                                                              |
+| Candidate marks "hired" or pauses the search  | Cancel all queued campaigns                                                                  |
+| Gmail token revoked                           | Pause all campaigns                                                                          |
 
 Default is Review mode. Autopilot is explicit user opt-in after they understand the rules.
 
@@ -513,26 +515,26 @@ Sell 100 outreach campaigns, not 100 messages.
 
 The existing project is Next.js 15, React 19, TypeScript, Firebase Auth, Vinext/Cloudflare, and its product plan names Railway Postgres and Cloudflare R2. Keep that direction.
 
-| Layer | Recommendation | Reason |
-|---|---|---|
-| Web app | Existing Next.js App Router + TypeScript | Preserve current app |
-| Identity | Existing Firebase Auth | Avoid auth rewrite |
-| API | Next server routes and Cloudflare Worker endpoints | Fits deployment |
-| Durable workflow | Cloudflare Workflows | Multi-day delays, retries, approval wait |
-| Fan-out | Cloudflare Queues with dead-letter queue | Ingestion, scoring, verification, notifications |
-| Database | Railway PostgreSQL | Transactional credits, sends, and state |
-| ORM | Drizzle ORM | Typed schema/migrations |
-| Files | Cloudflare R2 | CV originals and accepted PDFs |
-| CV parsing | Node 22 Railway worker | Better PDF/DOCX reliability than edge runtime |
-| Gmail | Gmail REST adapter using fetch/OAuth | Works with Worker environment |
-| AI | Vercel AI SDK adapters | Provider portable |
-| Monitoring | Sentry plus redacted structured logs | Operational debugging |
-| Postgres access from Workers | Cloudflare Hyperdrive or a connection pooler in front of Railway Postgres | Workers cannot hold long-lived database connections. Verify compatibility and latency early **[verify]** |
-| Keys and secrets | Managed KMS for token envelope keys; platform secrets for service credentials | Key rotation and access audit |
-| Scheduling | Cloudflare Cron Triggers start the daily fan-out; a per-candidate daily run key prevents double runs | Predictable, idempotent batches |
-| Feature flags | Flag service or an audited Postgres flag table | Required by section 21.10 |
-| Notifications | Email, web push, and WhatsApp or SMS for replies | Replies are the value event, and speed matters in India |
-| Tenant isolation | Postgres row-level security keyed to workspace ID, set per transaction | Defence in depth beyond service-layer checks |
+| Layer                        | Recommendation                                                                                       | Reason                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Web app                      | Existing Next.js App Router + TypeScript                                                             | Preserve current app                                                                                     |
+| Identity                     | Existing Firebase Auth                                                                               | Avoid auth rewrite                                                                                       |
+| API                          | Next server routes and Cloudflare Worker endpoints                                                   | Fits deployment                                                                                          |
+| Durable workflow             | Cloudflare Workflows                                                                                 | Multi-day delays, retries, approval wait                                                                 |
+| Fan-out                      | Cloudflare Queues with dead-letter queue                                                             | Ingestion, scoring, verification, notifications                                                          |
+| Database                     | Railway PostgreSQL                                                                                   | Transactional credits, sends, and state                                                                  |
+| ORM                          | Drizzle ORM                                                                                          | Typed schema/migrations                                                                                  |
+| Files                        | Cloudflare R2                                                                                        | CV originals and accepted PDFs                                                                           |
+| CV parsing                   | Node 22 Railway worker                                                                               | Better PDF/DOCX reliability than edge runtime                                                            |
+| Gmail                        | Gmail REST adapter using fetch/OAuth                                                                 | Works with Worker environment                                                                            |
+| AI                           | Vercel AI SDK adapters                                                                               | Provider portable                                                                                        |
+| Monitoring                   | Sentry plus redacted structured logs                                                                 | Operational debugging                                                                                    |
+| Postgres access from Workers | Cloudflare Hyperdrive or a connection pooler in front of Railway Postgres                            | Workers cannot hold long-lived database connections. Verify compatibility and latency early **[verify]** |
+| Keys and secrets             | Managed KMS for token envelope keys; platform secrets for service credentials                        | Key rotation and access audit                                                                            |
+| Scheduling                   | Cloudflare Cron Triggers start the daily fan-out; a per-candidate daily run key prevents double runs | Predictable, idempotent batches                                                                          |
+| Feature flags                | Flag service or an audited Postgres flag table                                                       | Required by section 21.10                                                                                |
+| Notifications                | Email, web push, and WhatsApp or SMS for replies                                                     | Replies are the value event, and speed matters in India                                                  |
+| Tenant isolation             | Postgres row-level security keyed to workspace ID, set per transaction                               | Defence in depth beyond service-layer checks                                                             |
 
 Cloudflare Workflows supports durable steps, retries, sleeps, and external waits. It should own the day-0/day-2/day-5 campaign state.
 
@@ -655,18 +657,18 @@ With the recommended launch scope set (`gmail.send` + `gmail.readonly`) drafts c
 
 Failure handling:
 
-| Failure | Action |
-|---|---|
-| Apify failure | Exponential retry, retain last corpus, mark source stale |
-| Hunter 202/timeout | Bounded poll/retry, never send before final result |
-| Gmail invalid grant | Pause campaigns and request reconnect |
-| Gmail timeout after send request | Reconcile Gmail thread/message before retry |
-| Database failure after send | Reconcile before credit debit; never resend blindly |
-| AI invalid output | One correction pass, then skip with logged reason |
-| Pub/Sub disruption | Recover from stored Gmail history ID, backed by the safety-net sweep (section 4.3) |
-| Verifier outage | Hold affected jobs; never send on an unverified address; try the next job |
-| Daily batch fails midway | Resume from the daily run key; never regenerate drafts already approved |
-| Clock or timezone fault | Evaluate send windows server-side in the candidate's stored timezone; refuse to send if clocks disagree beyond tolerance |
+| Failure                          | Action                                                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Apify failure                    | Exponential retry, retain last corpus, mark source stale                                                                 |
+| Hunter 202/timeout               | Bounded poll/retry, never send before final result                                                                       |
+| Gmail invalid grant              | Pause campaigns and request reconnect                                                                                    |
+| Gmail timeout after send request | Reconcile Gmail thread/message before retry                                                                              |
+| Database failure after send      | Reconcile before credit debit; never resend blindly                                                                      |
+| AI invalid output                | One correction pass, then skip with logged reason                                                                        |
+| Pub/Sub disruption               | Recover from stored Gmail history ID, backed by the safety-net sweep (section 4.3)                                       |
+| Verifier outage                  | Hold affected jobs; never send on an unverified address; try the next job                                                |
+| Daily batch fails midway         | Resume from the daily run key; never regenerate drafts already approved                                                  |
+| Clock or timezone fault          | Evaluate send windows server-side in the candidate's stored timezone; refuse to send if clocks disagree beyond tolerance |
 
 ## 15. Dashboard
 
@@ -714,16 +716,16 @@ Design requirements:
 
 Assumptions: 100 active users, maximum 10 new campaigns/user/workday, 20 workdays, one verification/job average, two follow-ups if there is no reply.
 
-| Metric | Monthly maximum |
-|---|---:|
-| New campaigns | 20,000 |
-| Initial messages | 20,000 |
-| Follow-ups | 40,000 |
-| Maximum Gmail sends | 60,000 |
-| Hunter calls at one/job | 20,000 |
-| Hunter credits at 0.5/call | 10,000 |
-| Hunter calls at two/job | 40,000 |
-| Hunter credits at 0.5/call | 20,000 |
+| Metric                     | Monthly maximum |
+| -------------------------- | --------------: |
+| New campaigns              |          20,000 |
+| Initial messages           |          20,000 |
+| Follow-ups                 |          40,000 |
+| Maximum Gmail sends        |          60,000 |
+| Hunter calls at one/job    |          20,000 |
+| Hunter credits at 0.5/call |          10,000 |
+| Hunter calls at two/job    |          40,000 |
+| Hunter credits at 0.5/call |          20,000 |
 
 Cost controls:
 
@@ -751,12 +753,12 @@ Use the saved 50 as an "apply with a prepared kit" list for jobs with no safe co
 
 ### 17.2 Scale ladder
 
-| Users | Architecture change |
-|---:|---|
-| 100 | Single Postgres, one worker pool, one verifier plus the benchmark rig |
-| 1,000 | Read replica, queue partitioning by tenant, domain-level verification cache, per-provider budgets, second verifier mandatory |
-| 10,000 | Partition events and outbox tables, dedicated sender fleet, KMS throughput planning, multi-region failover, SOC 2 Type II in place |
-| 100,000 | Separate data platform for outcome learning, regional data residency, enterprise trust programme |
+|   Users | Architecture change                                                                                                                |
+| ------: | ---------------------------------------------------------------------------------------------------------------------------------- |
+|     100 | Single Postgres, one worker pool, one verifier plus the benchmark rig                                                              |
+|   1,000 | Read replica, queue partitioning by tenant, domain-level verification cache, per-provider budgets, second verifier mandatory       |
+|  10,000 | Partition events and outbox tables, dedicated sender fleet, KMS throughput planning, multi-region failover, SOC 2 Type II in place |
+| 100,000 | Separate data platform for outcome learning, regional data residency, enterprise trust programme                                   |
 
 Recipient capacity becomes the binding constraint as users grow, because many candidates compete for the same recruiters. Allocating scarce recipient slots fairly between candidates is a design problem, not an afterthought (algorithm specification section 6.2).
 
@@ -843,12 +845,12 @@ Reply rate does not prove email validity. It also depends on candidate fit, job 
 
 ### Phase exit criteria
 
-| Exit | Criteria |
-|---|---|
-| Phase 0 to 1 | Source register complete; KMS and rotation rehearsed; state machine and simulation harness passing; legal review of sources and recipient data recorded |
-| Phase 1 to 2 | At least 300 reviewed sends; zero unsupported claims; wrong-contact rate and hard-bounce upper bound inside gates; reply classifier meets its gold-set targets |
-| Phase 2 to Autopilot | All go-live gates in section 21.12 |
-| Phase 3 onward | Calibration plots per band; fairness slice report; canary and rollback exercised |
+| Exit                 | Criteria                                                                                                                                                       |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 0 to 1         | Source register complete; KMS and rotation rehearsed; state machine and simulation harness passing; legal review of sources and recipient data recorded        |
+| Phase 1 to 2         | At least 300 reviewed sends; zero unsupported claims; wrong-contact rate and hard-bounce upper bound inside gates; reply classifier meets its gold-set targets |
+| Phase 2 to Autopilot | All go-live gates in section 21.12                                                                                                                             |
+| Phase 3 onward       | Calibration plots per band; fairness slice report; canary and rollback exercised                                                                               |
 
 ## 20. Critical decisions
 
@@ -871,7 +873,6 @@ Reply rate does not prove email validity. It also depends on candidate fit, job 
 17. Safety claims rest on confidence bounds from measured data, never on point estimates or vendor claims.
 18. Fairness and responsible-AI controls are release-blocking.
 
-
 ## 21. Production hardening additions
 
 This section adds requirements discovered in the production-readiness audit. These are required for a system that must work predictably at scale, rather than merely demonstrate the workflow.
@@ -882,12 +883,12 @@ The current project product brief states that users approve every letter, that t
 
 Update the product decision record before implementation:
 
-| Current brief | Production decision |
-|---|---|
-| User approves every letter | Review mode remains the default. Autopilot is an explicit, revocable user setting after the user has seen the rules. |
-| No LinkedIn scraper | Use the permitted scraper only for current role and company identity evidence. It is never an email source by itself. |
-| No guessed-email blasts | Generate at most three pattern candidates for one selected person, verify at most two, and send one email only. This is controlled candidate resolution, never a blast. |
-| One verified person, role, approved first email per credit | Preserve this in Review mode; change the wording to one eligible person and role per credit when Autopilot is on. |
+| Current brief                                              | Production decision                                                                                                                                                     |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User approves every letter                                 | Review mode remains the default. Autopilot is an explicit, revocable user setting after the user has seen the rules.                                                    |
+| No LinkedIn scraper                                        | Use the permitted scraper only for current role and company identity evidence. It is never an email source by itself.                                                   |
+| No guessed-email blasts                                    | Generate at most three pattern candidates for one selected person, verify at most two, and send one email only. This is controlled candidate resolution, never a blast. |
+| One verified person, role, approved first email per credit | Preserve this in Review mode; change the wording to one eligible person and role per credit when Autopilot is on.                                                       |
 
 The product positioning should remain: direct, relevant candidate outreach. It should never be positioned as a bulk mail engine.
 
@@ -1015,14 +1016,14 @@ Required data controls:
 
 Recommended resilience targets:
 
-| Measure | Target |
-|---|---|
-| API and dashboard availability | 99.9 percent monthly |
-| Duplicate campaign sends | Zero tolerated |
-| Daily draft batch available by deadline | 99 percent of healthy-provider days |
-| Recovery point objective for Postgres | 15 minutes or less |
-| Recovery time objective for campaign processing | 4 hours or less |
-| Maximum unsent reply-notification delay | 15 minutes excluding provider outage |
+| Measure                                         | Target                               |
+| ----------------------------------------------- | ------------------------------------ |
+| API and dashboard availability                  | 99.9 percent monthly                 |
+| Duplicate campaign sends                        | Zero tolerated                       |
+| Daily draft batch available by deadline         | 99 percent of healthy-provider days  |
+| Recovery point objective for Postgres           | 15 minutes or less                   |
+| Recovery time objective for campaign processing | 4 hours or less                      |
+| Maximum unsent reply-notification delay         | 15 minutes excluding provider outage |
 
 ### 21.9 Observability and operations
 
@@ -1099,19 +1100,19 @@ Autopilot must remain off platform-wide until all gates pass:
 
 Replies are the product's value event and its main stop signal, so they need a specified policy, not a single "any reply stops" rule.
 
-| Class | Typical signals | Campaign action | Learning label |
-|---|---|---|---|
-| Human reply (positive or neutral) | From the recipient or a colleague, no automated headers | Stop; notify immediately; offer reply assistance (always candidate-approved) | Positive contact outcome |
-| Interview or call request | Scheduling language | Stop; urgent notification | Strongest positive outcome |
-| Redirect to another person | "Please contact X" | Stop; store the named contact as new evidence; suggest next step | Positive relevance, new ownership evidence |
-| Rejection or no opening | Explicit decline | Stop; close the job for this candidate | Contact may be right; job outcome negative |
-| Apply-through-portal request | Link or instruction | Stop; notify with the link | Positive relevance |
-| Out-of-office | Auto-Submitted or similar header, return date | Defer the next follow-up past the return date | None |
-| Auto-acknowledgement | "Application received" | Stop follow-ups | None |
-| Opt-out or complaint | "Stop", "remove me", "unsubscribe" | Stop; global recipient suppression; review if abusive | Negative for that recipient only |
-| Hard bounce | Delivery-status notification with a 5.x.x code | Stop; suppress the address | Negative address evidence |
-| Soft bounce | 4.x.x code | No new initial message; bounded status check | None |
-| Unclassifiable | Low classifier confidence | Pause follow-ups; notify the candidate | Routed to human review |
+| Class                             | Typical signals                                         | Campaign action                                                              | Learning label                             |
+| --------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------ |
+| Human reply (positive or neutral) | From the recipient or a colleague, no automated headers | Stop; notify immediately; offer reply assistance (always candidate-approved) | Positive contact outcome                   |
+| Interview or call request         | Scheduling language                                     | Stop; urgent notification                                                    | Strongest positive outcome                 |
+| Redirect to another person        | "Please contact X"                                      | Stop; store the named contact as new evidence; suggest next step             | Positive relevance, new ownership evidence |
+| Rejection or no opening           | Explicit decline                                        | Stop; close the job for this candidate                                       | Contact may be right; job outcome negative |
+| Apply-through-portal request      | Link or instruction                                     | Stop; notify with the link                                                   | Positive relevance                         |
+| Out-of-office                     | Auto-Submitted or similar header, return date           | Defer the next follow-up past the return date                                | None                                       |
+| Auto-acknowledgement              | "Application received"                                  | Stop follow-ups                                                              | None                                       |
+| Opt-out or complaint              | "Stop", "remove me", "unsubscribe"                      | Stop; global recipient suppression; review if abusive                        | Negative for that recipient only           |
+| Hard bounce                       | Delivery-status notification with a 5.x.x code          | Stop; suppress the address                                                   | Negative address evidence                  |
+| Soft bounce                       | 4.x.x code                                              | No new initial message; bounded status check                                 | None                                       |
+| Unclassifiable                    | Low classifier confidence                               | Pause follow-ups; notify the candidate                                       | Routed to human review                     |
 
 Rules:
 
@@ -1175,14 +1176,14 @@ Playbooks required: a wrong-recipient or wrong-CV send (candidate notice, recipi
 
 ### 21.19 Service-level objectives and error budgets
 
-| Indicator | Target |
-|---|---|
-| Duplicate sends | 0 |
-| Follow-ups sent after a human reply | 0, with stop latency measured and alerted |
-| Unsupported factual claims in sent mail | 0 |
-| Credit and send mismatches | 0 |
-| Reply notification delay (p95) | Under 5 minutes; hard ceiling 15 minutes excluding provider outage |
-| Daily draft batch ready by deadline | 99 percent of healthy-provider days |
+| Indicator                                      | Target                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| Duplicate sends                                | 0                                                                      |
+| Follow-ups sent after a human reply            | 0, with stop latency measured and alerted                              |
+| Unsupported factual claims in sent mail        | 0                                                                      |
+| Credit and send mismatches                     | 0                                                                      |
+| Reply notification delay (p95)                 | Under 5 minutes; hard ceiling 15 minutes excluding provider outage     |
+| Daily draft batch ready by deadline            | 99 percent of healthy-provider days                                    |
 | Wrong-contact rate and hard-bounce upper bound | Set after the pilot from measured data; inside the gates in section 18 |
 
 An error-budget policy applies: when a budget is exhausted, freeze feature releases and Autopilot expansion until it recovers.
@@ -1247,19 +1248,19 @@ The central product flow remains the same. The additions above make it productio
 States: `drafted`, `pending_approval`, `approved`, `queued` (outbox record exists), `sending` (lease held), `uncertain_send` (needs reconciliation), `sent`, `awaiting_followup_1`, `followup_1_sent`, `awaiting_followup_2`, `followup_2_sent`, `closed_no_reply`.
 Stop states: `replied`, `opted_out`, `bounced`, `cancelled_by_user`, `cancelled_by_policy`, `expired` (job closed or deadline passed), `paused` (token revoked, quota, or kill switch).
 
-| From | To | Guard |
-|---|---|---|
-| drafted | pending_approval | All five gates stored and valid under current policy version |
-| pending_approval | approved | Candidate approved, or Autopilot on and cancel window elapsed |
-| approved | queued | Outbox record created in the same transaction |
-| queued | sending | Lease acquired; job live, no suppression, no reply, token valid, capacity reserved |
-| sending | sent | Gmail identifiers stored and credit debited in one transaction |
-| sending | uncertain_send | Timeout or ambiguous Gmail response |
-| uncertain_send | sent or queued | Reconciliation proves sent or proves not sent |
-| sent | awaiting_followup_1 | Initial send confirmed |
-| awaiting_followup_n | followup_n_sent | Same guards as queued, plus no stop-class reply |
-| followup_2_sent | closed_no_reply | Schedule complete |
-| any non-terminal | a stop state | Reply class, bounce, opt-out, user action, policy, or kill switch |
+| From                | To                  | Guard                                                                              |
+| ------------------- | ------------------- | ---------------------------------------------------------------------------------- |
+| drafted             | pending_approval    | All five gates stored and valid under current policy version                       |
+| pending_approval    | approved            | Candidate approved, or Autopilot on and cancel window elapsed                      |
+| approved            | queued              | Outbox record created in the same transaction                                      |
+| queued              | sending             | Lease acquired; job live, no suppression, no reply, token valid, capacity reserved |
+| sending             | sent                | Gmail identifiers stored and credit debited in one transaction                     |
+| sending             | uncertain_send      | Timeout or ambiguous Gmail response                                                |
+| uncertain_send      | sent or queued      | Reconciliation proves sent or proves not sent                                      |
+| sent                | awaiting_followup_1 | Initial send confirmed                                                             |
+| awaiting_followup_n | followup_n_sent     | Same guards as queued, plus no stop-class reply                                    |
+| followup_2_sent     | closed_no_reply     | Schedule complete                                                                  |
+| any non-terminal    | a stop state        | Reply class, bounce, opt-out, user action, policy, or kill switch                  |
 
 Illegal transitions are rejected by the database. Every transition writes an audit record with actor, reason, and policy, model, and prompt versions.
 
@@ -1280,47 +1281,45 @@ Invariants (each is a property test):
 
 ## Appendix B. Open decisions
 
-| # | Decision | Recommended default | Needed before |
-|---|---|---|---|
-| 1 | Gmail scope set | `gmail.send` + `gmail.readonly` | Phase 0 |
-| 2 | Accept `gmail.compose` for Gmail drafts? | No; drafts stay in Firstround | Phase 1 |
-| 3 | Credit refund and expiry policy | Refund on hard bounce within 72 hours and on confirmed fraud | Phase 2 |
-| 4 | Invited-channel policy (accept-all, role-based mailboxes) | Allowed on that path only | Phase 1 pilot |
-| 5 | Default send time | Evening window until experiment says otherwise | Phase 2 |
-| 6 | Follow-up spacing | Business days 2 and 5 | Phase 2 |
-| 7 | Recipient jurisdictions at launch | India only | Phase 1 |
-| 8 | Counsel's view on LinkedIn-derived and pattern-inferred recipient data | Required in writing | Phase 0 |
-| 9 | Second verifier vendor | Pick one for arbitration and the benchmark rig | Phase 1 |
-| 10 | Notification channels | Email, push, and WhatsApp or SMS | Phase 2 |
-| 11 | Verification cadence (CASA assessor, timeline, budget) | Start in Phase 0 | Phase 0 |
-| 12 | Promise on daily volume | "Up to 10, typically fewer" | Phase 1 |
+| #   | Decision                                                               | Recommended default                                          | Needed before |
+| --- | ---------------------------------------------------------------------- | ------------------------------------------------------------ | ------------- |
+| 1   | Gmail scope set                                                        | `gmail.send` + `gmail.readonly`                              | Phase 0       |
+| 2   | Accept `gmail.compose` for Gmail drafts?                               | No; drafts stay in Firstround                                | Phase 1       |
+| 3   | Credit refund and expiry policy                                        | Refund on hard bounce within 72 hours and on confirmed fraud | Phase 2       |
+| 4   | Invited-channel policy (accept-all, role-based mailboxes)              | Allowed on that path only                                    | Phase 1 pilot |
+| 5   | Default send time                                                      | Evening window until experiment says otherwise               | Phase 2       |
+| 6   | Follow-up spacing                                                      | Business days 2 and 5                                        | Phase 2       |
+| 7   | Recipient jurisdictions at launch                                      | India only                                                   | Phase 1       |
+| 8   | Counsel's view on LinkedIn-derived and pattern-inferred recipient data | Required in writing                                          | Phase 0       |
+| 9   | Second verifier vendor                                                 | Pick one for arbitration and the benchmark rig               | Phase 1       |
+| 10  | Notification channels                                                  | Email, push, and WhatsApp or SMS                             | Phase 2       |
+| 11  | Verification cadence (CASA assessor, timeline, budget)                 | Start in Phase 0                                             | Phase 0       |
+| 12  | Promise on daily volume                                                | "Up to 10, typically fewer"                                  | Phase 1       |
 
 ## Appendix C. Configuration registry
 
 Every threshold is configuration with an owner, an experiment record, and a version.
 
-| Parameter | Launch value |
-|---|---:|
-| Job trust minimum | 75 |
-| Job match minimum | 78 |
-| Person-job minimum | 80 |
-| Owner margin minimum | 10 points (waived if explicitly named) |
-| Address identity minimum | 75 |
-| Mailbox confidence minimum | 90 |
-| Draft specificity minimum | 85 (rescaled when a dimension is not applicable) |
-| CV readiness threshold | 85 |
-| New campaigns per candidate per day | 10 maximum |
-| Research set per candidate per day | 15 to 20 jobs |
-| Verified candidates per job | 2 maximum |
-| Campaigns per company per candidate per day | 2 maximum |
-| Candidate-to-recipient cooldown | 21 days |
-| Platform recipient cap | 3 per 24 hours; 10 per 30 days |
-| Platform company-domain cap | 10 per day |
-| Follow-up schedule | Business days 2 and 5 |
-| Autopilot cancel notice | 15 minutes |
-| Autopilot idle fall-back | 7 days |
-| Autopilot hard-bounce stop | Upper 95 percent bound at 3 percent, minimum 300 sends |
-| Watch renewal | Daily; alert at 48 hours |
-| Reply notification ceiling | 15 minutes |
-
-
+| Parameter                                   |                                           Launch value |
+| ------------------------------------------- | -----------------------------------------------------: |
+| Job trust minimum                           |                                                     75 |
+| Job match minimum                           |                                                     78 |
+| Person-job minimum                          |                                                     80 |
+| Owner margin minimum                        |                 10 points (waived if explicitly named) |
+| Address identity minimum                    |                                                     75 |
+| Mailbox confidence minimum                  |                                                     90 |
+| Draft specificity minimum                   |       85 (rescaled when a dimension is not applicable) |
+| CV readiness threshold                      |                                                     85 |
+| New campaigns per candidate per day         |                                             10 maximum |
+| Research set per candidate per day          |                                          15 to 20 jobs |
+| Verified candidates per job                 |                                              2 maximum |
+| Campaigns per company per candidate per day |                                              2 maximum |
+| Candidate-to-recipient cooldown             |                                                21 days |
+| Platform recipient cap                      |                         3 per 24 hours; 10 per 30 days |
+| Platform company-domain cap                 |                                             10 per day |
+| Follow-up schedule                          |                                  Business days 2 and 5 |
+| Autopilot cancel notice                     |                                             15 minutes |
+| Autopilot idle fall-back                    |                                                 7 days |
+| Autopilot hard-bounce stop                  | Upper 95 percent bound at 3 percent, minimum 300 sends |
+| Watch renewal                               |                               Daily; alert at 48 hours |
+| Reply notification ceiling                  |                                             15 minutes |

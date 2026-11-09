@@ -20,18 +20,18 @@ The product should treat these as separate probabilistic decisions. A large lang
 
 ## Algorithm stack
 
-| Engine | Output | Initial method | Long-term method |
-|---|---|---|---|
-| Profile intelligence | Structured candidate evidence | Rules plus schema extraction | Versioned profile graph |
-| Job intelligence | Canonical job, trust, freshness, requirements | Rules plus extractor | Job/entity graph |
-| MatchRank | Probability that candidate should pursue job | Weighted score | Calibrated ranking model |
-| OwnerGraph | Probability a person owns/recruits for job | Evidence-weighted graph score | Learning-to-rank model |
-| AddressProof | Probability address reaches chosen person | Evidence and verification score | Calibrated deliverability model |
-| CampaignRank | Expected value of sending now | Deterministic expected value | Contextual ranking model |
-| DraftGuard | Truthful, specific, human-sounding message | Evidence compiler and validators | Learned ranker over message variants and style profile, always under deterministic validators |
-| OutcomeLoop | Trusted labels and feedback | Event ledger | Versioned training and calibration pipeline |
-| ReplyIQ | Class and meaning of every inbound message | Header rules plus rules-first classifier (section 13) | Calibrated classifier with human audit |
-| FairnessGuard | Bias and harm checks across all engines | Feature allow-list and matched-pair tests (section 14) | Continuous slice monitoring and independent audit |
+| Engine               | Output                                        | Initial method                                         | Long-term method                                                                              |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Profile intelligence | Structured candidate evidence                 | Rules plus schema extraction                           | Versioned profile graph                                                                       |
+| Job intelligence     | Canonical job, trust, freshness, requirements | Rules plus extractor                                   | Job/entity graph                                                                              |
+| MatchRank            | Probability that candidate should pursue job  | Weighted score                                         | Calibrated ranking model                                                                      |
+| OwnerGraph           | Probability a person owns/recruits for job    | Evidence-weighted graph score                          | Learning-to-rank model                                                                        |
+| AddressProof         | Probability address reaches chosen person     | Evidence and verification score                        | Calibrated deliverability model                                                               |
+| CampaignRank         | Expected value of sending now                 | Deterministic expected value                           | Contextual ranking model                                                                      |
+| DraftGuard           | Truthful, specific, human-sounding message    | Evidence compiler and validators                       | Learned ranker over message variants and style profile, always under deterministic validators |
+| OutcomeLoop          | Trusted labels and feedback                   | Event ledger                                           | Versioned training and calibration pipeline                                                   |
+| ReplyIQ              | Class and meaning of every inbound message    | Header rules plus rules-first classifier (section 13)  | Calibrated classifier with human audit                                                        |
+| FairnessGuard        | Bias and harm checks across all engines       | Feature allow-list and matched-pair tests (section 14) | Continuous slice monitoring and independent audit                                             |
 
 The engines must expose inputs, evidence, score, threshold, algorithm version, and decision reason. No black-box decision may send an email.
 
@@ -80,12 +80,12 @@ Core edge types:
 
 Example:
 
-| Atomic fact | Source |
-|---|---|
-| Managed a three-person analytics team | CV bullet, accepted version 3 |
+| Atomic fact                                        | Source                        |
+| -------------------------------------------------- | ----------------------------- |
+| Managed a three-person analytics team              | CV bullet, accepted version 3 |
 | Built weekly retention dashboard in SQL and Looker | CV bullet, accepted version 3 |
-| Increased activation by 12 percent | User-approved clarification |
-| Targets Product Analyst or Growth Analyst jobs | Candidate preference |
+| Increased activation by 12 percent                 | User-approved clarification   |
+| Targets Product Analyst or Growth Analyst jobs     | Candidate preference          |
 
 The source pointer is required. Every later draft claim must resolve to one or more facts.
 
@@ -112,13 +112,13 @@ The onboarding score is not just a content score. It determines confidence in al
 
 Initial calculation:
 
-| Dimension | Weight | Example evidence |
-|---|---:|---|
-| Evidence completeness | 0.20 | Roles, dates, tools, scope |
-| Outcome quality | 0.25 | Metrics, before/after, scale |
-| Target-role coverage | 0.25 | Skills and projects relevant to target roles |
-| Career consistency | 0.15 | Chronology errors, contradictions, and implausible claims. Gaps, career breaks, lateral moves, and non-linear paths are not penalised |
-| Communication clarity | 0.15 | Specific, parseable, concise bullets |
+| Dimension             | Weight | Example evidence                                                                                                                      |
+| --------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence completeness |   0.20 | Roles, dates, tools, scope                                                                                                            |
+| Outcome quality       |   0.25 | Metrics, before/after, scale                                                                                                          |
+| Target-role coverage  |   0.25 | Skills and projects relevant to target roles                                                                                          |
+| Career consistency    |   0.15 | Chronology errors, contradictions, and implausible claims. Gaps, career breaks, lateral moves, and non-linear paths are not penalised |
+| Communication clarity |   0.15 | Specific, parseable, concise bullets                                                                                                  |
 
 Readiness score equals the weighted sum after each dimension is normalized to 0–100.
 
@@ -132,12 +132,12 @@ Contact details, location, and working links are a pass/fail sendability checkli
 
 Each atomic fact carries a verification level, which controls whether it may appear in a message:
 
-| Level | Meaning | May appear in outreach |
-|---|---|---|
-| L3 | Corroborated by an external artefact the candidate links (public repository, published work, certificate page) | Yes |
-| L2 | In the accepted CV and attested by the candidate | Yes |
-| L1 | Candidate's answer to a clarification question, attested | Yes |
-| L0 | Inferred by the system | Never, except as non-factual interest |
+| Level | Meaning                                                                                                        | May appear in outreach                |
+| ----- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| L3    | Corroborated by an external artefact the candidate links (public repository, published work, certificate page) | Yes                                   |
+| L2    | In the accepted CV and attested by the candidate                                                               | Yes                                   |
+| L1    | Candidate's answer to a clarification question, attested                                                       | Yes                                   |
+| L0    | Inferred by the system                                                                                         | Never, except as non-factual interest |
 
 Verification level reduces unsupported-claim risk; it does not change a requirement's coverage multiplier in section 3.2.
 
@@ -162,14 +162,14 @@ A canonical job can have many source-post nodes. This solves job duplication acr
 
 A job must pass trust before matching or contact research.
 
-| Signal | Weight | Example |
-|---|---:|---|
-| Company identity consistency | 25 | Company name, official domain, and source agree |
-| Source reliability | 20 | Known source, stable URL, expected job fields |
-| Freshness | 15 | Recent source capture and posting date |
-| Application-domain safety | 15 | Application domain belongs to company or known ATS |
-| Description quality | 10 | Coherent role, team, location, requirements |
-| Fraud-risk absence | 15 | No payment, equipment, crypto, or suspicious identity request |
+| Signal                       | Weight | Example                                                       |
+| ---------------------------- | -----: | ------------------------------------------------------------- |
+| Company identity consistency |     25 | Company name, official domain, and source agree               |
+| Source reliability           |     20 | Known source, stable URL, expected job fields                 |
+| Freshness                    |     15 | Recent source capture and posting date                        |
+| Application-domain safety    |     15 | Application domain belongs to company or known ATS            |
+| Description quality          |     10 | Coherent role, team, location, requirements                   |
+| Fraud-risk absence           |     15 | No payment, equipment, crypto, or suspicious identity request |
 
 Trust score below 75 means quarantine. The job is not shown as contactable and no CV can be sent.
 
@@ -239,13 +239,13 @@ Hard filters are deterministic and explainable.
 
 For remaining jobs, calculate five scores:
 
-| Component | Weight | Method |
-|---|---:|---|
-| Function fit | 0.28 | Taxonomy overlap plus semantic similarity |
-| Requirement evidence | 0.27 | Mandatory/preferred requirements mapped to supported profile facts |
-| Scope and seniority | 0.18 | Title, experience, ownership, team size, ambiguity |
-| Location and working preferences | 0.12 | Exact/flexible/remote preference model |
-| Career direction | 0.15 | Candidate goals, industry, compensation, desired skills |
+| Component                        | Weight | Method                                                             |
+| -------------------------------- | -----: | ------------------------------------------------------------------ |
+| Function fit                     |   0.28 | Taxonomy overlap plus semantic similarity                          |
+| Requirement evidence             |   0.27 | Mandatory/preferred requirements mapped to supported profile facts |
+| Scope and seniority              |   0.18 | Title, experience, ownership, team size, ambiguity                 |
+| Location and working preferences |   0.12 | Exact/flexible/remote preference model                             |
+| Career direction                 |   0.15 | Candidate goals, industry, compensation, desired skills            |
 
 Initial score:
 
@@ -253,13 +253,13 @@ MatchScore = 100 × weighted sum of the five normalized components.
 
 Do not give 100 percent credit for an inferred skill. Evidence quality changes each requirement contribution:
 
-| Evidence source | Confidence multiplier |
-|---|---:|
-| Explicit in accepted CV or work sample | 1.00 |
-| User-approved related project evidence | 0.85 |
-| Strong semantic similarity only | 0.55 |
-| Assumed from title alone | 0.25 |
-| No evidence | 0.00 |
+| Evidence source                        | Confidence multiplier |
+| -------------------------------------- | --------------------: |
+| Explicit in accepted CV or work sample |                  1.00 |
+| User-approved related project evidence |                  0.85 |
+| Strong semantic similarity only        |                  0.55 |
+| Assumed from title alone               |                  0.25 |
+| No evidence                            |                  0.00 |
 
 This is a major quality difference from basic keyword matching.
 
@@ -343,18 +343,18 @@ The scraper's people output supplies names and titles. Company pages and public 
 
 ### 4.3 Owner probability features
 
-| Feature group | Examples |
-|---|---|
-| Direct linkage | Listed on job, job poster, named in hiring announcement |
-| Current employment | Current company, title, date observed, employment-source agreement |
-| Team alignment | Title/function maps to job team |
-| Seniority fit | Recruiter, team lead, director, VP, founder depending company size |
-| Geography | Same country/city/business unit as job |
-| Recency | Recent activity, fresh title/employment evidence |
-| Source quality | Official company source > current public profile > weak inference |
-| Conflict signals | Former employee, unrelated team, generic HR, old title |
-| Name ambiguity | Probability that another employee at the company shares the normalised name |
-| Role type | Talent acquisition, hiring manager, HR operations, payroll, or administration |
+| Feature group      | Examples                                                                      |
+| ------------------ | ----------------------------------------------------------------------------- |
+| Direct linkage     | Listed on job, job poster, named in hiring announcement                       |
+| Current employment | Current company, title, date observed, employment-source agreement            |
+| Team alignment     | Title/function maps to job team                                               |
+| Seniority fit      | Recruiter, team lead, director, VP, founder depending company size            |
+| Geography          | Same country/city/business unit as job                                        |
+| Recency            | Recent activity, fresh title/employment evidence                              |
+| Source quality     | Official company source > current public profile > weak inference             |
+| Conflict signals   | Former employee, unrelated team, generic HR, old title                        |
+| Name ambiguity     | Probability that another employee at the company shares the normalised name   |
+| Role type          | Talent acquisition, hiring manager, HR operations, payroll, or administration |
 
 Initial score:
 
@@ -383,11 +383,11 @@ Record the abstention reason, because the reasons drive improvement: no sourced 
 
 Company size changes who is likely to own hiring:
 
-| Company profile | Preferred contact |
-|---|---|
-| Early-stage/small | Founder or direct functional lead |
-| Mid-size | Functional hiring manager or recruiter |
-| Enterprise | Relevant recruiter, talent partner, or named hiring team member |
+| Company profile                 | Preferred contact                                                       |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| Early-stage/small               | Founder or direct functional lead                                       |
+| Mid-size                        | Functional hiring manager or recruiter                                  |
+| Enterprise                      | Relevant recruiter, talent partner, or named hiring team member         |
 | Staffing or consultancy posting | The posting consultant. Never guess the unnamed client's hiring manager |
 
 Company-size bands must be stored as policy data, not buried inside prompts.
@@ -433,14 +433,14 @@ Pattern evidence tracks:
 
 ### 5.3 Address identity score
 
-| Signal | Weight |
-|---|---:|
-| Direct public source ties address to person | 0.40 |
-| Pattern support and independence | 0.20 |
-| Local-part name correspondence | 0.15 |
-| Corporate-domain match | 0.10 |
-| Person current employment evidence | 0.10 |
-| Pattern freshness | 0.05 |
+| Signal                                      | Weight |
+| ------------------------------------------- | -----: |
+| Direct public source ties address to person |   0.40 |
+| Pattern support and independence            |   0.20 |
+| Local-part name correspondence              |   0.15 |
+| Corporate-domain match                      |   0.10 |
+| Person current employment evidence          |   0.10 |
+| Pattern freshness                           |   0.05 |
 
 AddressIdentityScore is separate from Hunter.
 
@@ -480,12 +480,12 @@ For every confidence band, compare predicted confidence with observed permanent-
 
 Example:
 
-| Predicted band | Observed hard-bounce ceiling |
-|---|---:|
-| 95–100 | Under 2 percent |
-| 90–94 | Under 4 percent |
-| 80–89 | Not sendable at launch; eligible only for second-verifier arbitration (section 5.8) |
-| Below 80 | Not sendable |
+| Predicted band |                                                        Observed hard-bounce ceiling |
+| -------------- | ----------------------------------------------------------------------------------: |
+| 95–100         |                                                                     Under 2 percent |
+| 90–94          |                                                                     Under 4 percent |
+| 80–89          | Not sendable at launch; eligible only for second-verifier arbitration (section 5.8) |
+| Below 80       |                                                                        Not sendable |
 
 If observed outcomes degrade, raise send thresholds automatically and investigate the source/pattern provider.
 
@@ -596,13 +596,13 @@ Every factual sentence carries source IDs.
 
 Score each draft:
 
-| Dimension | Weight |
-|---|---:|
-| Candidate evidence relevance | 30 |
-| Job specificity | 25 |
-| Recipient relevance | 15 |
-| Factual support | 20 |
-| Tone and brevity | 10 |
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Candidate evidence relevance |     30 |
+| Job specificity              |     25 |
+| Recipient relevance          |     15 |
+| Factual support              |     20 |
+| Tone and brevity             |     10 |
 
 Drafts must score at least 85 and pass every safety validator. A score cannot override a missing factual source.
 
@@ -643,22 +643,22 @@ The moat is the outcome graph produced from lawful, user-benefiting operation:
 
 Outcome labels:
 
-| Event | Meaning |
-|---|---|
-| Hard bounce | Strong negative address evidence |
-| Soft bounce | Temporary/mail-server outcome, not identity proof |
-| Human reply | Strong positive thread/contact outcome |
-| Redirect to recruiter/team | Positive contact relevance; add new contact evidence |
-| Request to apply | Positive relevance but no interview proof |
-| Decline/no opening | Contact may be correct; job status is negative |
-| Auto-acknowledgement | Stops follow-ups; not positive contact evidence |
-| Out-of-office | Defers the next follow-up; no evidence either way |
-| Opt-out or do not contact | Hard stop and global suppression; negative for that recipient only, not for the job |
-| Wrong person | Negative OwnerGraph label for that person-job pair; store any redirect as new evidence |
-| Interview or call arranged (reported or detected) | Strongest positive outcome |
-| Shortlist accept or decline | Earliest and densest label for MatchRank |
-| Candidate reports wrong contact | Negative OwnerGraph label |
-| No reply | Weak, ambiguous signal |
+| Event                                             | Meaning                                                                                |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Hard bounce                                       | Strong negative address evidence                                                       |
+| Soft bounce                                       | Temporary/mail-server outcome, not identity proof                                      |
+| Human reply                                       | Strong positive thread/contact outcome                                                 |
+| Redirect to recruiter/team                        | Positive contact relevance; add new contact evidence                                   |
+| Request to apply                                  | Positive relevance but no interview proof                                              |
+| Decline/no opening                                | Contact may be correct; job status is negative                                         |
+| Auto-acknowledgement                              | Stops follow-ups; not positive contact evidence                                        |
+| Out-of-office                                     | Defers the next follow-up; no evidence either way                                      |
+| Opt-out or do not contact                         | Hard stop and global suppression; negative for that recipient only, not for the job    |
+| Wrong person                                      | Negative OwnerGraph label for that person-job pair; store any redirect as new evidence |
+| Interview or call arranged (reported or detected) | Strongest positive outcome                                                             |
+| Shortlist accept or decline                       | Earliest and densest label for MatchRank                                               |
+| Candidate reports wrong contact                   | Negative OwnerGraph label                                                              |
+| No reply                                          | Weak, ambiguous signal                                                                 |
 
 ### 8.1 Learning sequence
 
@@ -705,16 +705,16 @@ Split train/test data by time and company. Otherwise the model will memorize a c
 
 ### 9.2 Required metrics
 
-| Engine | Primary metric | Safety metric |
-|---|---|---|
-| CV extraction | Fact precision/recall | Unsupported fact rate |
-| Job matching | Precision at 10 | Hard-filter violation rate |
-| OwnerGraph | Top-1 person precision | Wrong-team contact rate |
-| AddressProof | Hard-bounce rate by confidence band | Catch-all false-positive rate |
-| CampaignRank | Replies per credit | Recipient fatigue/cap violations |
-| DraftGuard | Approval/edit rate | Unsupported claim rate |
-| ReplyIQ | Macro F1 across classes | Follow-ups sent after a human reply; human replies misread as automated |
-| FairnessGuard | Matched-pair score and draft deltas | Features outside the allow-list |
+| Engine        | Primary metric                      | Safety metric                                                           |
+| ------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| CV extraction | Fact precision/recall               | Unsupported fact rate                                                   |
+| Job matching  | Precision at 10                     | Hard-filter violation rate                                              |
+| OwnerGraph    | Top-1 person precision              | Wrong-team contact rate                                                 |
+| AddressProof  | Hard-bounce rate by confidence band | Catch-all false-positive rate                                           |
+| CampaignRank  | Replies per credit                  | Recipient fatigue/cap violations                                        |
+| DraftGuard    | Approval/edit rate                  | Unsupported claim rate                                                  |
+| ReplyIQ       | Macro F1 across classes             | Follow-ups sent after a human reply; human replies misread as automated |
+| FairnessGuard | Matched-pair score and draft deltas | Features outside the allow-list                                         |
 
 ### 9.3 Release gate
 
@@ -750,27 +750,27 @@ Pin dataset hashes, seeds, model and prompt versions, and feature schemas in the
 
 These are starting policies, not permanent truths. Store them as configuration.
 
-| Rule | Launch value |
-|---|---:|
-| Job trust minimum | 75 |
-| Job match minimum | 78 |
-| Owner score minimum | 0.80 |
-| Owner margin minimum | 0.10 |
-| Address identity minimum | 0.75 |
-| Mailbox confidence minimum | 0.90 |
-| Draft specificity minimum | 85 |
-| Daily campaigns/candidate | 10 |
-| Candidate-to-recipient cooldown | 21 days |
-| Platform recipient cap/day | 3 initial messages |
-| Platform recipient cap/30 days | 10 initial messages |
-| Autopilot hard-bounce stop level | Upper 95 percent bound at 3 percent, minimum 300 sends |
-| Research set per candidate per day | 15 to 20 jobs |
-| Verified candidates per job | 2 maximum |
-| Campaigns per company per candidate per day | 2 maximum |
-| Platform company-domain cap per day | 10 initial messages |
-| Follow-up schedule | Business days 2 and 5 |
-| Reply label window | Bounce about 72 hours; reply about 14 days |
-| Exploration share | At most 1 of 10 slots |
+| Rule                                        |                                           Launch value |
+| ------------------------------------------- | -----------------------------------------------------: |
+| Job trust minimum                           |                                                     75 |
+| Job match minimum                           |                                                     78 |
+| Owner score minimum                         |                                                   0.80 |
+| Owner margin minimum                        |                                                   0.10 |
+| Address identity minimum                    |                                                   0.75 |
+| Mailbox confidence minimum                  |                                                   0.90 |
+| Draft specificity minimum                   |                                                     85 |
+| Daily campaigns/candidate                   |                                                     10 |
+| Candidate-to-recipient cooldown             |                                                21 days |
+| Platform recipient cap/day                  |                                     3 initial messages |
+| Platform recipient cap/30 days              |                                    10 initial messages |
+| Autopilot hard-bounce stop level            | Upper 95 percent bound at 3 percent, minimum 300 sends |
+| Research set per candidate per day          |                                          15 to 20 jobs |
+| Verified candidates per job                 |                                              2 maximum |
+| Campaigns per company per candidate per day |                                              2 maximum |
+| Platform company-domain cap per day         |                                    10 initial messages |
+| Follow-up schedule                          |                                  Business days 2 and 5 |
+| Reply label window                          |             Bounce about 72 hours; reply about 14 days |
+| Exploration share                           |                                  At most 1 of 10 slots |
 
 When measured evidence supports changing a threshold, change it through configuration, experiment record, and versioned approval. Never silently alter model behavior.
 
@@ -833,22 +833,21 @@ A product becomes a standard when others can rely on its definitions. Publish, o
 
 ## 15. Failure modes and adversarial analysis
 
-| Failure mode | Effect | Detection | Mitigation |
-|---|---|---|---|
-| Two employees share a name | Message reaches the wrong person | Wrong-contact reports; collision-risk feature | Collision adjustment; direct evidence required when risk is high |
-| Person left the company | Undeliverable or wrong person | Employment freshness; bounces | Job-change conflict signal; freshness requirement |
-| Catch-all domain returns "valid" | False confidence | Accept-all flag; benchmark rig | Treat as uncertain; invited-channel exception only |
-| Spam trap | Sender reputation damage | Complaint and blocklist signals | Send only to verified, identity-supported addresses; domain suppression |
-| Look-alike company domain in scraped data | CV sent to an impostor | Domain age and similarity checks | Job trust gate; official-domain match |
-| Scam posting | Candidate harm | Trust signals; reports | Quarantine below 75; never send CV |
-| Prompt injection in job text | Model misbehaviour | Output validators; adversarial suite | Typed extraction; delimited untrusted text; strict schemas |
-| Ghost or evergreen job | Wasted campaign | Liveness estimate | Liveness in ranking; re-check at send |
-| Same job under different IDs | Double contact | Canonical-job deduplication | Canonical job key; per-recipient cooldown |
-| Many candidates target one recruiter | Fatigue and complaints | Recipient and company caps | Global caps; central allocation |
-| Verifier silently changes behaviour | Hidden accuracy loss | Result-mix drift; benchmark rig | Weekly rig runs; second verifier |
-| Model learns from its own selections | Feedback loop | Held-out set; exploration slot | Logged propensities; exploration; held-out evaluation |
-| Human reply read as automated | Follow-up after a reply | Gold set; stop-latency alert | Asymmetric rule: uncertain means stop |
-| Candidate misrepresents experience | Reputational harm | Consistency checks | Claim register and attestation; verification levels |
-| Provider or API change | Silent breakage | Contract tests | Weekly contract tests; feature flags; kill switches |
-| Label leakage in evaluation | Inflated metrics | Split audits | Time and company splits; near-duplicate removal |
-
+| Failure mode                              | Effect                           | Detection                                     | Mitigation                                                              |
+| ----------------------------------------- | -------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
+| Two employees share a name                | Message reaches the wrong person | Wrong-contact reports; collision-risk feature | Collision adjustment; direct evidence required when risk is high        |
+| Person left the company                   | Undeliverable or wrong person    | Employment freshness; bounces                 | Job-change conflict signal; freshness requirement                       |
+| Catch-all domain returns "valid"          | False confidence                 | Accept-all flag; benchmark rig                | Treat as uncertain; invited-channel exception only                      |
+| Spam trap                                 | Sender reputation damage         | Complaint and blocklist signals               | Send only to verified, identity-supported addresses; domain suppression |
+| Look-alike company domain in scraped data | CV sent to an impostor           | Domain age and similarity checks              | Job trust gate; official-domain match                                   |
+| Scam posting                              | Candidate harm                   | Trust signals; reports                        | Quarantine below 75; never send CV                                      |
+| Prompt injection in job text              | Model misbehaviour               | Output validators; adversarial suite          | Typed extraction; delimited untrusted text; strict schemas              |
+| Ghost or evergreen job                    | Wasted campaign                  | Liveness estimate                             | Liveness in ranking; re-check at send                                   |
+| Same job under different IDs              | Double contact                   | Canonical-job deduplication                   | Canonical job key; per-recipient cooldown                               |
+| Many candidates target one recruiter      | Fatigue and complaints           | Recipient and company caps                    | Global caps; central allocation                                         |
+| Verifier silently changes behaviour       | Hidden accuracy loss             | Result-mix drift; benchmark rig               | Weekly rig runs; second verifier                                        |
+| Model learns from its own selections      | Feedback loop                    | Held-out set; exploration slot                | Logged propensities; exploration; held-out evaluation                   |
+| Human reply read as automated             | Follow-up after a reply          | Gold set; stop-latency alert                  | Asymmetric rule: uncertain means stop                                   |
+| Candidate misrepresents experience        | Reputational harm                | Consistency checks                            | Claim register and attestation; verification levels                     |
+| Provider or API change                    | Silent breakage                  | Contract tests                                | Weekly contract tests; feature flags; kill switches                     |
+| Label leakage in evaluation               | Inflated metrics                 | Split audits                                  | Time and company splits; near-duplicate removal                         |
