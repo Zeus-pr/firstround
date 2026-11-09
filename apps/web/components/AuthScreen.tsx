@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
@@ -86,6 +87,7 @@ function AuthStage() {
 }
 
 export function AuthScreen({ mode }: { mode: Mode }) {
+  const router = useRouter();
   const signingUp = mode === 'signup';
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
@@ -105,11 +107,15 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       setUser(next);
       setReady(true);
       if (!next) return;
-      void ensureAppSession(next).catch(() => {
-        setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
-      });
+      void ensureAppSession(next)
+        .then(() => {
+          router.replace('/desk');
+        })
+        .catch(() => {
+          setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
+        });
     });
-  }, []);
+  }, [router]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -187,10 +193,16 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     return (
       <main className="auth-shell">
         <section className="auth-panel">
-          <h1>Signed in</h1>
+          <h1>Opening your desk</h1>
           <p>You are signed in as {user.email ?? 'this account'}.</p>
+          <p className="note" role="status">
+            {note || 'Taking you to LetterProof.'}
+          </p>
+          <Link className="wax desk-link-btn" href="/desk">
+            Go to desk
+          </Link>
           <button
-            className="wax"
+            className="text-button"
             type="button"
             onClick={() => {
               const auth = firebaseAuth();
