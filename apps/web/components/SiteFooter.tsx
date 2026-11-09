@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 const LINKS = [
@@ -23,6 +24,16 @@ export function SiteFooter() {
           ))}
         </nav>
         <p className="site-foot-copy">© 2026 firstround</p>
+      </div>
+      <div className="frame site-foot-mark" aria-hidden="true">
+        <Image
+          src="/brand/firstround-logo.svg"
+          alt=""
+          className="site-foot-logo"
+          width={3028}
+          height={699}
+          unoptimized
+        />
       </div>
     </footer>
   );
