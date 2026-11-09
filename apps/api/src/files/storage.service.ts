@@ -46,7 +46,9 @@ export class StorageService {
   private readonly client: S3Client | null;
   private readonly bucket: string | null;
 
-  constructor(env: StorageEnv = process.env) {
+  constructor() {
+    // Read process.env directly — Nest must not treat StorageEnv as a DI token.
+    const env: StorageEnv = process.env;
     const endpoint =
       env.R2_ENDPOINT ??
       (env.R2_ACCOUNT_ID ? `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined);
