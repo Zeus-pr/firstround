@@ -150,6 +150,27 @@ export class StorageService {
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: fileKey }));
   }
 
+  async getObjectBytes(
+    ownerId: string,
+    fileKey: string,
+  ): Promise<{ bytes: Buffer; contentType: string | null }> {
+    if (
+      !ownerId ||
+      fileKey.includes('..') ||
+      fileKey.includes('\\') ||
+      fileKey.startsWith('/') ||
+      fileKey.split('/')[1] !== ownerId
+    ) {
+      throw new NotFoundException('File not found');
+    }
+    const { client, bucket } = this.ready();
+    const out = await client.send(new GetObjectCommand({ Bucket: bucket, Key: fileKey }));
+    const body = out.Body;
+    if (!body) throw new NotFoundException('File not found');
+    const bytes = Buffer.from(await body.transformToByteArray());
+    return { bytes, contentType: out.ContentType ?? null };
+  }
+
   async downloadUrl(
     ownerId: string,
     fileKey: string,
