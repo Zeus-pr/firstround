@@ -12,8 +12,10 @@ import type { Request } from 'express';
 import {
   AnalyzeCvRequest,
   RegisterCvRequest,
+  SuperchargeCvRequest,
   type AnalyzeCvResponse,
   type RegisterCvResponse,
+  type SuperchargeCvResponse,
 } from '@firstround/contracts';
 import type { AuthUser } from '../auth/auth-user.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -63,6 +65,18 @@ export class CvController {
     this.assertRate(req);
     const user = await this.sessions.ensureUser(auth);
     return this.cv.analyze(user, body.cvDocumentId);
+  }
+
+  @Post('supercharge')
+  @HttpCode(200)
+  async supercharge(
+    @Req() req: Request,
+    @CurrentUser() auth: AuthUser,
+    @Body(new ZodPipe(SuperchargeCvRequest)) body: SuperchargeCvRequest,
+  ): Promise<SuperchargeCvResponse> {
+    this.assertRate(req);
+    const user = await this.sessions.ensureUser(auth);
+    return this.cv.supercharge(user, body.cvDocumentId);
   }
 
   @Get('readiness/latest')
