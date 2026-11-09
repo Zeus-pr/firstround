@@ -27,6 +27,7 @@ import {
 import { CreditsService } from '../credits/credits.service.js';
 import { DB } from '../db/db.module.js';
 import { StorageService } from '../files/storage.service.js';
+import { hydrateReadinessFromScore } from '../readiness/hydrate-score.js';
 import { scoreCvReadiness } from '../readiness/scorer.js';
 import { createGrokClient, extractCvFactsWithGrok } from './grok-extract.js';
 import { superchargeCvWithGrok } from './grok-supercharge.js';
@@ -206,7 +207,11 @@ export class CvService {
       .where(eq(cvReadinessScores.userId, userId))
       .orderBy(desc(cvReadinessScores.createdAt))
       .limit(1);
-    return row ?? null;
+    if (!row) return null;
+    return {
+      readiness: hydrateReadinessFromScore(row),
+      cvDocumentId: row.cvDocumentId,
+    };
   }
 
   async supercharge(user: SessionUser, cvDocumentId: string): Promise<SuperchargeCvResponse> {
