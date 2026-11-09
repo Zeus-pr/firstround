@@ -11,8 +11,8 @@ export function Mast() {
             src="/brand/firstround-logo.svg"
             alt="First Round"
             className="logo"
-            width={160}
-            height={26}
+            width={210}
+            height={34}
             priority
             unoptimized
           />
