@@ -17,9 +17,12 @@ export function AccountNav() {
   if (user) {
     return (
       <nav className="mast-nav" aria-label="Account">
-        <span>{user.email}</span>
+        <span className="mast-account-name">{user.email}</span>
+        <Link className="mast-signup" href="/desk">
+          Dashboard
+        </Link>
         <button
-          className="mast-signup"
+          className="text-button mast-signout"
           type="button"
           onClick={() => {
             const auth = firebaseAuth();

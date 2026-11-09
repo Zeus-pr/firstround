@@ -132,6 +132,25 @@ button {
   padding: 0.5rem 0.85rem;
 }
 
+.mast-account-name {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--sheet) 78%, transparent);
+}
+
+.mast-signout {
+  color: var(--sheet);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
 .sheet {
   width: 100%;
   background: var(--sheet);
