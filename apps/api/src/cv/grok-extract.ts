@@ -9,6 +9,7 @@ import {
   type ParseQuality,
 } from '@firstround/contracts';
 import type { RenderedPage } from './pdf-render.js';
+import { coerceCvFactsPayload } from './coerce-cv-facts.js';
 
 const SYSTEM = `You extract structured CV facts for First Round.
 Return JSON only.
@@ -71,7 +72,7 @@ function parseModelJson(raw: string): ModelPayload {
   const parsed = JSON.parse(raw) as Record<string, unknown>;
   const confidenceRaw = parsed.confidence;
   delete parsed.confidence;
-  const facts = CvFacts.parse(parsed);
+  const facts = CvFacts.parse(coerceCvFactsPayload(parsed));
   const confidence = FieldConfidence.safeParse(confidenceRaw);
   return confidence.success ? { ...facts, confidence: confidence.data } : facts;
 }
