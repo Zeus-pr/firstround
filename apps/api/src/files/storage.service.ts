@@ -150,7 +150,10 @@ export class StorageService {
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: fileKey }));
   }
 
-  async getObjectBytes(ownerId: string, fileKey: string): Promise<{ bytes: Buffer; contentType: string | null }> {
+  async getObjectBytes(
+    ownerId: string,
+    fileKey: string,
+  ): Promise<{ bytes: Buffer; contentType: string | null }> {
     if (
       !ownerId ||
       fileKey.includes('..') ||
