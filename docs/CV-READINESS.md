@@ -52,7 +52,7 @@ Contact email, location, and links are a separate sendability checklist outside 
 | Variable       | Required    | Notes                           |
 | -------------- | ----------- | ------------------------------- |
 | `XAI_API_KEY`  | for analyze | xAI / Grok key                  |
-| `XAI_MODEL`    | optional    | default `grok-4-fast-reasoning` |
+| `XAI_MODEL`    | optional    | default `grok-4.3` (key may also allow `grok-4.7`) |
 | `XAI_BASE_URL` | optional    | default `https://api.x.ai/v1`   |
 
 Without `XAI_API_KEY`, register still works; analyze returns 503.

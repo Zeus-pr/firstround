@@ -85,7 +85,7 @@ export async function extractCvFactsWithGrok(
     parse: ParseQuality;
   },
 ): Promise<ExtractResult> {
-  const model = opts.model ?? process.env.XAI_MODEL?.trim() ?? 'grok-4-fast-reasoning';
+  const model = opts.model ?? process.env.XAI_MODEL?.trim() ?? 'grok-4.3';
   const useVision =
     opts.pages &&
     opts.pages.length > 0 &&
