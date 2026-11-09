@@ -65,6 +65,8 @@ Google Sans Variable, self-hosted from the OFL package. Display is tight and lar
 
 A centered sheet, max about 46rem, with blotter around it. The first viewport holds the sentence at the top of the sheet and the email field at the bottom. The letter continues in the same sheet: a sort, one kept role, the sample letter, then Sent, Quiet, Nudge, Answer. The paper fold sits in a dark well at the end of that line.
 
+After the opening, a route diagram contrasts the application queue with the reviewed letter's path to the recruiting head. The mobile layout preserves the same story in a vertical sequence.
+
 ## Components
 
 The field is an underline, not a box. The button is a wax rectangle with square corners. The kept role is a drawn ring. Discarded roles get a hairline strike. The day mark is an 11px wax dot on a rule.
@@ -72,6 +74,8 @@ The field is an underline, not a box. The button is a wax rectangle with square 
 ## Motion
 
 Scroll draws the strikes, the ring, and the wax dot. A single folded sheet in the dark well turns as the dot travels. Reduced motion shows the strikes, the ring, and the dot already at the end, and does not mount the 3D scene.
+
+The resume splits into two continuously moving paths: the usual application queue and First Round's reviewed letter to the recruiting head. The head's marker flashes green when the letter arrives. Reduced motion keeps both paths and their steps visible, but stops the flow, paper markers, and arrival flash.
 
 ## Do
 

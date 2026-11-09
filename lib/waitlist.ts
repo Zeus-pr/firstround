@@ -27,25 +27,36 @@ export function normalizeEmail(value: unknown): string | null {
   return email;
 }
 
+function listed(raw: string, email: string) {
+  return raw.split("\n").some((line) => {
+    if (!line) return false;
+    try {
+      return (JSON.parse(line) as { email?: string }).email === email;
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function readList() {
+  try {
+    return await readFile(file, "utf8");
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") throw error;
+    return "";
+  }
+}
+
+export function findSeat(email: string): Promise<boolean> {
+  return enqueue(async () => listed(await readList(), email));
+}
+
 export function saveSeat(email: string): Promise<SeatResult> {
   return enqueue(async () => {
     await mkdir(path.dirname(file), { recursive: true });
-    let raw = "";
-    try {
-      raw = await readFile(file, "utf8");
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code !== "ENOENT") throw error;
-    }
-
-    const already = raw.split("\n").some((line) => {
-      if (!line) return false;
-      try {
-        return (JSON.parse(line) as { email?: string }).email === email;
-      } catch {
-        return false;
-      }
-    });
+    const raw = await readList();
+    const already = listed(raw, email);
 
     if (already) return { ok: true, already: true };
 

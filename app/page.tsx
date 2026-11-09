@@ -1,4 +1,4 @@
-import { Letter } from "@/components/Letter";
+import { HomeLetter } from "@/components/HomeLetter";
 
 export default async function Page({
   searchParams,
@@ -12,16 +12,22 @@ export default async function Page({
       <a className="skip" href="#email">
         Skip to the seat
       </a>
-      <main className="blotter">
-        <header className="mast">
-          <a className="word" href="/">
-            First Round
-          </a>
-          <a href="#email">Take a seat</a>
-        </header>
-        <Letter initialSeat={params.seat} />
-        <p className="colophon">No letter leaves without you.</p>
+      <main>
+        <HomeLetter initialSeat={params.seat} />
       </main>
+      <footer className="foot">
+        <div className="frame foot-grid">
+          <div>
+            <p className="foot-name">First Round</p>
+            <p className="foot-line">No letter leaves without you.</p>
+          </div>
+          <nav className="foot-nav" aria-label="Footer">
+            <a href="/login">Log in</a>
+            <a href="/signup">Sign up</a>
+          </nav>
+          <p className="foot-year">2026</p>
+        </div>
+      </footer>
     </>
   );
 }

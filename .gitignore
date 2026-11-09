@@ -8,3 +8,9 @@ out
 .env.*
 data/
 tsconfig.tsbuildinfo
+/dist/
+.vinext/
+.cloudflare/
+.continue/
+.wrangler/
+GoogleSans-Variable.ttf

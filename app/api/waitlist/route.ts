@@ -1,4 +1,4 @@
-import { normalizeEmail, saveSeat } from "@/lib/waitlist";
+import { findSeat, normalizeEmail, saveSeat } from "@/lib/waitlist";
 
 const hits = new Map<string, number[]>();
 
@@ -30,10 +30,15 @@ export async function POST(req: Request) {
 
   const contentType = req.headers.get("content-type") ?? "";
   let raw: unknown = "";
+  let intent = "signup";
 
   if (contentType.includes("application/json")) {
-    const body = (await req.json().catch(() => null)) as { email?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as {
+      email?: unknown;
+      intent?: unknown;
+    } | null;
     raw = body?.email;
+    if (body?.intent === "login") intent = "login";
   } else {
     const form = await req.formData();
     raw = form.get("email");
@@ -50,6 +55,17 @@ export async function POST(req: Request) {
       { error: "Use a full email address." },
       { status: 400 },
     );
+  }
+
+  if (intent === "login") {
+    const found = await findSeat(email);
+    if (!found) {
+      return Response.json(
+        { error: "No seat under that address yet." },
+        { status: 404 },
+      );
+    }
+    return Response.json({ ok: true, already: true });
   }
 
   const saved = await saveSeat(email);

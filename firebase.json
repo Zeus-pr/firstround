@@ -1,0 +1,18 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "First Round",
+        "supportEmail": "prajeshchoudhury42@gmail.com"
+      }
+    },
+    "authorizedDomains": [
+      "localhost",
+      "127.0.0.1",
+      "firstround.space",
+      "firstround-space.firebaseapp.com",
+      "firstround-space.web.app"
+    ]
+  }
+}

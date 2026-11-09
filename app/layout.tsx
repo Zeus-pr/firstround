@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/google-sans";
+import { Mast } from "@/components/Mast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Mast />
+        {children}
+      </body>
     </html>
   );
 }
