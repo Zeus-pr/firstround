@@ -26,8 +26,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 70rem 40rem at 50% 0%, var(--lamp), transparent 68%), var(--blotter);
+  background: var(--blotter);
 }
 
 ::selection {
@@ -86,7 +85,7 @@ button {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: linear-gradient(var(--blotter) 55%, transparent);
+  background: var(--blotter);
 }
 
 .mast-row {
@@ -1016,8 +1015,8 @@ h1 {
 }
 
 .site-foot {
-  border-top: 1px solid rgba(60, 48, 36, 0.12);
-  color: #8a7f70;
+  border-top: 1px solid rgba(244, 239, 230, 0.14);
+  color: #cfc6b8;
   padding: 1.35rem 0 2.25rem;
   margin-top: clamp(2rem, 6vh, 4rem);
 }
@@ -1049,7 +1048,7 @@ h1 {
   width: 1px;
   height: 0.85em;
   margin: 0 0.7rem;
-  background: rgba(60, 48, 36, 0.22);
+  background: rgba(244, 239, 230, 0.22);
 }
 
 .site-foot a {
@@ -1059,7 +1058,7 @@ h1 {
 
 .site-foot a:hover,
 .site-foot a:focus-visible {
-  color: #3c3024;
+  color: var(--sheet);
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
@@ -1067,18 +1066,20 @@ h1 {
 .site-foot-copy {
   margin: 0;
   font-size: 0.82rem;
-  color: #a39888;
+  color: #cfc6b8;
 }
 
 .legal-shell {
   min-height: calc(100vh - 8rem);
-  padding: clamp(2.5rem, 8vh, 4.5rem) 0 3rem;
+  padding: clamp(1.5rem, 4vh, 2.5rem) clamp(1rem, 3vw, 1.5rem) 3rem;
 }
 
 .legal-sheet {
-  max-width: 40rem;
+  max-width: 42rem;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 4vw, 2rem);
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  background: var(--sheet);
+  color: var(--ink);
 }
 
 .legal-sheet h1 {
@@ -1086,11 +1087,11 @@ h1 {
   font-size: clamp(1.75rem, 4vw, 2.35rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: #2c241c;
+  color: var(--ink);
 }
 
 .legal-body {
-  color: #5a5044;
+  color: var(--quiet);
   font-size: 1.02rem;
   line-height: 1.65;
 }
@@ -1099,7 +1100,7 @@ h1 {
   margin: 1.75rem 0 0.55rem;
   font-size: 1.05rem;
   font-weight: 600;
-  color: #2c241c;
+  color: var(--ink);
 }
 
 .legal-body p {
@@ -1107,7 +1108,7 @@ h1 {
 }
 
 .legal-body a {
-  color: #2c241c;
+  color: var(--ink);
   text-underline-offset: 0.15em;
 }
 
