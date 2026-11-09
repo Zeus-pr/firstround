@@ -17,6 +17,8 @@
     "typecheck": "turbo run typecheck && tsc --noEmit",
 =======
     "build:web": "turbo run build --filter=@firstround/web...",
+    "start": "node apps/api/dist/main.js",
+    "start:web": "pnpm --filter @firstround/web start",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
 >>>>>>> d4224dd ((web) Move Next app to apps/web and call the API origin.)
