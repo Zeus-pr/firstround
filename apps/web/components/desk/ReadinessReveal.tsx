@@ -117,9 +117,7 @@ export function ReadinessReveal({
       ) : null}
 
       <p className="desk-meta desk-reveal-in">
-        {readiness.parse.ocrUsed || readiness.parse.visionUsed
-          ? 'Hard PDF path used (OCR/vision). '
-          : null}
+        {readiness.parse.visionUsed ? 'Hard PDF path used (vision). ' : null}
         First Round LetterProof · {readiness.algorithmVersion}. Not a universal ATS score.
       </p>
 
