@@ -22,7 +22,7 @@ export function AccountNav() {
           Dashboard
         </Link>
         <button
-          className="text-button mast-signout"
+          className="mast-signout"
           type="button"
           onClick={() => {
             const auth = firebaseAuth();

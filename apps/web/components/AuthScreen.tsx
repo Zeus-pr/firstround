@@ -111,8 +111,17 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         .then(() => {
           router.replace('/desk');
         })
-        .catch(() => {
-          setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : '';
+          const unreachable =
+            message.includes('Failed to fetch') ||
+            message.includes('NetworkError') ||
+            message.includes('NEXT_PUBLIC_API_URL');
+          setNote(
+            unreachable
+              ? 'Signed in, but the API is unreachable. Start the local API (port 4000) or point NEXT_PUBLIC_API_URL at a live API, then refresh.'
+              : 'Signed in, but we could not open your desk yet. Refresh and try again.',
+          );
         });
     });
   }, [router]);
