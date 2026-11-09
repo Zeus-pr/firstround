@@ -16,11 +16,11 @@ Public (no auth): `/health`, `POST /waitlist`.
 
 ## Railway env (api service)
 
-| Variable | Notes |
-|---|---|
-| `FIREBASE_PROJECT_ID` | `firstround-space` |
-| `FIREBASE_CLIENT_EMAIL` | Service account email |
-| `FIREBASE_PRIVATE_KEY` | PEM; store newlines as `\n` in the Railway variable |
+| Variable                | Notes                                               |
+| ----------------------- | --------------------------------------------------- |
+| `FIREBASE_PROJECT_ID`   | `firstround-space`                                  |
+| `FIREBASE_CLIENT_EMAIL` | Service account email                               |
+| `FIREBASE_PRIVATE_KEY`  | PEM; store newlines as `\n` in the Railway variable |
 
 Production boot fails if these are missing.
 
