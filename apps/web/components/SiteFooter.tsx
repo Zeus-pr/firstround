@@ -22,7 +22,7 @@ export function SiteFooter() {
             </span>
           ))}
         </nav>
-        <p className="site-foot-copy">© 2026 First Round</p>
+        <p className="site-foot-copy">© 2026 firstround</p>
       </div>
     </footer>
   );
