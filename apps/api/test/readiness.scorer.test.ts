@@ -151,6 +151,29 @@ describe('scoreCvReadiness v2', () => {
     expect(result.genuineGaps.some((g) => /overlap|date/i.test(g))).toBe(true);
   });
 
+  it('does not lower the score when a specific line is added beside existing proof', () => {
+    const base = scoreCvReadiness(strong, ['product manager']);
+    const extra: CvFacts = {
+      ...strong,
+      roles: [
+        {
+          ...strong.roles[0]!,
+          bullets: [
+            ...(strong.roles[0]?.bullets ?? []),
+            'Partnered with design and data to sequence the onboarding experiment backlog each week.',
+          ],
+        },
+        ...strong.roles.slice(1),
+      ],
+    };
+    const next = scoreCvReadiness(extra, ['product manager']);
+    expect(next.total).toBeGreaterThanOrEqual(base.total);
+    expect(next.dimensions.outcomeQuality).toBeGreaterThanOrEqual(base.dimensions.outcomeQuality);
+    expect(next.dimensions.communicationClarity).toBeGreaterThanOrEqual(
+      base.dimensions.communicationClarity,
+    );
+  });
+
   it('returns checks, confidence, and normalized lexicon', () => {
     const result = scoreCvReadiness(strong, ['product manager']);
     expect(result.checks.length).toBeGreaterThan(3);

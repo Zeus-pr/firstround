@@ -16,6 +16,8 @@ import {
   type Db,
 } from '@firstround/db';
 import {
+  FieldConfidence,
+  ParseQuality,
   SUPERCHARGE_CREDIT_COST,
   type AnalyzeCvResponse,
   type RegisterCvRequest,
@@ -31,6 +33,7 @@ import { hydrateReadinessFromScore } from '../readiness/hydrate-score.js';
 import { scoreCvReadiness } from '../readiness/scorer.js';
 import { createGrokClient, extractCvFactsWithGrok } from './grok-extract.js';
 import { superchargeCvWithGrok } from './grok-supercharge.js';
+import { factsToPlainText, finalizeSupercharge } from './supercharge-facts.js';
 import { extractTextFromCv } from './parse-document.js';
 
 @Injectable()
@@ -262,6 +265,17 @@ export class CvService {
     }
     priorReadiness.total = latestScore.total;
     priorReadiness.gaps = latestScore.gaps ?? priorReadiness.gaps;
+    const storedConfidence = FieldConfidence.safeParse(stored.confidence);
+    if (storedConfidence.success) priorReadiness.confidence = storedConfidence.data;
+    const storedParse = ParseQuality.safeParse(stored.parse);
+    if (storedParse.success) priorReadiness.parse = storedParse.data;
+    if (
+      latestScore.dimensions &&
+      typeof latestScore.dimensions === 'object' &&
+      'outcomeQuality' in latestScore.dimensions
+    ) {
+      priorReadiness.dimensions = latestScore.dimensions as typeof priorReadiness.dimensions;
+    }
 
     const debit = await this.credits.debitOnce({
       workspaceId: user.workspaceId,
@@ -282,7 +296,19 @@ export class CvService {
       .where(eq(preferences.userId, user.id))
       .limit(1);
 
-    const readiness = scoreCvReadiness(boosted.facts, pref?.jobFamilies ?? []);
+    const finalized = finalizeSupercharge({
+      original: facts,
+      proposed: boosted.facts,
+      prior: priorReadiness,
+      targetHints: pref?.jobFamilies ?? [],
+    });
+    const readiness = finalized.readiness;
+    const rewrittenText = finalized.acceptedRewrite
+      ? boosted.rewrittenText
+      : factsToPlainText(finalized.facts);
+    if (readiness.total < priorReadiness.total) {
+      throw new ServiceUnavailableException('Supercharge refused to lower the readiness score');
+    }
 
     const [nextExtraction] = await db
       .insert(cvExtractions)
@@ -291,12 +317,15 @@ export class CvService {
         userId: user.id,
         schemaVersion: extraction.schemaVersion,
         modelVersion: boosted.modelVersion,
-        promptVersion: 'cv-supercharge-v1',
-        facts: boosted.facts,
+        promptVersion: 'cv-supercharge-v2',
+        facts: finalized.facts,
         meta: {
           superchargedFrom: extraction.id,
-          rewrittenText: boosted.rewrittenText,
+          rewrittenText,
           creditsCharged: debit.charged,
+          acceptedRewrite: finalized.acceptedRewrite,
+          scoreBefore: priorReadiness.total,
+          scoreAfter: readiness.total,
         },
       })
       .returning({ id: cvExtractions.id });
@@ -334,8 +363,8 @@ export class CvService {
       cvDocumentId: doc.id,
       extractionId: nextExtraction.id,
       readiness,
-      facts: boosted.facts,
-      rewrittenText: boosted.rewrittenText,
+      facts: finalized.facts,
+      rewrittenText,
       creditsCharged: debit.charged,
       creditBalance: debit.balance,
       onboardingStep: 'readiness',
