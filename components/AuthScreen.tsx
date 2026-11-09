@@ -74,7 +74,7 @@ function AuthStage() {
         {STAGE_BEATS.map((beat) => (
           <li key={beat.state}>
             <span className="auth-orb">
-              <Orb state={beat.state} size={28} label={beat.line} />
+              <Orb state={beat.state} size={44} label={beat.line} />
             </span>
             <span>{beat.line}</span>
           </li>
