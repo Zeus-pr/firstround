@@ -113,12 +113,8 @@ export class CvService {
     const parse = {
       ...parsed.parse,
       visionUsed: extracted.visionUsed || parsed.parse.visionUsed,
-      method:
-        extracted.visionUsed && parsed.parse.ocrUsed
-          ? ('hybrid' as const)
-          : extracted.visionUsed
-            ? ('vision' as const)
-            : parsed.parse.method,
+      ocrUsed: false,
+      method: extracted.visionUsed ? ('vision' as const) : parsed.parse.method,
       notes: [
         ...parsed.parse.notes,
         ...(extracted.visionUsed ? ['Vision pass used for layout-aware extraction.'] : []),

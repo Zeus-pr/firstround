@@ -1,6 +1,5 @@
 import type { ParseQuality } from '@firstround/contracts';
 import mammoth from 'mammoth';
-import { ocrPages } from './ocr.js';
 import { renderPdfPages } from './pdf-render.js';
 
 const MAX_CHARS = 120_000;
@@ -85,49 +84,34 @@ export async function extractTextFromCv(bytes: Buffer, contentType: string): Pro
 async function extractPdf(bytes: Buffer): Promise<ParsedCv> {
   const pdf = await loadPdfParse();
   const parsed = await pdf(bytes);
-  let text = stripNul(parsed.text ?? '');
+  const text = stripNul(parsed.text ?? '').slice(0, MAX_CHARS);
   const pageEstimate = parsed.numpages ?? 0;
-  let assess = assessText(text, pageEstimate);
+  const assess = assessText(text, pageEstimate);
   const notes: string[] = [];
-  let ocrUsed = false;
   let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
-  let method: ParseQuality['method'] = 'text';
 
+  // Hard PDFs: render pages for Grok vision. No local OCR (Tesseract is too heavy).
   if (assess.sparseText || assess.multiColumnSuspected) {
     pages = await renderPdfPages(bytes, 3);
     if (pages.length > 0) {
-      const ocrText = await ocrPages(pages);
-      ocrUsed = ocrText.length > 0;
-      if (ocrText.length > text.length * 0.8) {
-        text = ocrText;
-        method = 'ocr';
-        notes.push('Used OCR because the PDF text layer was thin or column-scrambled.');
-      } else if (ocrText.length > 80) {
-        text = `${text}\n\n${ocrText}`.trim();
-        method = 'hybrid';
-        notes.push('Merged PDF text with OCR for harder pages.');
-      } else {
-        notes.push('OCR ran but added little; keeping the text layer.');
-      }
-      assess = assessText(text, pageEstimate || pages.length);
+      notes.push('Rendered pages for vision extract (thin or multi-column text layer).');
     } else {
-      notes.push('Could not render PDF pages for OCR; continuing with the text layer.');
+      notes.push('Could not render PDF pages; continuing with the text layer only.');
     }
   }
 
-  text = text.slice(0, MAX_CHARS);
   return {
     text,
     pageEstimate: pageEstimate || pages.length || 1,
     pages,
     parse: {
-      method,
+      method: 'text',
       textChars: text.length,
       pageEstimate: pageEstimate || pages.length || 1,
       pagesRendered: pages.length,
       multiColumnSuspected: assess.multiColumnSuspected,
       sparseText: assess.sparseText,
-      ocrUsed,
+      ocrUsed: false,
       visionUsed: false,
       quality: assess.quality,
       notes,

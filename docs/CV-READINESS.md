@@ -1,6 +1,6 @@
 # CV readiness (v2 · LetterProof)
 
-Deterministic scorer + Grok extraction + OCR/vision for hard PDFs. The model fills a fact schema with per-field confidence; First Round's algorithm owns the score.
+Deterministic scorer + Grok extraction + vision for hard PDFs. The model fills a fact schema with per-field confidence; First Round's algorithm owns the score.
 
 ## Unique product rules
 
@@ -34,8 +34,8 @@ Contact email, location, and links are a separate sendability checklist outside 
 ## Parse pipeline
 
 1. Text layer (pdf-parse / mammoth)
-2. If sparse or multi-column suspected → render first pages → OCR (tesseract)
-3. If still hard → Grok vision on page images (layout-aware)
+2. If sparse or multi-column suspected → render first pages (max 3)
+3. Grok vision on those page images (layout-aware). No local Tesseract OCR.
 4. Taxonomy normalize skills/titles (`taxonomy-v1`)
 5. Score with confidence blend + soft prior
 
@@ -56,4 +56,4 @@ Contact email, location, and links are a separate sendability checklist outside 
 | `XAI_BASE_URL` | optional    | default `https://api.x.ai/v1`   |
 
 Without `XAI_API_KEY`, register still works; analyze returns 503.
-OCR/vision soft-fail to text-only if render libs fail.
+Page render soft-fails to text-only if canvas/pdfjs fails; vision still needs `XAI_API_KEY`.

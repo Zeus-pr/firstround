@@ -11,7 +11,7 @@ export type RenderedPage = {
 };
 
 /**
- * Render the first pages of a PDF to PNG for OCR / vision.
+ * Render the first pages of a PDF to PNG for Grok vision.
  * Soft-fails: callers treat empty results as "text-only path".
  */
 export async function renderPdfPages(bytes: Buffer, maxPages = MAX_PAGES): Promise<RenderedPage[]> {

@@ -66,7 +66,6 @@ function defaultConfidence(facts: CvFacts, parse: ParseQuality): FieldConfidence
     Math.min(1, (contact + rolesScore + skills + education) / 4 + parseBoost),
   );
   const notes: string[] = [];
-  if (parse.ocrUsed) notes.push('OCR filled gaps in the PDF text layer.');
   if (parse.visionUsed) notes.push('Vision pass helped with layout.');
   if (parse.multiColumnSuspected) notes.push('Multi-column layout was suspected.');
   if (overall < 0.55) notes.push('Some fields are uncertain; we scored gently.');
