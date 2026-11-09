@@ -3,6 +3,7 @@ import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CampaignModule } from './campaign/campaign.module.js';
 import { CryptoModule } from './crypto/crypto.module.js';
+import { CvModule } from './cv/cv.module.js';
 import { DbModule } from './db/db.module.js';
 import { FilesModule } from './files/files.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -19,6 +20,7 @@ import { WaitlistModule } from './waitlist/waitlist.module.js';
     WaitlistModule,
     SessionModule,
     FilesModule,
+    CvModule,
     CampaignModule,
     ProvidersModule,
     AuditModule,
