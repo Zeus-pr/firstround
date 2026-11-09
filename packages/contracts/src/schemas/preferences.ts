@@ -1,15 +1,17 @@
 import { z } from 'zod';
 import { OnboardingStep } from './session.js';
 
+const optionalHttpUrl = z.union([z.string().url(), z.literal('')]).optional();
+
 export const PreferencesPayload = z.object({
   jobFamilies: z.array(z.string().min(1).max(80)).max(20).default([]),
   locations: z.array(z.string().min(1).max(120)).max(20).default([]),
   targetLevel: z.string().max(80).nullable().optional(),
   links: z
     .object({
-      linkedin: z.string().url().optional(),
-      github: z.string().url().optional(),
-      portfolio: z.string().url().optional(),
+      linkedin: optionalHttpUrl,
+      github: optionalHttpUrl,
+      portfolio: optionalHttpUrl,
     })
     .default({}),
 });
