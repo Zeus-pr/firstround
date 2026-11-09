@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CvFacts } from '@firstround/contracts';
 import { scoreCvReadiness } from '../src/readiness/scorer.js';
+import { normalizeLexicon, normalizeSkill, normalizeTitle } from '../src/readiness/taxonomy.js';
 
 const strong: CvFacts = {
   emails: ['a@example.com'],
@@ -36,6 +37,31 @@ const strong: CvFacts = {
   ],
   education: [{ school: 'IIT', degree: 'B.Tech' }],
   targetRoleHints: ['product manager'],
+};
+
+const average: CvFacts = {
+  emails: ['c@example.com'],
+  phones: [],
+  locations: ['Pune'],
+  links: { linkedin: 'https://linkedin.com/in/c', other: [] },
+  skills: ['Java', 'SQL'],
+  roles: [
+    {
+      title: 'Software Engineer',
+      company: 'Studio',
+      startDate: '2022-03',
+      endDate: null,
+      isCurrent: true,
+      bullets: [
+        'Built APIs for the billing service.',
+        'Worked on dashboard improvements with the product team.',
+      ],
+      tools: ['Java'],
+      metrics: [],
+    },
+  ],
+  education: [{ school: 'State Uni', degree: 'B.E.' }],
+  targetRoleHints: ['software engineer'],
 };
 
 const thin: CvFacts = {
@@ -92,18 +118,29 @@ const messyDates: CvFacts = {
   targetRoleHints: ['engineer'],
 };
 
-describe('scoreCvReadiness', () => {
-  it('scores a strong CV into the ready or improve band', () => {
+describe('scoreCvReadiness v2', () => {
+  it('scores a strong CV into ready (≥80)', () => {
     const result = scoreCvReadiness(strong, ['product manager']);
-    expect(result.total).toBeGreaterThanOrEqual(70);
+    expect(result.total).toBeGreaterThanOrEqual(80);
+    expect(result.band).toBe('ready');
+    expect(result.recommendation.action).toBe('continue');
     expect(result.sendability.ok).toBe(true);
-    expect(result.algorithmVersion).toBe('readiness-v1');
+    expect(result.algorithmVersion).toBe('readiness-v2');
   });
 
-  it('keeps thin CVs limited and explains gaps in plain language', () => {
+  it('keeps ordinary CVs in supercharge (60–79), not failure', () => {
+    const result = scoreCvReadiness(average, ['software engineer']);
+    expect(result.total).toBeGreaterThanOrEqual(60);
+    expect(result.total).toBeLessThan(80);
+    expect(result.band).toBe('supercharge');
+    expect(result.recommendation.action).toBe('supercharge');
+  });
+
+  it('coaches thin CVs without crushing them into single digits', () => {
     const result = scoreCvReadiness(thin);
-    expect(result.total).toBeLessThan(70);
-    expect(result.band).toBe('limited');
+    expect(result.total).toBeGreaterThanOrEqual(40);
+    expect(result.total).toBeLessThan(60);
+    expect(result.band).toBe('strengthen');
     expect(result.gaps.length).toBeGreaterThan(0);
     expect(result.sendability.ok).toBe(false);
   });
@@ -111,6 +148,29 @@ describe('scoreCvReadiness', () => {
   it('penalizes overlapping full-time chronology, not career shape', () => {
     const result = scoreCvReadiness(messyDates);
     expect(result.dimensions.careerConsistency).toBeLessThan(100);
-    expect(result.gaps.some((g) => /overlap|date/i.test(g))).toBe(true);
+    expect(result.genuineGaps.some((g) => /overlap|date/i.test(g))).toBe(true);
+  });
+
+  it('returns checks, confidence, and normalized lexicon', () => {
+    const result = scoreCvReadiness(strong, ['product manager']);
+    expect(result.checks.length).toBeGreaterThan(3);
+    expect(result.confidence.overall).toBeGreaterThan(0.4);
+    expect(result.normalized.skills).toContain('typescript');
+    expect(result.normalized.titles).toContain('senior product manager');
+  });
+});
+
+describe('taxonomy', () => {
+  it('normalizes skill and title aliases', () => {
+    expect(normalizeSkill('React.js')).toBe('react');
+    expect(normalizeTitle('Sr. Product Manager')).toBe('senior product manager');
+    const lex = normalizeLexicon({
+      skills: ['TS', 'Node JS'],
+      titles: ['SWE'],
+      hints: ['software engineer'],
+    });
+    expect(lex.skills).toEqual(expect.arrayContaining(['typescript', 'node.js']));
+    expect(lex.titles).toContain('software engineer');
+    expect(lex.families).toContain('engineering');
   });
 });

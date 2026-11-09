@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { OnboardingStep } from './session.js';
 
-export const ALGORITHM_VERSION = 'readiness-v1';
-export const EXTRACTION_SCHEMA_VERSION = 'cv-facts-v1';
-export const EXTRACTION_PROMPT_VERSION = 'cv-extract-v1';
+export const ALGORITHM_VERSION = 'readiness-v2';
+export const EXTRACTION_SCHEMA_VERSION = 'cv-facts-v2';
+export const EXTRACTION_PROMPT_VERSION = 'cv-extract-v2';
+export const TAXONOMY_VERSION = 'taxonomy-v1';
 
 export const CvRole = z.object({
   title: z.string().min(1).max(200),
@@ -49,6 +50,48 @@ export const CvFacts = z.object({
 });
 export type CvFacts = z.infer<typeof CvFacts>;
 
+/** Model + parser confidence. Low confidence never invents failure; it softens certainty. */
+export const FieldConfidence = z.object({
+  overall: z.number().min(0).max(1),
+  contact: z.number().min(0).max(1),
+  roles: z.number().min(0).max(1),
+  skills: z.number().min(0).max(1),
+  education: z.number().min(0).max(1),
+  notes: z.array(z.string().max(240)).max(12).default([]),
+});
+export type FieldConfidence = z.infer<typeof FieldConfidence>;
+
+export const ParseQuality = z.object({
+  method: z.enum(['text', 'ocr', 'vision', 'hybrid']),
+  textChars: z.number().int().min(0),
+  pageEstimate: z.number().int().min(0),
+  pagesRendered: z.number().int().min(0).default(0),
+  multiColumnSuspected: z.boolean(),
+  sparseText: z.boolean(),
+  ocrUsed: z.boolean(),
+  visionUsed: z.boolean(),
+  quality: z.enum(['high', 'medium', 'low']),
+  notes: z.array(z.string().max(240)).max(12).default([]),
+});
+export type ParseQuality = z.infer<typeof ParseQuality>;
+
+export const NormalizedLexicon = z.object({
+  taxonomyVersion: z.literal(TAXONOMY_VERSION),
+  skills: z.array(z.string().max(80)).max(80).default([]),
+  titles: z.array(z.string().max(120)).max(40).default([]),
+  families: z.array(z.string().max(80)).max(20).default([]),
+});
+export type NormalizedLexicon = z.infer<typeof NormalizedLexicon>;
+
+export const ReadinessCheck = z.object({
+  id: z.string().max(64),
+  label: z.string().max(160),
+  passed: z.boolean(),
+  /** soft = coaching; hard = chronology/contact issues */
+  severity: z.enum(['soft', 'hard']),
+});
+export type ReadinessCheck = z.infer<typeof ReadinessCheck>;
+
 export const ReadinessDimensions = z.object({
   evidenceCompleteness: z.number().min(0).max(100),
   outcomeQuality: z.number().min(0).max(100),
@@ -67,13 +110,33 @@ export const SendabilityChecklist = z.object({
 });
 export type SendabilityChecklist = z.infer<typeof SendabilityChecklist>;
 
+export const ReadinessRecommendation = z.object({
+  action: z.enum(['continue', 'supercharge', 'strengthen']),
+  headline: z.string().max(120),
+  body: z.string().max(400),
+});
+export type ReadinessRecommendation = z.infer<typeof ReadinessRecommendation>;
+
+export const ReadinessBand = z.enum(['ready', 'supercharge', 'strengthen']);
+export type ReadinessBand = z.infer<typeof ReadinessBand>;
+
 export const ReadinessResult = z.object({
   total: z.number().int().min(0).max(100),
   dimensions: ReadinessDimensions,
+  /** Combined plain-language list for simple UIs */
   gaps: z.array(z.string()).default([]),
+  /** True missing proof */
+  genuineGaps: z.array(z.string()).default([]),
+  /** Present but buried or weakly worded */
+  underEmphasised: z.array(z.string()).default([]),
+  checks: z.array(ReadinessCheck).max(40).default([]),
   sendability: SendabilityChecklist,
+  confidence: FieldConfidence,
+  parse: ParseQuality,
+  normalized: NormalizedLexicon,
+  recommendation: ReadinessRecommendation,
   algorithmVersion: z.literal(ALGORITHM_VERSION),
-  band: z.enum(['ready', 'improve', 'limited']),
+  band: ReadinessBand,
 });
 export type ReadinessResult = z.infer<typeof ReadinessResult>;
 

@@ -97,22 +97,44 @@ export class CvService {
       .set({ sha256, status: 'analyzing', updatedAt: new Date() })
       .where(eq(cvDocuments.id, doc.id));
 
-    const { text, pageEstimate } = await extractTextFromCv(bytes, contentType ?? doc.contentType);
-    if (text.length < 40) {
+    const parsed = await extractTextFromCv(bytes, contentType ?? doc.contentType);
+    if (parsed.text.length < 40 && parsed.pages.length === 0) {
       throw new BadRequestException('That file has almost no readable text. Try another export.');
     }
-    if (pageEstimate > 12) {
+    if (parsed.pageEstimate > 12) {
       throw new BadRequestException('Keep the CV under 12 pages for analysis.');
     }
 
-    const extracted = await extractCvFactsWithGrok(text, grok);
+    const extracted = await extractCvFactsWithGrok(parsed.text, grok, {
+      pages: parsed.pages,
+      parse: parsed.parse,
+    });
+
+    const parse = {
+      ...parsed.parse,
+      visionUsed: extracted.visionUsed || parsed.parse.visionUsed,
+      method:
+        extracted.visionUsed && parsed.parse.ocrUsed
+          ? ('hybrid' as const)
+          : extracted.visionUsed
+            ? ('vision' as const)
+            : parsed.parse.method,
+      notes: [
+        ...parsed.parse.notes,
+        ...(extracted.visionUsed ? ['Vision pass used for layout-aware extraction.'] : []),
+      ].slice(0, 12),
+    };
+
     const [pref] = await db
       .select({ jobFamilies: preferences.jobFamilies })
       .from(preferences)
       .where(eq(preferences.userId, user.id))
       .limit(1);
 
-    const readiness = scoreCvReadiness(extracted.facts, pref?.jobFamilies ?? []);
+    const readiness = scoreCvReadiness(extracted.facts, pref?.jobFamilies ?? [], {
+      parse,
+      confidence: extracted.confidence,
+    });
 
     const [extraction] = await db
       .insert(cvExtractions)
@@ -123,7 +145,13 @@ export class CvService {
         modelVersion: extracted.modelVersion,
         promptVersion: extracted.promptVersion,
         facts: extracted.facts,
-        meta: { pageEstimate, charCount: text.length },
+        meta: {
+          pageEstimate: parsed.pageEstimate,
+          charCount: parsed.text.length,
+          parse,
+          confidence: extracted.confidence,
+          normalized: readiness.normalized,
+        },
       })
       .returning({ id: cvExtractions.id });
     if (!extraction) throw new ServiceUnavailableException('Could not save extraction');
@@ -135,7 +163,17 @@ export class CvService {
       total: readiness.total,
       dimensions: readiness.dimensions,
       gaps: readiness.gaps,
-      sendability: readiness.sendability,
+      sendability: {
+        ...readiness.sendability,
+        band: readiness.band,
+        recommendation: readiness.recommendation,
+        genuineGaps: readiness.genuineGaps,
+        underEmphasised: readiness.underEmphasised,
+        checks: readiness.checks,
+        confidence: readiness.confidence,
+        parse: readiness.parse,
+        normalized: readiness.normalized,
+      },
       algorithmVersion: readiness.algorithmVersion,
     });
 
