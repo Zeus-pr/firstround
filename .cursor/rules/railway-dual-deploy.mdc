@@ -1,0 +1,29 @@
+---
+description: Railway api+web always deploy together from main
+alwaysApply: true
+---
+
+# Railway dual deploy (AriForce-style)
+
+Both **api** and **web** must auto-deploy on **every** push/merge to `main`, whether the diff touched api, web, or neither-app files.
+
+## Required config
+
+| Service | Branch | watchPatterns |
+|---|---|---|
+| api (`9fca6685-…`) | `main` | `**` (or equivalent: never skip) |
+| web (`84d8a1bc-…`) | `main` | `**` (or equivalent: never skip) |
+
+Project: `hopeful-surprise` / `0d203832-0797-41b6-ac8f-e44466d80bc2`, env production `fdb0c2b2-…`.
+
+- Do **not** point either service at feature branches for production.
+- Do **not** use narrow watchPatterns (`apps/api/**`, `apps/web/**`, etc.) that skip the other service.
+- After retargeting or config changes, avoid double `connect-service-source` / redeploy storms; one trigger per service is enough (Railway queues extra deploys **within** a service).
+
+## After merges that move the web root
+
+When Next lives under `apps/web`, web build/start must use `@firstround/web` (not root `next`). Keep branch + watchPatterns as above.
+
+## Agent duty
+
+If you find api/web off `main` or with path-filtered watches, fix them back to this rule and tell Prajesh.

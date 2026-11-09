@@ -1,0 +1,21 @@
+---
+description: All First Round PRs target main; merge one at a time
+alwaysApply: true
+---
+
+# PR base is always `main`
+
+Every PR (`(api)` or `(web)`) must target **`main`**, never another feature branch.
+
+## Workflow
+
+1. Branch from latest `origin/main`.
+2. Open PR with `--base main`.
+3. Prajesh merges **one PR at a time**, in order when work depends on a prior PR.
+4. After each merge: rebase the next open branch onto `origin/main`, fix conflicts, force-push that branch. Do not leave it stacked on a feature base.
+
+## Do not
+
+- Stack PR bases (`feat/a` → `feat/b` → `main`)
+- Ask Prajesh to retarget the base to `main` manually
+- Merge several dependent PRs in one batch without rebasing the next onto `main` first
