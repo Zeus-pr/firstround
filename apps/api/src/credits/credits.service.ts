@@ -6,7 +6,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
-import { SUPERCHARGE_CREDIT_COST } from '@firstround/contracts';
 import { creditLedger, type Db } from '@firstround/db';
 import { DB } from '../db/db.module.js';
 
