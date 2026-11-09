@@ -15,6 +15,7 @@ import {
 } from '@/lib/cv';
 import { CvModal, type CvModalStage } from './CvModal';
 import { DeskDashboard } from './DeskDashboard';
+import { PreferencesModal } from './PreferencesModal';
 
 function needsCvModal(step: string) {
   return step === 'account' || step === 'cv';
@@ -198,6 +199,11 @@ export function DeskOnboarding() {
         }}
         onDismissSuggestions={() => setSuggestions([])}
       />
+      {note && !modalOpen ? (
+        <p className="note desk-dash-note" role="status">
+          {note}
+        </p>
+      ) : null}
 
       <CvModal
         open={modalOpen}
@@ -219,31 +225,16 @@ export function DeskOnboarding() {
         }}
       />
 
-      {prefsOpen ? (
-        <div className="desk-modal-root" role="presentation">
-          <button
-            className="desk-modal-scrim"
-            type="button"
-            aria-label="Close preferences"
-            onClick={() => setPrefsOpen(false)}
-          />
-          <div className="desk-modal" role="dialog" aria-modal="true" aria-label="Preferences">
-            <header className="desk-modal-top">
-              <p className="desk-kicker">Preferences</p>
-              <button className="text-button" type="button" onClick={() => setPrefsOpen(false)}>
-                Close
-              </button>
-            </header>
-            <p className="desk-lead">
-              Role families, locations, and level land in the next preferences slice. The desk seat
-              is ready.
-            </p>
-            <button className="wax" type="button" onClick={() => setPrefsOpen(false)}>
-              Back to desk
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <PreferencesModal
+        open={prefsOpen}
+        user={user}
+        onClose={() => setPrefsOpen(false)}
+        onSaved={(onboardingStep) => {
+          setSession((prev) => (prev ? { ...prev, onboardingStep } : prev));
+          setPrefsOpen(false);
+          setNote('Preferences saved. Gmail connect is next.');
+        }}
+      />
     </main>
   );
 }
