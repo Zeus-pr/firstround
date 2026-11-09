@@ -15,16 +15,21 @@ import {
   profiles,
   type Db,
 } from '@firstround/db';
-import type {
-  AnalyzeCvResponse,
-  RegisterCvRequest,
-  RegisterCvResponse,
-  SessionUser,
+import {
+  SUPERCHARGE_CREDIT_COST,
+  type AnalyzeCvResponse,
+  type RegisterCvRequest,
+  type RegisterCvResponse,
+  type SessionUser,
+  type SuperchargeCvResponse,
+  CvFacts,
 } from '@firstround/contracts';
+import { CreditsService } from '../credits/credits.service.js';
 import { DB } from '../db/db.module.js';
 import { StorageService } from '../files/storage.service.js';
 import { scoreCvReadiness } from '../readiness/scorer.js';
 import { createGrokClient, extractCvFactsWithGrok } from './grok-extract.js';
+import { superchargeCvWithGrok } from './grok-supercharge.js';
 import { extractTextFromCv } from './parse-document.js';
 
 @Injectable()
@@ -32,6 +37,7 @@ export class CvService {
   constructor(
     @Inject(DB) private readonly db: Db | null,
     private readonly storage: StorageService,
+    private readonly credits: CreditsService,
   ) {}
 
   private ready(): Db {
@@ -201,5 +207,133 @@ export class CvService {
       .orderBy(desc(cvReadinessScores.createdAt))
       .limit(1);
     return row ?? null;
+  }
+
+  async supercharge(user: SessionUser, cvDocumentId: string): Promise<SuperchargeCvResponse> {
+    const db = this.ready();
+    const grok = createGrokClient();
+    if (!grok) {
+      throw new ServiceUnavailableException(
+        'CV analysis is not configured yet (missing XAI_API_KEY)',
+      );
+    }
+
+    const [doc] = await db
+      .select()
+      .from(cvDocuments)
+      .where(and(eq(cvDocuments.id, cvDocumentId), eq(cvDocuments.userId, user.id)))
+      .limit(1);
+    if (!doc) throw new NotFoundException('CV not found');
+
+    const [latestScore] = await db
+      .select()
+      .from(cvReadinessScores)
+      .where(and(eq(cvReadinessScores.cvDocumentId, doc.id), eq(cvReadinessScores.userId, user.id)))
+      .orderBy(desc(cvReadinessScores.createdAt))
+      .limit(1);
+    if (!latestScore) {
+      throw new BadRequestException('Analyze the CV before Supercharge.');
+    }
+
+    const [extraction] = await db
+      .select()
+      .from(cvExtractions)
+      .where(and(eq(cvExtractions.id, latestScore.extractionId), eq(cvExtractions.userId, user.id)))
+      .limit(1);
+    if (!extraction) throw new NotFoundException('Extraction not found');
+
+    const facts = CvFacts.parse(extraction.facts);
+    const priorReadiness = scoreCvReadiness(facts, []);
+    // Prefer stored gaps/band from sendability blob when present.
+    const stored = latestScore.sendability as Record<string, unknown>;
+    if (typeof stored.band === 'string') {
+      priorReadiness.band = stored.band as typeof priorReadiness.band;
+    }
+    if (Array.isArray(stored.genuineGaps)) {
+      priorReadiness.genuineGaps = stored.genuineGaps as string[];
+    }
+    if (Array.isArray(stored.underEmphasised)) {
+      priorReadiness.underEmphasised = stored.underEmphasised as string[];
+    }
+    priorReadiness.total = latestScore.total;
+    priorReadiness.gaps = latestScore.gaps ?? priorReadiness.gaps;
+
+    const debit = await this.credits.debitOnce({
+      workspaceId: user.workspaceId,
+      userId: user.id,
+      amount: SUPERCHARGE_CREDIT_COST,
+      reason: `cv_supercharge:${doc.id}:${extraction.id}`,
+    });
+
+    const boosted = await superchargeCvWithGrok({
+      client: grok,
+      facts,
+      readiness: priorReadiness,
+    });
+
+    const [pref] = await db
+      .select({ jobFamilies: preferences.jobFamilies })
+      .from(preferences)
+      .where(eq(preferences.userId, user.id))
+      .limit(1);
+
+    const readiness = scoreCvReadiness(boosted.facts, pref?.jobFamilies ?? []);
+
+    const [nextExtraction] = await db
+      .insert(cvExtractions)
+      .values({
+        cvDocumentId: doc.id,
+        userId: user.id,
+        schemaVersion: extraction.schemaVersion,
+        modelVersion: boosted.modelVersion,
+        promptVersion: 'cv-supercharge-v1',
+        facts: boosted.facts,
+        meta: {
+          superchargedFrom: extraction.id,
+          rewrittenText: boosted.rewrittenText,
+          creditsCharged: debit.charged,
+        },
+      })
+      .returning({ id: cvExtractions.id });
+    if (!nextExtraction) throw new ServiceUnavailableException('Could not save supercharge');
+
+    await db.insert(cvReadinessScores).values({
+      userId: user.id,
+      cvDocumentId: doc.id,
+      extractionId: nextExtraction.id,
+      total: readiness.total,
+      dimensions: readiness.dimensions,
+      gaps: readiness.gaps,
+      sendability: {
+        ...readiness.sendability,
+        band: readiness.band,
+        recommendation: readiness.recommendation,
+        genuineGaps: readiness.genuineGaps,
+        underEmphasised: readiness.underEmphasised,
+        checks: readiness.checks,
+        confidence: readiness.confidence,
+        parse: readiness.parse,
+        normalized: readiness.normalized,
+        supercharged: true,
+      },
+      algorithmVersion: readiness.algorithmVersion,
+    });
+
+    await db
+      .update(profiles)
+      .set({ onboardingStep: 'readiness', updatedAt: new Date() })
+      .where(eq(profiles.userId, user.id));
+
+    return {
+      ok: true,
+      cvDocumentId: doc.id,
+      extractionId: nextExtraction.id,
+      readiness,
+      facts: boosted.facts,
+      rewrittenText: boosted.rewrittenText,
+      creditsCharged: debit.charged,
+      creditBalance: debit.balance,
+      onboardingStep: 'readiness',
+    };
   }
 }

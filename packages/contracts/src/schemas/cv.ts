@@ -178,3 +178,31 @@ export const AnalyzeCvResponse = z.object({
   onboardingStep: OnboardingStep,
 });
 export type AnalyzeCvResponse = z.infer<typeof AnalyzeCvResponse>;
+
+export const SUPERCHARGE_CREDIT_COST = 5;
+
+export const SuperchargeCvRequest = z.object({
+  cvDocumentId: z.string().uuid(),
+});
+export type SuperchargeCvRequest = z.infer<typeof SuperchargeCvRequest>;
+
+export const SuperchargeCvResponse = z.object({
+  ok: z.literal(true),
+  cvDocumentId: z.string().uuid(),
+  extractionId: z.string().uuid(),
+  readiness: ReadinessResult,
+  facts: CvFacts,
+  rewrittenText: z.string().min(1).max(120_000),
+  creditsCharged: z.number().int().min(0).max(SUPERCHARGE_CREDIT_COST),
+  creditBalance: z.number().int(),
+  onboardingStep: OnboardingStep,
+});
+export type SuperchargeCvResponse = z.infer<typeof SuperchargeCvResponse>;
+
+export const CreditsBalanceResponse = z.object({
+  ok: z.literal(true),
+  balance: z.number().int(),
+  superchargeCost: z.literal(SUPERCHARGE_CREDIT_COST),
+  testMode: z.boolean(),
+});
+export type CreditsBalanceResponse = z.infer<typeof CreditsBalanceResponse>;

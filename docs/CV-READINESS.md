@@ -45,7 +45,19 @@ Contact email, location, and links are a separate sendability checklist outside 
 2. Client PUT to R2
 3. `POST /cv/register` `{ fileKey, contentType, sizeBytes, originalFilename? }`
 4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized)
-5. `GET /cv/readiness/latest`
+5. `POST /cv/supercharge` `{ cvDocumentId }` → grounded rewrite + re-score (costs 5 credits; idempotent per extraction)
+6. `GET /cv/readiness/latest`
+7. `GET /credits` → balance + supercharge cost
+
+## Supercharge credits
+
+| Item      | Value                                                                       |
+| --------- | --------------------------------------------------------------------------- |
+| Cost      | 5 credits per Supercharge                                                   |
+| Ledger    | `credit_ledger`                                                             |
+| Test mode | `CREDITS_TEST_MODE=1` or non-production auto-grants 100 when balance is low |
+
+Skip Supercharge on the web: show `genuineGaps` / `underEmphasised` suggestions; no debit.
 
 ## Env (api)
 
