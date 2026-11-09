@@ -19,11 +19,11 @@ const WEIGHTS = {
   communicationClarity: 0.15,
 } as const;
 
-const METRIC_RE =
+export const METRIC_RE =
   /(\d+(\.\d+)?\s*%|\b\d+(\.\d+)?\s*(k|m|b|million|billion|users|customers|revenue|arr|mrr)\b|\$\s?\d|\b\d+x\b)/i;
-const OWNERSHIP_RE =
+export const OWNERSHIP_RE =
   /\b(led|owned|built|shipped|launched|grew|cut|reduced|increased|designed|drove|ran|created)\b/i;
-const VAGUE_RE = /responsible for|helped with|worked on|various tasks|duties included/i;
+export const VAGUE_RE = /responsible for|helped with|worked on|various tasks|duties included/i;
 
 function clamp(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -105,6 +105,7 @@ function recommendationFor(band: ReadinessBand, total: number): ReadinessRecomme
  * Soft priors so ordinary CVs land in supercharge, not failure.
  * Career gaps and non-linear paths are never penalized.
  * Missing metrics lower proof quality; they do not invent failure.
+ * Outcome and clarity use counts, not ratios, so an extra specific line cannot lower the score.
  */
 export function scoreCvReadiness(
   facts: CvFacts,
@@ -209,6 +210,18 @@ export function scoreCvReadiness(
   };
 }
 
+/** Supercharge may publish a higher score. It may not publish a lower one. */
+export function lockReadinessFloor(prior: ReadinessResult, next: ReadinessResult): ReadinessResult {
+  if (next.total >= prior.total) return next;
+  const band = bandFor(prior.total);
+  return {
+    ...prior,
+    total: prior.total,
+    band,
+    recommendation: recommendationFor(band, prior.total),
+  };
+}
+
 function scoreEvidence(
   roles: CvFacts['roles'],
   skills: string[],
@@ -237,11 +250,8 @@ function scoreOutcomes(roles: CvFacts['roles'], confidence: FieldConfidence): nu
   if (allBullets.length === 0) return 52;
   const withMetric = allBullets.filter((b) => METRIC_RE.test(b)).length;
   const withOwnership = allBullets.filter((b) => OWNERSHIP_RE.test(b)).length;
-  const metricRatio = withMetric / allBullets.length;
-  const ownershipRatio = withOwnership / allBullets.length;
-  // Missing metrics soften proof; they do not claim the person failed.
-  // A real bullet list without numbers still sits in the coachable middle.
-  const score = 56 + metricRatio * 32 + ownershipRatio * 12;
+  // Counts, not ratios. Extra context beside an existing number must not dilute proof.
+  const score = 56 + Math.min(32, withMetric * 8) + Math.min(12, withOwnership * 4);
   return clamp(score * (0.9 + confidence.roles * 0.1));
 }
 
@@ -290,7 +300,8 @@ function scoreClarity(roles: CvFacts['roles'], summary: string | null): number {
   if (bullets.length === 0) return summary && summary.length > 40 ? 58 : 46;
   let score = 54;
   const specific = bullets.filter((b) => b.split(/\s+/).length >= 8 && /[a-z]/i.test(b)).length;
-  score += Math.min(28, (specific / bullets.length) * 28);
+  // Each clear line adds. A short extra line does not shrink the lines already counted.
+  score += Math.min(28, specific * 8);
   const tooVague = bullets.filter((b) => VAGUE_RE.test(b) && !METRIC_RE.test(b)).length;
   score -= Math.min(14, tooVague * 3);
   if (summary && summary.length > 60) score += 6;

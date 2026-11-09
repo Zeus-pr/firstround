@@ -7,6 +7,8 @@ Deterministic scorer + Grok extraction + vision for hard PDFs. The model fills a
 - Soft priors: ordinary CVs land in **supercharge**, not failure.
 - Career gaps and non-linear paths are never penalized.
 - Missing metrics lower proof quality; they do not invent failure.
+- Outcome and clarity count proof lines. Extra specific lines cannot dilute a score.
+- Supercharge never publishes a lower total than the score already stored.
 - Low extract confidence softens certainty; it does not invent a harsh fail.
 - Dual coaching lists: **genuine gaps** vs **under-emphasised**.
 - Never claim this is a universal ATS score. It is First Round LetterProof.
@@ -45,7 +47,7 @@ Contact email, location, and links are a separate sendability checklist outside 
 2. Client PUT to R2
 3. `POST /cv/register` `{ fileKey, contentType, sizeBytes, originalFilename? }`
 4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized)
-5. `POST /cv/supercharge` `{ cvDocumentId }` → grounded rewrite + re-score (costs 5 credits; idempotent per extraction)
+5. `POST /cv/supercharge` `{ cvDocumentId }` → grounded rewrite + re-score (costs 5 credits; idempotent per extraction). The saved total is `max(previous, next)`. Dates, employers, and numbers from the source extraction are kept. Rewritten bullets are accepted only when they stay grounded and score at least as high.
 6. `GET /cv/readiness/latest`
 7. `GET /credits` → balance + supercharge cost
 
@@ -61,11 +63,12 @@ Skip Supercharge on the web: show `genuineGaps` / `underEmphasised` suggestions;
 
 ## Env (api)
 
-| Variable       | Required    | Notes                                              |
-| -------------- | ----------- | -------------------------------------------------- |
-| `XAI_API_KEY`  | for analyze | xAI / Grok key                                     |
-| `XAI_MODEL`    | optional    | default `grok-4.3` (key may also allow `grok-4.7`) |
-| `XAI_BASE_URL` | optional    | default `https://api.x.ai/v1`                      |
+| Variable                | Required    | Notes                          |
+| ----------------------- | ----------- | ------------------------------ |
+| `XAI_API_KEY`           | for analyze | xAI / Grok key                 |
+| `XAI_MODEL`             | optional    | extract default `grok-4.3`     |
+| `XAI_SUPERCHARGE_MODEL` | optional    | Supercharge default `grok-4.7` |
+| `XAI_BASE_URL`          | optional    | default `https://api.x.ai/v1`  |
 
 Without `XAI_API_KEY`, register still works; analyze returns 503.
 Page render soft-fails to text-only if canvas/pdfjs fails; vision still needs `XAI_API_KEY`.
