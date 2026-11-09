@@ -37,18 +37,20 @@ export class CreditsService {
   async ensureTestGrant(workspaceId: string, userId: string): Promise<void> {
     if (!this.testMode()) return;
     const bal = await this.balance(workspaceId);
-    if (bal >= SUPERCHARGE_CREDIT_COST) return;
+    // Keep a large free pool while testing so Supercharge never blocks.
+    if (bal >= 1000) return;
     const db = this.ready();
     await db.insert(creditLedger).values({
       workspaceId,
       userId,
-      delta: 100,
-      reason: 'test_grant',
+      delta: 1000 - bal,
+      reason: `test_grant:${Date.now()}`,
     });
   }
 
   /**
    * Debit credits once per idempotency key (reason). Returns amount charged (0 if already billed).
+   * When CREDITS_TEST_MODE=1 (or non-production), Supercharge is free: no debit, no 402.
    */
   async debitOnce(opts: {
     workspaceId: string;
@@ -58,6 +60,10 @@ export class CreditsService {
   }): Promise<{ charged: number; balance: number }> {
     const db = this.ready();
     await this.ensureTestGrant(opts.workspaceId, opts.userId);
+
+    if (this.testMode()) {
+      return { charged: 0, balance: await this.balance(opts.workspaceId) };
+    }
 
     const [existing] = await db
       .select({ id: creditLedger.id })
