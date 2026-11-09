@@ -10,7 +10,7 @@
     "dev:api": "turbo run dev --filter=@firstround/api",
     "build": "turbo run build --filter=@firstround/api... && next build",
     "build:api": "turbo run build --filter=@firstround/api...",
-    "start": "next start",
+    "start": "node apps/api/dist/main.js",
     "lint": "turbo run lint && eslint .",
     "typecheck": "turbo run typecheck && tsc --noEmit",
     "test": "turbo run test",
@@ -21,7 +21,8 @@
     "db:ci": "pnpm --filter @firstround/db db:ci",
     "db:generate": "pnpm --filter @firstround/db db:generate",
     "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run db:ci && pnpm run build",
-    "start:api": "node apps/api/dist/main.js"
+    "start:api": "node apps/api/dist/main.js",
+    "start:web": "next start"
   },
   "dependencies": {
     "@fontsource-variable/google-sans": "^5.2.8",
