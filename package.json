@@ -11,17 +11,9 @@
     "dev:web": "turbo run dev --filter=@firstround/web",
     "build": "turbo run build",
     "build:api": "turbo run build --filter=@firstround/api...",
-<<<<<<< HEAD
-    "start": "node apps/api/dist/main.js",
-    "lint": "turbo run lint && eslint .",
-    "typecheck": "turbo run typecheck && tsc --noEmit",
-=======
     "build:web": "turbo run build --filter=@firstround/web...",
-    "start": "node apps/api/dist/main.js",
-    "start:web": "pnpm --filter @firstround/web start",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
->>>>>>> d4224dd ((web) Move Next app to apps/web and call the API origin.)
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -31,7 +23,7 @@
     "db:generate": "pnpm --filter @firstround/db db:generate",
     "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run db:ci && pnpm run build",
     "start:api": "node apps/api/dist/main.js",
-    "start:web": "next start"
+    "start:web": "pnpm --filter @firstround/web start"
   },
   "devDependencies": {
     "@firstround/config": "workspace:*",
