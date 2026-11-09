@@ -49,11 +49,11 @@ Contact email, location, and links are a separate sendability checklist outside 
 
 ## Env (api)
 
-| Variable       | Required    | Notes                           |
-| -------------- | ----------- | ------------------------------- |
-| `XAI_API_KEY`  | for analyze | xAI / Grok key                  |
+| Variable       | Required    | Notes                                              |
+| -------------- | ----------- | -------------------------------------------------- |
+| `XAI_API_KEY`  | for analyze | xAI / Grok key                                     |
 | `XAI_MODEL`    | optional    | default `grok-4.3` (key may also allow `grok-4.7`) |
-| `XAI_BASE_URL` | optional    | default `https://api.x.ai/v1`   |
+| `XAI_BASE_URL` | optional    | default `https://api.x.ai/v1`                      |
 
 Without `XAI_API_KEY`, register still works; analyze returns 503.
 Page render soft-fails to text-only if canvas/pdfjs fails; vision still needs `XAI_API_KEY`.
