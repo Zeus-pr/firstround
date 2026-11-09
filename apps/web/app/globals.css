@@ -1017,8 +1017,9 @@ h1 {
 .site-foot {
   border-top: 1px solid rgba(244, 239, 230, 0.14);
   color: #cfc6b8;
-  padding: 1.35rem 0 2.25rem;
+  padding: 1.35rem 0 0;
   margin-top: clamp(2rem, 6vh, 4rem);
+  overflow: hidden;
 }
 
 .site-foot-row {
@@ -1027,6 +1028,29 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem 1.5rem;
+}
+
+.site-foot-mark {
+  margin-top: clamp(1.75rem, 4vh, 2.75rem);
+  padding-bottom: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.site-foot-logo {
+  display: block;
+  width: min(92vw, 58rem);
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  opacity: 0.42;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    rgba(0, 0, 0, 0.55) 42%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.55) 42%, transparent 100%);
 }
 
 .site-foot-nav {
@@ -1161,6 +1185,11 @@ h1 {
   .site-foot-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .site-foot-logo {
+    width: min(100%, 36rem);
+    opacity: 0.38;
   }
 }
 
