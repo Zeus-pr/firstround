@@ -173,3 +173,84 @@ export const sourceRegister = pgTable(
   },
   (table) => [uniqueIndex('source_register_source_key_uidx').on(table.sourceKey)],
 );
+
+export const onboardingStepEnum = pgEnum('onboarding_step', [
+  'account',
+  'cv',
+  'readiness',
+  'preferences',
+  'gmail',
+  'done',
+]);
+
+export const profiles = pgTable('profiles', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  displayName: text('display_name'),
+  onboardingStep: onboardingStepEnum('onboarding_step').notNull().default('account'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const cvDocuments = pgTable('cv_documents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  fileKey: text('file_key').notNull(),
+  contentType: text('content_type').notNull(),
+  sizeBytes: integer('size_bytes').notNull(),
+  sha256: text('sha256'),
+  originalFilename: text('original_filename'),
+  status: text('status').notNull().default('uploaded'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const cvExtractions = pgTable('cv_extractions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  cvDocumentId: uuid('cv_document_id')
+    .notNull()
+    .references(() => cvDocuments.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  schemaVersion: text('schema_version').notNull(),
+  modelVersion: text('model_version').notNull(),
+  promptVersion: text('prompt_version').notNull(),
+  facts: jsonb('facts').$type<Record<string, unknown>>().default({}).notNull(),
+  meta: jsonb('meta').$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const cvReadinessScores = pgTable('cv_readiness_scores', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  cvDocumentId: uuid('cv_document_id')
+    .notNull()
+    .references(() => cvDocuments.id, { onDelete: 'cascade' }),
+  extractionId: uuid('extraction_id')
+    .notNull()
+    .references(() => cvExtractions.id, { onDelete: 'cascade' }),
+  total: integer('total').notNull(),
+  dimensions: jsonb('dimensions').$type<Record<string, number>>().default({}).notNull(),
+  gaps: jsonb('gaps').$type<string[]>().default([]).notNull(),
+  sendability: jsonb('sendability').$type<Record<string, unknown>>().default({}).notNull(),
+  algorithmVersion: text('algorithm_version').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const preferences = pgTable('preferences', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  jobFamilies: text('job_families').array().notNull().default([]),
+  locations: text('locations').array().notNull().default([]),
+  targetLevel: text('target_level'),
+  links: jsonb('links').$type<Record<string, string>>().default({}).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
