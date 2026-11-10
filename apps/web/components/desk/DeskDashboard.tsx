@@ -34,6 +34,8 @@ type Props = {
   onStartRound: () => void;
   cvFilename?: string | null;
   onDownloadCv?: () => void;
+  onDeleteCv?: () => void;
+  cvBusy?: boolean;
 };
 
 export function DeskDashboard({
@@ -63,6 +65,8 @@ export function DeskDashboard({
   onStartRound,
   cvFilename = null,
   onDownloadCv,
+  onDeleteCv,
+  cvBusy = false,
 }: Props) {
   const hasReadiness = Boolean(readiness);
   const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval').slice(0, 10);
@@ -121,9 +125,21 @@ export function DeskDashboard({
                     ? 'Good enough to start. A stronger CV gets more replies.'
                     : 'You can keep going. A stronger CV gets more replies.'}
                 </p>
-                <button className="desk-quiet" type="button" onClick={onReviewScore}>
-                  See the breakdown
-                </button>
+                <div className="desk-pane-actions">
+                  <button className="desk-quiet" type="button" onClick={onReviewScore}>
+                    See the breakdown
+                  </button>
+                  {onDeleteCv ? (
+                    <button
+                      className="desk-quiet"
+                      type="button"
+                      disabled={cvBusy}
+                      onClick={onDeleteCv}
+                    >
+                      {cvBusy ? 'Deleting…' : 'Delete CV'}
+                    </button>
+                  ) : null}
+                </div>
               </>
             ) : (
               <>

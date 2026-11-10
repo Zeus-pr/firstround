@@ -202,6 +202,16 @@ export async function fetchCvDownload(
   return (await res.json()) as { downloadUrl: string; filename: string };
 }
 
+export async function deleteCv(user: User, cvDocumentId: string): Promise<void> {
+  const headers = await authHeaders(user);
+  const res = await fetch(apiUrl(`/cv/documents/${cvDocumentId}`), {
+    method: 'DELETE',
+    headers,
+  });
+  if (res.status === 404) throw new Error('That CV is already gone.');
+  if (!res.ok) throw new Error(`Could not delete the CV (${res.status})`);
+}
+
 export async function fetchLatestReadiness(user: User): Promise<{
   readiness: ReadinessResult | null;
   cvDocumentId: string | null;

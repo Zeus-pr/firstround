@@ -1754,6 +1754,13 @@ h1 {
   width: auto;
 }
 
+.desk-pane-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
 .desk-rail-list {
   list-style: none;
   margin: 0.7rem 0 0;
@@ -2190,6 +2197,11 @@ h1 {
 
 .desk-pick-menu button:hover {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.desk-pick-empty {
+  padding: 0.45rem 0.7rem;
+  color: var(--quiet);
 }
 
 .desk-choosing {
