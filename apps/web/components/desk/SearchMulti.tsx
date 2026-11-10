@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 type Props = {
   label: string;
@@ -24,16 +24,26 @@ export function SearchMulti({
   disabled = false,
 }: Props) {
   const listId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener('mousedown', onPointer);
+    return () => window.removeEventListener('mousedown', onPointer);
+  }, [open]);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     return options
       .filter((option) => !value.some((picked) => picked.toLowerCase() === option.toLowerCase()))
       .filter((option) => (q ? option.toLowerCase().includes(q) : true))
-      .slice(0, 8);
+      .slice(0, 40);
   }, [options, query, value]);
 
   const exact = options.some((option) => option.toLowerCase() === query.trim().toLowerCase());
@@ -65,7 +75,7 @@ export function SearchMulti({
   }
 
   return (
-    <div className="desk-pick">
+    <div className={`desk-pick${open ? ' is-open' : ''}`} ref={rootRef}>
       <span className="desk-pick-label" id={listId}>
         {label}
       </span>
@@ -86,27 +96,37 @@ export function SearchMulti({
           ))}
         </ul>
       ) : null}
-      <input
-        aria-labelledby={listId}
-        value={query}
-        placeholder={placeholder}
-        disabled={disabled}
-        autoComplete="off"
-        onFocus={() => setOpen(true)}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setOpen(true);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            if (matches[0] && query.trim()) pick(matches[0]);
-            else if (canAdd) void addCustom();
-          }
-          if (event.key === 'Escape') setOpen(false);
-        }}
-      />
-      {open && (matches.length > 0 || canAdd) ? (
+      <div className="desk-pick-control">
+        <input
+          aria-labelledby={listId}
+          aria-expanded={open}
+          value={query}
+          placeholder={placeholder}
+          disabled={disabled}
+          autoComplete="off"
+          onFocus={() => setOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              if (matches[0] && query.trim()) pick(matches[0]);
+              else if (canAdd) void addCustom();
+            }
+            if (event.key === 'Escape') setOpen(false);
+          }}
+        />
+        <button
+          type="button"
+          className="desk-pick-toggle"
+          aria-label={open ? `Close ${label}` : `Open ${label}`}
+          disabled={disabled}
+          onClick={() => setOpen((current) => !current)}
+        />
+      </div>
+      {open ? (
         <ul className="desk-pick-menu" role="listbox" aria-labelledby={listId}>
           {matches.map((option) => (
             <li key={option}>

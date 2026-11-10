@@ -1,6 +1,7 @@
 'use client';
 
 import { Orb } from '@yogesharc/thinking-orbs';
+import { ScoreName } from './ScoreName';
 
 const ANALYZE_BEATS = [
   { state: 'searching' as const, line: 'Reading the CV' },
@@ -27,7 +28,9 @@ export function AnalysisOrbs({
       <p className="desk-kicker">
         {mode === 'suggest' ? 'Writing suggestions' : 'Reading your CV'}
       </p>
-      <h1>Reply mark</h1>
+      <h1>
+        <ScoreName />
+      </h1>
       <p className="desk-lead">
         {mode === 'suggest'
           ? 'Short edits based on the score and the text already on your CV. The score does not change.'

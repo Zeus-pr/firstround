@@ -6,10 +6,10 @@ export type RoundPhase =
   'idle' | 'thinking' | 'scanning' | 'scoring' | 'drafting' | 'done' | 'error';
 
 const BEATS: Record<Exclude<RoundPhase, 'idle' | 'done' | 'error'>, string> = {
-  thinking: 'Reading your CV and preferences…',
-  scanning: 'Scanning today’s openings…',
-  scoring: 'Scoring the strongest fits…',
-  drafting: 'Preparing letters for review…',
+  thinking: 'Reading your CV…',
+  scanning: 'Looking at today’s roles…',
+  scoring: 'Checking each role against your CV…',
+  drafting: 'Writing the letters…',
 };
 
 type Props = {
@@ -32,36 +32,38 @@ export function StartMyRound({
 
   const title =
     phase === 'done'
-      ? 'Round ready'
+      ? 'Your 10 are in'
       : phase === 'error'
-        ? 'Couldn’t finish'
+        ? 'Try again'
         : running
-          ? 'Working on it'
-          : 'Start my round';
+          ? 'Choosing the right roles'
+          : 'Find my 10';
 
   const lead = running
     ? BEATS[phase]
     : phase === 'done' || phase === 'error'
       ? (resultMessage ??
-        (phase === 'done' ? 'Drafts are ready to review.' : 'Try again in a moment.'))
-      : 'We match your CV to today’s openings and draft letters for you to approve.';
+        (phase === 'done'
+          ? 'Read the letters below. Keep the ones you want.'
+          : 'Something got stuck. Try once more.'))
+      : 'Up to 10 roles today, with a letter for each. That’s the daily limit.';
 
   const buttonLabel =
     phase === 'done'
-      ? 'Run again'
+      ? 'Look again'
       : phase === 'error'
         ? 'Try again'
         : running
           ? 'Working…'
-          : 'Start my round';
+          : 'Find my 10';
 
   return (
     <section
       className={`desk-round${phase === 'error' ? ' is-error' : ''}`}
-      aria-label="Start my round"
+      aria-label="Find my 10"
     >
       <div className="desk-round-copy">
-        <p className="desk-kicker">Your round</p>
+        <p className="desk-kicker">Today</p>
         <h2 className="desk-round-title">{title}</h2>
         <p className="desk-round-lead" aria-live="polite">
           {lead}

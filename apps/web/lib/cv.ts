@@ -71,14 +71,13 @@ export const SUPERCHARGE_CREDIT_COST = 5;
 
 /** Straight copy for the desk UI. API wording can stay poetic; the page does not. */
 export function coachReadiness(readiness: ReadinessResult): ReadinessResult {
-  const total = readiness.total;
   if (readiness.band === 'ready') {
     return {
       ...readiness,
       recommendation: {
         action: 'continue',
-        headline: 'Ready to email',
-        body: `CV score ${total}. Continue to job preferences, then connect Gmail.`,
+        headline: 'Looks ready',
+        body: 'Set your preferences, then connect Gmail.',
       },
     };
   }
@@ -87,8 +86,8 @@ export function coachReadiness(readiness: ReadinessResult): ReadinessResult {
       ...readiness,
       recommendation: {
         action: 'supercharge',
-        headline: 'Good base. Get CV suggestions.',
-        body: `CV score ${total}. Get short edit suggestions, or keep the checklist. The score does not change.`,
+        headline: 'Good enough to start',
+        body: 'You can keep going. A few edits would make the letters stronger.',
       },
     };
   }
@@ -96,8 +95,8 @@ export function coachReadiness(readiness: ReadinessResult): ReadinessResult {
     ...readiness,
     recommendation: {
       action: 'strengthen',
-      headline: 'Strengthen the CV first',
-      body: `CV score ${total}. Fix the gaps below before you email recruiters.`,
+      headline: 'Needs work',
+      body: 'Fix the gaps below, then come back. You can still continue.',
     },
   };
 }
@@ -193,9 +192,20 @@ export async function fetchCredits(user: User): Promise<CreditsBalanceResponse> 
   return (await res.json()) as CreditsBalanceResponse;
 }
 
+export async function fetchCvDownload(
+  user: User,
+  cvDocumentId: string,
+): Promise<{ downloadUrl: string; filename: string }> {
+  const headers = await authHeaders(user);
+  const res = await fetch(apiUrl(`/cv/documents/${cvDocumentId}/download`), { headers });
+  if (!res.ok) throw new Error(`Could not download the CV (${res.status})`);
+  return (await res.json()) as { downloadUrl: string; filename: string };
+}
+
 export async function fetchLatestReadiness(user: User): Promise<{
   readiness: ReadinessResult | null;
   cvDocumentId: string | null;
+  cvFilename: string | null;
   suggestions: string[];
 }> {
   const headers = await authHeaders(user);
@@ -206,6 +216,7 @@ export async function fetchLatestReadiness(user: User): Promise<{
   return (await res.json()) as {
     readiness: ReadinessResult | null;
     cvDocumentId: string | null;
+    cvFilename: string | null;
     suggestions: string[];
   };
 }

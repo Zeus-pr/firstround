@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ReviewDraft } from '@/lib/jobs';
+import { NaukriMark } from './NaukriMark';
 
 type Props = {
   drafts: ReviewDraft[];
@@ -22,14 +23,14 @@ export function DraftLetters({
   onSave,
   onCancel,
 }: Props) {
-  const pending = drafts.filter((d) => d.status === 'pending_approval');
+  const pending = drafts.filter((d) => d.status === 'pending_approval').slice(0, 10);
   const [openId, setOpenId] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ id: string; subject: string; body: string } | null>(null);
 
   return (
     <div className="desk-letters-wrap">
       <div className="desk-shuffle">
-        <p>Smart shuffle writes a different subject and opening for each letter.</p>
+        <p>Use a different subject line on each letter.</p>
         <button
           type="button"
           className={`desk-switch${shuffle ? ' is-on' : ''}`}
@@ -58,7 +59,10 @@ export function DraftLetters({
                   onClick={() => setOpenId(open ? null : draft.id)}
                 >
                   <span className="desk-letter-meta">
-                    <span className="desk-letter-company">{company}</span>
+                    <span className="desk-letter-company">
+                      <NaukriMark />
+                      {company}
+                    </span>
                     <span className="desk-letter-role">{draft.subject?.trim() || role}</span>
                   </span>
                   <span className="desk-letter-chevron" aria-hidden="true" />

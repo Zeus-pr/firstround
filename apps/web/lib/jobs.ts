@@ -89,12 +89,23 @@ export async function approveDraft(user: User, draftId: string, body?: string): 
 
 export type DeskRunResult = {
   ok: true;
+  status?: 'selecting' | 'ready' | 'empty' | 'failed';
+  runId?: string;
   created: number;
   considered: number;
   drafts: Array<{ draftId: string; campaignId: string; company: string; role: string }>;
   message: string;
   readinessTotal: number;
 };
+
+export async function fetchDeskRun(
+  user: User,
+  runId: string,
+): Promise<{ status: string; message: string; created: number }> {
+  const res = await fetch(apiUrl(`/desk/run/${runId}`), { headers: await authHeaders(user) });
+  if (!res.ok) throw new Error(`Could not check the round (${res.status})`);
+  return (await res.json()) as { status: string; message: string; created: number };
+}
 
 export async function startDeskRun(user: User): Promise<DeskRunResult> {
   const res = await fetch(apiUrl('/desk/run'), {

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReadinessResult } from '@/lib/cv';
 import { AnalysisOrbs } from './AnalysisOrbs';
 import { ReadinessReveal } from './ReadinessReveal';
+import { ScoreName } from './ScoreName';
 
 export type CvModalStage = 'upload' | 'analyzing' | 'suggesting' | 'result';
 
@@ -66,7 +67,7 @@ export function CvModal({
       <div className="desk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="desk-modal-top">
           <p className="desk-kicker" id={titleId}>
-            Reply mark
+            <ScoreName />
           </p>
           {!busy ? (
             <button className="text-button" type="button" onClick={onClose}>

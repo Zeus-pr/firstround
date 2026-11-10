@@ -10,6 +10,7 @@ import {
   fetchCredits,
   fetchCvSuggestions,
   fetchLatestReadiness,
+  fetchCvDownload,
   coachReadiness,
   uploadAndAnalyzeCv,
   type ReadinessResult,
@@ -20,6 +21,7 @@ import {
   cancelDraft,
   fetchTodayDrafts,
   saveDraftBody,
+  fetchDeskRun,
   startDeskRun,
   type ReviewDraft,
 } from '@/lib/jobs';
@@ -59,6 +61,7 @@ export function DeskOnboarding() {
   const [note, setNote] = useState('');
   const [fileName, setFileName] = useState<string>();
   const [cvDocumentId, setCvDocumentId] = useState<string | null>(null);
+  const [cvFilename, setCvFilename] = useState<string | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -146,6 +149,7 @@ export function DeskOnboarding() {
           if (isReadiness(latest?.readiness)) {
             setReadiness(coachReadiness(latest.readiness));
             if (latest.cvDocumentId) setCvDocumentId(latest.cvDocumentId);
+            setCvFilename(latest.cvFilename ?? null);
             if (latest.suggestions?.length) setSuggestions(latest.suggestions);
             if (needsCvModal(step)) {
               setModalOpen(false);
@@ -279,6 +283,17 @@ export function DeskOnboarding() {
           setModalOpen(true);
         }}
         onOpenPreferences={() => setPrefsOpen(true)}
+        cvFilename={cvFilename}
+        onDownloadCv={() => {
+          if (!user || !cvDocumentId) return;
+          void fetchCvDownload(user, cvDocumentId)
+            .then((file) => {
+              window.open(file.downloadUrl, '_blank', 'noopener,noreferrer');
+            })
+            .catch((error) => {
+              setNote(error instanceof Error ? error.message : 'Could not download the CV.');
+            });
+        }}
         onStartRound={() => {
           if (!user || (roundPhase !== 'idle' && roundPhase !== 'done' && roundPhase !== 'error')) {
             return;
@@ -295,6 +310,27 @@ export function DeskOnboarding() {
           void startDeskRun(user)
             .then(async (result) => {
               window.clearInterval(timer);
+              if (result.status === 'selecting' && result.runId) {
+                setRoundPhase('scoring');
+                setRoundMessage(result.message);
+                setNote(result.message);
+                const runId = result.runId;
+                const poll = window.setInterval(() => {
+                  void fetchDeskRun(user, runId)
+                    .then(async (state) => {
+                      if (state.status === 'selecting') return;
+                      window.clearInterval(poll);
+                      setRoundPhase(state.status === 'failed' ? 'error' : 'done');
+                      setRoundMessage(state.message);
+                      setDrafts(await fetchTodayDrafts(user).catch(() => []));
+                      setNote(state.message);
+                    })
+                    .catch(() => {
+                      window.clearInterval(poll);
+                    });
+                }, 8000);
+                return;
+              }
               setRoundPhase('done');
               setRoundMessage(result.message);
               setDrafts(await fetchTodayDrafts(user).catch(() => []));
