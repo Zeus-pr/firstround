@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReadinessResult } from '@/lib/cv';
+import type { CorpusStatus, ReviewDraft } from '@/lib/jobs';
 
 type Props = {
   email: string | null;
@@ -11,12 +12,16 @@ type Props = {
   gmailConnected?: boolean;
   gmailEmail?: string | null;
   gmailBusy?: boolean;
+  corpus?: CorpusStatus | null;
+  drafts?: ReviewDraft[];
+  draftBusyId?: string | null;
   onOpenCv: () => void;
   onReviewScore: () => void;
   onOpenPreferences: () => void;
   onConnectGmail?: () => void;
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
+  onApproveDraft?: (draftId: string) => void;
 };
 
 export function DeskDashboard({
@@ -28,14 +33,19 @@ export function DeskDashboard({
   gmailConnected = false,
   gmailEmail = null,
   gmailBusy = false,
+  corpus = null,
+  drafts = [],
+  draftBusyId = null,
   onOpenCv,
   onReviewScore,
   onOpenPreferences,
   onConnectGmail,
   onDisconnectGmail,
   onDismissSuggestions,
+  onApproveDraft,
 }: Props) {
   const hasReadiness = Boolean(readiness);
+  const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval');
 
   return (
     <div className="desk-dash">
@@ -131,25 +141,30 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Email drafts</p>
-            <ul className="desk-rail-list">
-              <li>
-                <span>Subject lines</span>
-                <span className="desk-muted">Empty</span>
-              </li>
-              <li>
-                <span>First email</span>
-                <span className="desk-muted">Empty</span>
-              </li>
-              <li>
-                <span>About me</span>
-                <span className="desk-muted">Empty</span>
-              </li>
-              <li>
-                <span>Follow-ups</span>
-                <span className="desk-muted">3 planned later</span>
-              </li>
-            </ul>
+            <p className="desk-kicker">Today’s drafts</p>
+            {pendingDrafts.length === 0 ? (
+              <p className="desk-pane-copy">No drafts waiting for approval.</p>
+            ) : (
+              <ul className="desk-rail-list">
+                {pendingDrafts.slice(0, 5).map((draft) => (
+                  <li key={draft.id}>
+                    <span>Draft · {draft.specificity}</span>
+                    {onApproveDraft ? (
+                      <button
+                        className="text-button"
+                        type="button"
+                        disabled={draftBusyId === draft.id}
+                        onClick={() => onApproveDraft(draft.id)}
+                      >
+                        {draftBusyId === draft.id ? 'Approving…' : 'Approve'}
+                      </button>
+                    ) : (
+                      <span className="desk-muted">{draft.status}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section className="desk-pane desk-pane-quiet">
@@ -172,24 +187,30 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Job applications</p>
-            <p className="desk-pane-copy">Review drafts, follow-ups, and replies here.</p>
-            <ul className="desk-stats" aria-label="Application stats">
+            <p className="desk-kicker">Job corpus</p>
+            <p className="desk-pane-copy">
+              {corpus
+                ? `${corpus.counts.canonical} canonical · ${corpus.counts.quarantined} quarantined · ${corpus.counts.stale} stale${corpus.apifyConfigured ? '' : ' · Apify not configured'}`
+                : 'Corpus status loads after sign-in.'}
+            </p>
+            <ul className="desk-stats" aria-label="Corpus and draft stats">
               <li>
-                <span className="desk-stat">0</span>
-                <span>Companies contacted</span>
+                <span className="desk-stat">{corpus?.counts.canonical ?? 0}</span>
+                <span>Jobs in corpus</span>
               </li>
               <li>
-                <span className="desk-stat">0</span>
-                <span>Emails sent</span>
+                <span className="desk-stat">{pendingDrafts.length}</span>
+                <span>Pending approvals</span>
               </li>
               <li>
-                <span className="desk-stat">0</span>
-                <span>Companies replied</span>
+                <span className="desk-stat">
+                  {corpus?.sources.filter((s) => s.enabled && !s.killSwitch).length ?? 0}
+                </span>
+                <span>Sources on</span>
               </li>
               <li>
-                <span className="desk-stat">—</span>
-                <span>Reply rate</span>
+                <span className="desk-stat">{corpus?.apifyConfigured ? 'On' : '—'}</span>
+                <span>Apify</span>
               </li>
             </ul>
           </section>
