@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReadinessResult } from '@/lib/cv';
-import type { CorpusStatus, ReviewDraft } from '@/lib/jobs';
+import type { ReviewDraft } from '@/lib/jobs';
+import { StartMyRound, type RoundPhase } from './StartMyRound';
 
 type Props = {
   email: string | null;
@@ -12,9 +13,10 @@ type Props = {
   gmailConnected?: boolean;
   gmailEmail?: string | null;
   gmailBusy?: boolean;
-  corpus?: CorpusStatus | null;
   drafts?: ReviewDraft[];
   draftBusyId?: string | null;
+  roundPhase: RoundPhase;
+  roundMessage?: string;
   onOpenCv: () => void;
   onReviewScore: () => void;
   onOpenPreferences: () => void;
@@ -22,6 +24,7 @@ type Props = {
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
   onApproveDraft?: (draftId: string) => void;
+  onStartRound: () => void;
 };
 
 export function DeskDashboard({
@@ -33,9 +36,10 @@ export function DeskDashboard({
   gmailConnected = false,
   gmailEmail = null,
   gmailBusy = false,
-  corpus = null,
   drafts = [],
   draftBusyId = null,
+  roundPhase,
+  roundMessage,
   onOpenCv,
   onReviewScore,
   onOpenPreferences,
@@ -43,9 +47,12 @@ export function DeskDashboard({
   onDisconnectGmail,
   onDismissSuggestions,
   onApproveDraft,
+  onStartRound,
 }: Props) {
   const hasReadiness = Boolean(readiness);
   const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval');
+  const roundDisabled = !hasReadiness;
+  const roundDisabledReason = !hasReadiness ? 'Upload a CV and get a score first.' : undefined;
 
   return (
     <div className="desk-dash">
@@ -67,21 +74,13 @@ export function DeskDashboard({
         </div>
       </header>
 
-      <section className="desk-add-role" aria-label="Add a job">
-        <p className="desk-kicker">Found a job you want?</p>
-        <p className="desk-add-role-copy">
-          Add the posting. We draft an email to the recruiter or hiring manager.
-        </p>
-        <div className="desk-add-role-row">
-          <button className="desk-ghost" type="button" disabled>
-            Screenshot
-          </button>
-          <button className="desk-ghost" type="button" disabled>
-            Link or paste
-          </button>
-          <span className="desk-coming">Coming next</span>
-        </div>
-      </section>
+      <StartMyRound
+        disabled={roundDisabled}
+        disabledReason={roundDisabledReason}
+        phase={roundPhase}
+        resultMessage={roundMessage}
+        onStart={onStartRound}
+      />
 
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
@@ -178,7 +177,7 @@ export function DeskDashboard({
             <div>
               <p className="desk-kicker">Autopilot</p>
               <p className="desk-pane-copy">
-                Off. Connect Gmail and set preferences before drafts run.
+                Off. Connect Gmail and set preferences before drafts send on their own.
               </p>
             </div>
             <button className="desk-ghost" type="button" disabled>
@@ -187,30 +186,26 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Job corpus</p>
-            <p className="desk-pane-copy">
-              {corpus
-                ? `${corpus.counts.canonical} canonical · ${corpus.counts.quarantined} quarantined · ${corpus.counts.stale} stale${corpus.apifyConfigured ? '' : ' · Apify not configured'}`
-                : 'Corpus status loads after sign-in.'}
-            </p>
-            <ul className="desk-stats" aria-label="Corpus and draft stats">
-              <li>
-                <span className="desk-stat">{corpus?.counts.canonical ?? 0}</span>
-                <span>Jobs in corpus</span>
-              </li>
+            <p className="desk-kicker">Applications</p>
+            <p className="desk-pane-copy">Review drafts, follow-ups, and replies here.</p>
+            <ul className="desk-stats" aria-label="Application stats">
               <li>
                 <span className="desk-stat">{pendingDrafts.length}</span>
                 <span>Pending approvals</span>
               </li>
               <li>
                 <span className="desk-stat">
-                  {corpus?.sources.filter((s) => s.enabled && !s.killSwitch).length ?? 0}
+                  {drafts.filter((d) => d.status === 'approved').length}
                 </span>
-                <span>Sources on</span>
+                <span>Approved</span>
               </li>
               <li>
-                <span className="desk-stat">{corpus?.apifyConfigured ? 'On' : '—'}</span>
-                <span>Apify</span>
+                <span className="desk-stat">0</span>
+                <span>Sent</span>
+              </li>
+              <li>
+                <span className="desk-stat">—</span>
+                <span>Reply rate</span>
               </li>
             </ul>
           </section>
@@ -245,7 +240,22 @@ export function DeskDashboard({
               <span>To</span>
               <span>Status</span>
             </div>
-            <p className="desk-log-empty">No emails yet. Add a job when that feature ships.</p>
+            {pendingDrafts.length === 0 ? (
+              <p className="desk-log-empty">
+                No applications yet. Start my round when you’re ready.
+              </p>
+            ) : (
+              <ul className="desk-log-list">
+                {pendingDrafts.slice(0, 8).map((draft) => (
+                  <li key={draft.id}>
+                    <span>Draft</span>
+                    <span>Pending approval</span>
+                    <span>—</span>
+                    <span>{draft.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       </div>

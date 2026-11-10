@@ -53,6 +53,10 @@ components:
 
 The public page is a sheet of paper on a dark desk. Google Sans is the only face. Wax red is the traveling mark and the one button. Status is a sentence, never a pill.
 
+## Motion references (not UI to copy)
+
+Premium thinking / processing motion language: [Craftwork components](https://craftwork.design/components) (AI Loader, Soft Blur, Liquid Metal Button, Siri Orb). Desk “Start my round” uses in-repo orbs + soft blur / morph, not a pasted Craftwork kit.
+
 ## Colors
 
 The blotter is the room. The sheet is the only light object. Quiet text is ink, darkened, not gray. Wax appears twice: the dot on the day line, and Hold a seat.

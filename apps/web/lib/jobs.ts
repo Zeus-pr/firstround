@@ -67,3 +67,26 @@ export async function approveDraft(user: User, draftId: string, body?: string): 
     throw new Error(err?.message ?? `Could not approve draft (${res.status})`);
   }
 }
+
+export type DeskRunResult = {
+  ok: true;
+  created: number;
+  considered: number;
+  drafts: Array<{ draftId: string; campaignId: string; company: string; role: string }>;
+  message: string;
+  readinessTotal: number;
+};
+
+export async function startDeskRun(user: User): Promise<DeskRunResult> {
+  const res = await fetch(apiUrl('/desk/run'), {
+    method: 'POST',
+    headers: await authHeaders(user),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(
+      typeof err?.message === 'string' ? err.message : `Could not start your round (${res.status})`,
+    );
+  }
+  return (await res.json()) as DeskRunResult;
+}
