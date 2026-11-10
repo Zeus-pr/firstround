@@ -15,6 +15,13 @@ import {
   type ReadinessResult,
 } from '@/lib/cv';
 import { disconnectGmail, fetchGmailStatus, startGmailConnect } from '@/lib/gmail';
+import {
+  approveDraft,
+  fetchCorpusStatus,
+  fetchTodayDrafts,
+  type CorpusStatus,
+  type ReviewDraft,
+} from '@/lib/jobs';
 import { CvModal, type CvModalStage } from './CvModal';
 import { DeskDashboard } from './DeskDashboard';
 import { PreferencesModal } from './PreferencesModal';
@@ -59,6 +66,9 @@ export function DeskOnboarding() {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [gmailBusy, setGmailBusy] = useState(false);
+  const [corpus, setCorpus] = useState<CorpusStatus | null>(null);
+  const [drafts, setDrafts] = useState<ReviewDraft[]>([]);
+  const [draftBusyId, setDraftBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -92,6 +102,8 @@ export function DeskOnboarding() {
         setReadiness(null);
         setGmailConnected(false);
         setGmailEmail(null);
+        setCorpus(null);
+        setDrafts([]);
         return;
       }
       void (async () => {
@@ -106,11 +118,15 @@ export function DeskOnboarding() {
             setModalStage('upload');
           }
 
-          const [credits, latest, gmail] = await Promise.all([
+          const [credits, latest, gmail, corpusStatus, todayDrafts] = await Promise.all([
             fetchCredits(next).catch(() => null),
             fetchLatestReadiness(next).catch(() => null),
             fetchGmailStatus(next).catch(() => null),
+            fetchCorpusStatus(next).catch(() => null),
+            fetchTodayDrafts(next).catch(() => []),
           ]);
+          if (corpusStatus) setCorpus(corpusStatus);
+          setDrafts(todayDrafts);
           if (credits) setCreditBalance(credits.balance);
           if (gmail) {
             setGmailConnected(gmail.connected);
@@ -241,6 +257,9 @@ export function DeskOnboarding() {
         gmailConnected={gmailConnected}
         gmailEmail={gmailEmail}
         gmailBusy={gmailBusy}
+        corpus={corpus}
+        drafts={drafts}
+        draftBusyId={draftBusyId}
         onOpenCv={() => {
           setNote('');
           setFileName(undefined);
@@ -253,6 +272,20 @@ export function DeskOnboarding() {
           setModalOpen(true);
         }}
         onOpenPreferences={() => setPrefsOpen(true)}
+        onApproveDraft={(draftId) => {
+          if (!user) return;
+          setDraftBusyId(draftId);
+          setNote('');
+          void approveDraft(user, draftId)
+            .then(async () => {
+              setDrafts(await fetchTodayDrafts(user).catch(() => []));
+              setNote('Draft approved.');
+            })
+            .catch((error) => {
+              setNote(error instanceof Error ? error.message : 'Could not approve draft.');
+            })
+            .finally(() => setDraftBusyId(null));
+        }}
         onConnectGmail={() => {
           if (!user) return;
           setGmailBusy(true);
