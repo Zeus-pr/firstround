@@ -5,7 +5,7 @@ import type { ReadinessResult } from '@/lib/cv';
 import { AnalysisOrbs } from './AnalysisOrbs';
 import { ReadinessReveal } from './ReadinessReveal';
 
-export type CvModalStage = 'upload' | 'analyzing' | 'supercharging' | 'result';
+export type CvModalStage = 'upload' | 'analyzing' | 'suggesting' | 'result';
 
 type Props = {
   open: boolean;
@@ -14,7 +14,7 @@ type Props = {
   note: string;
   readiness: ReadinessResult | null;
   creditBalance?: number | null;
-  rewrittenText?: string | null;
+  suggestions?: string[];
   replacing?: boolean;
   primaryBusy?: boolean;
   onClose: () => void;
@@ -30,7 +30,7 @@ export function CvModal({
   note,
   readiness,
   creditBalance,
-  rewrittenText,
+  suggestions,
   replacing,
   primaryBusy,
   onClose,
@@ -40,7 +40,7 @@ export function CvModal({
 }: Props) {
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const busy = stage === 'analyzing' || stage === 'supercharging';
+  const busy = stage === 'analyzing' || stage === 'suggesting';
 
   useEffect(() => {
     if (!open) return;
@@ -75,11 +75,8 @@ export function CvModal({
           ) : null}
         </header>
 
-        {stage === 'analyzing' || stage === 'supercharging' ? (
-          <AnalysisOrbs
-            fileName={fileName}
-            mode={stage === 'supercharging' ? 'supercharge' : 'analyze'}
-          />
+        {stage === 'analyzing' || stage === 'suggesting' ? (
+          <AnalysisOrbs fileName={fileName} mode={stage === 'suggesting' ? 'suggest' : 'analyze'} />
         ) : null}
 
         {stage === 'upload' ? (
@@ -125,7 +122,7 @@ export function CvModal({
               onSkip={onSkip}
               primaryBusy={primaryBusy}
               creditBalance={creditBalance}
-              rewrittenText={rewrittenText}
+              suggestions={suggestions}
             />
             {note ? (
               <p className="note" role="status">

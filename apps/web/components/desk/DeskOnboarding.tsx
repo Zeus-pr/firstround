@@ -8,8 +8,9 @@ import { ensureAppSession, type SessionPayload } from '@/lib/session';
 import {
   acceptCvFile,
   fetchCredits,
+  fetchCvSuggestions,
   fetchLatestReadiness,
-  superchargeCv,
+  coachReadiness,
   uploadAndAnalyzeCv,
   type ReadinessResult,
 } from '@/lib/cv';
@@ -48,7 +49,6 @@ export function DeskOnboarding() {
   const [fileName, setFileName] = useState<string>();
   const [cvDocumentId, setCvDocumentId] = useState<string | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
-  const [rewrittenText, setRewrittenText] = useState<string | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStage, setModalStage] = useState<CvModalStage>('upload');
@@ -71,7 +71,7 @@ export function DeskOnboarding() {
         setModalOpen(false);
         setCreditBalance(null);
         setCvDocumentId(null);
-        setRewrittenText(null);
+        setSuggestions([]);
         setReadiness(null);
         return;
       }
@@ -93,8 +93,9 @@ export function DeskOnboarding() {
           ]);
           if (credits) setCreditBalance(credits.balance);
           if (isReadiness(latest?.readiness)) {
-            setReadiness(latest.readiness);
+            setReadiness(coachReadiness(latest.readiness));
             if (latest.cvDocumentId) setCvDocumentId(latest.cvDocumentId);
+            if (latest.suggestions?.length) setSuggestions(latest.suggestions);
             if (needsCvModal(step)) {
               setModalOpen(false);
             }
@@ -118,12 +119,12 @@ export function DeskOnboarding() {
     }
     setNote('');
     setFileName(file.name);
-    setRewrittenText(null);
+    setSuggestions([]);
     setModalStage('analyzing');
     try {
       const result = await uploadAndAnalyzeCv(user, file);
       setCvDocumentId(result.cvDocumentId);
-      setReadiness(result.readiness);
+      setReadiness(coachReadiness(result.readiness));
       setSession((prev) => (prev ? { ...prev, onboardingStep: result.onboardingStep } : prev));
       setModalStage('result');
       const credits = await fetchCredits(user).catch(() => null);
@@ -153,23 +154,22 @@ export function DeskOnboarding() {
     }
     if (readiness.band !== 'supercharge') return;
     if (!cvDocumentId) {
-      setNote('Upload and analyze this CV again before Supercharge.');
+      setNote('Upload and analyze this CV again before asking for suggestions.');
       return;
     }
     setPrimaryBusy(true);
     setNote('');
-    setModalStage('supercharging');
+    setModalStage('suggesting');
     try {
-      const result = await superchargeCv(user, cvDocumentId);
+      const result = await fetchCvSuggestions(user, cvDocumentId);
       setCvDocumentId(result.cvDocumentId);
-      setReadiness(result.readiness);
-      setRewrittenText(result.rewrittenText);
+      setReadiness(coachReadiness(result.readiness));
+      setSuggestions(result.suggestions);
       setCreditBalance(result.creditBalance);
       setSession((prev) => (prev ? { ...prev, onboardingStep: result.onboardingStep } : prev));
-      setSuggestions([]);
       setModalStage('result');
     } catch (error) {
-      setNote(error instanceof Error ? error.message : 'Supercharge did not finish.');
+      setNote(error instanceof Error ? error.message : 'Suggestions did not finish.');
       setModalStage('result');
     } finally {
       setPrimaryBusy(false);
@@ -212,7 +212,6 @@ export function DeskOnboarding() {
         onOpenCv={() => {
           setNote('');
           setFileName(undefined);
-          setRewrittenText(null);
           setModalStage('upload');
           setModalOpen(true);
         }}
@@ -241,11 +240,11 @@ export function DeskOnboarding() {
         note={note}
         readiness={readiness}
         creditBalance={creditBalance}
-        rewrittenText={rewrittenText}
+        suggestions={suggestions}
         replacing={Boolean(readiness)}
         primaryBusy={primaryBusy}
         onClose={() => {
-          if (modalStage === 'analyzing' || modalStage === 'supercharging') return;
+          if (modalStage === 'analyzing' || modalStage === 'suggesting') return;
           setModalOpen(false);
         }}
         onPickFile={(file) => void onFile(file)}

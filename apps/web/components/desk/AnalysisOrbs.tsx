@@ -8,10 +8,10 @@ const ANALYZE_BEATS = [
   { state: 'working' as const, line: 'Scoring LetterProof' },
 ];
 
-const SUPERCHARGE_BEATS = [
-  { state: 'reasoning' as const, line: 'Grounding every claim' },
-  { state: 'working' as const, line: 'Rewriting for clarity' },
-  { state: 'searching' as const, line: 'Re-scoring LetterProof' },
+const SUGGEST_BEATS = [
+  { state: 'searching' as const, line: 'Reading the gaps already scored' },
+  { state: 'working' as const, line: 'Writing a few concrete edits' },
+  { state: 'reasoning' as const, line: 'Leaving the score as it is' },
 ];
 
 export function AnalysisOrbs({
@@ -19,18 +19,18 @@ export function AnalysisOrbs({
   mode = 'analyze',
 }: {
   fileName?: string;
-  mode?: 'analyze' | 'supercharge';
+  mode?: 'analyze' | 'suggest';
 }) {
-  const beats = mode === 'supercharge' ? SUPERCHARGE_BEATS : ANALYZE_BEATS;
+  const beats = mode === 'suggest' ? SUGGEST_BEATS : ANALYZE_BEATS;
   return (
     <div className="desk-analyze" aria-live="polite" aria-busy="true">
       <p className="desk-kicker">
-        {mode === 'supercharge' ? 'First Round is Supercharging' : 'First Round is reading'}
+        {mode === 'suggest' ? 'First Round is writing suggestions' : 'First Round is reading'}
       </p>
       <h1>LetterProof</h1>
       <p className="desk-lead">
-        {mode === 'supercharge'
-          ? 'Improving wording from facts already on the page. No invented employers or metrics.'
+        {mode === 'suggest'
+          ? 'Short edits from the score and the lines already on the CV. The number does not move.'
           : fileName
             ? `Working through ${fileName}. The model extracts facts. Our algorithm owns the score.`
             : 'Working through your CV. The model extracts facts. Our algorithm owns the score.'}

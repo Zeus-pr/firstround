@@ -54,7 +54,7 @@ export type SuperchargeCvResponse = {
   cvDocumentId: string;
   extractionId: string;
   readiness: ReadinessResult;
-  rewrittenText: string;
+  suggestions: string[];
   creditsCharged: number;
   creditBalance: number;
   onboardingStep: string;
@@ -68,6 +68,22 @@ export type CreditsBalanceResponse = {
 };
 
 export const SUPERCHARGE_CREDIT_COST = 5;
+
+export function coachReadiness(readiness: ReadinessResult): ReadinessResult {
+  const headline = readiness.recommendation.headline;
+  const body = readiness.recommendation.body;
+  if (headline !== 'Good base. Supercharge it.' && !body.includes('A short Supercharge pass')) {
+    return readiness;
+  }
+  return {
+    ...readiness,
+    recommendation: {
+      action: 'supercharge',
+      headline: 'Good base. Tighten the proof.',
+      body: `You are in the sweet middle (${readiness.total}). Suggestions name the lines to sharpen. This score stays as it is.`,
+    },
+  };
+}
 
 async function authHeaders(user: User): Promise<HeadersInit> {
   const token = await user.getIdToken();
@@ -160,9 +176,11 @@ export async function fetchCredits(user: User): Promise<CreditsBalanceResponse> 
   return (await res.json()) as CreditsBalanceResponse;
 }
 
-export async function fetchLatestReadiness(
-  user: User,
-): Promise<{ readiness: ReadinessResult | null; cvDocumentId: string | null }> {
+export async function fetchLatestReadiness(user: User): Promise<{
+  readiness: ReadinessResult | null;
+  cvDocumentId: string | null;
+  suggestions: string[];
+}> {
   const headers = await authHeaders(user);
   const res = await fetch(apiUrl('/cv/readiness/latest'), { headers });
   if (!res.ok) {
@@ -171,15 +189,16 @@ export async function fetchLatestReadiness(
   return (await res.json()) as {
     readiness: ReadinessResult | null;
     cvDocumentId: string | null;
+    suggestions: string[];
   };
 }
 
-export async function superchargeCv(
+export async function fetchCvSuggestions(
   user: User,
   cvDocumentId: string,
 ): Promise<SuperchargeCvResponse> {
   const headers = await authHeaders(user);
-  const res = await fetch(apiUrl('/cv/supercharge'), {
+  const res = await fetch(apiUrl('/cv/suggestions'), {
     method: 'POST',
     headers,
     body: JSON.stringify({ cvDocumentId }),
@@ -189,11 +208,11 @@ export async function superchargeCv(
   }
   if (res.status === 402 || res.status === 400) {
     const body = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? 'Not enough credits for Supercharge.');
+    throw new Error(body?.message ?? 'Not enough credits for suggestions.');
   }
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `Supercharge failed (${res.status})`);
+    throw new Error(body?.message ?? `Suggestions failed (${res.status})`);
   }
   return (await res.json()) as SuperchargeCvResponse;
 }
