@@ -16,8 +16,6 @@ import {
   type Db,
 } from '@firstround/db';
 import {
-  FieldConfidence,
-  ParseQuality,
   SUPERCHARGE_CREDIT_COST,
   type AnalyzeCvResponse,
   type RegisterCvRequest,
@@ -32,8 +30,7 @@ import { StorageService } from '../files/storage.service.js';
 import { hydrateReadinessFromScore } from '../readiness/hydrate-score.js';
 import { scoreCvReadiness } from '../readiness/scorer.js';
 import { createGrokClient, extractCvFactsWithGrok } from './grok-extract.js';
-import { superchargeCvWithGrok } from './grok-supercharge.js';
-import { factsToPlainText, finalizeSupercharge } from './supercharge-facts.js';
+import { algorithmSuggestions, suggestCvLines } from './suggest-cv.js';
 import { extractTextFromCv } from './parse-document.js';
 
 @Injectable()
@@ -214,18 +211,12 @@ export class CvService {
     return {
       readiness: hydrateReadinessFromScore(row),
       cvDocumentId: row.cvDocumentId,
+      suggestions: storedSuggestions(row.sendability),
     };
   }
 
   async supercharge(user: SessionUser, cvDocumentId: string): Promise<SuperchargeCvResponse> {
     const db = this.ready();
-    const grok = createGrokClient();
-    if (!grok) {
-      throw new ServiceUnavailableException(
-        'CV analysis is not configured yet (missing XAI_API_KEY)',
-      );
-    }
-
     const [doc] = await db
       .select()
       .from(cvDocuments)
@@ -240,7 +231,7 @@ export class CvService {
       .orderBy(desc(cvReadinessScores.createdAt))
       .limit(1);
     if (!latestScore) {
-      throw new BadRequestException('Analyze the CV before Supercharge.');
+      throw new BadRequestException('Analyze the CV before asking for suggestions.');
     }
 
     const [extraction] = await db
@@ -251,123 +242,66 @@ export class CvService {
     if (!extraction) throw new NotFoundException('Extraction not found');
 
     const facts = CvFacts.parse(extraction.facts);
-    const priorReadiness = scoreCvReadiness(facts, []);
-    // Prefer stored gaps/band from sendability blob when present.
-    const stored = latestScore.sendability as Record<string, unknown>;
-    if (typeof stored.band === 'string') {
-      priorReadiness.band = stored.band as typeof priorReadiness.band;
-    }
-    if (Array.isArray(stored.genuineGaps)) {
-      priorReadiness.genuineGaps = stored.genuineGaps as string[];
-    }
-    if (Array.isArray(stored.underEmphasised)) {
-      priorReadiness.underEmphasised = stored.underEmphasised as string[];
-    }
-    priorReadiness.total = latestScore.total;
-    priorReadiness.gaps = latestScore.gaps ?? priorReadiness.gaps;
-    const storedConfidence = FieldConfidence.safeParse(stored.confidence);
-    if (storedConfidence.success) priorReadiness.confidence = storedConfidence.data;
-    const storedParse = ParseQuality.safeParse(stored.parse);
-    if (storedParse.success) priorReadiness.parse = storedParse.data;
-    if (
-      latestScore.dimensions &&
-      typeof latestScore.dimensions === 'object' &&
-      'outcomeQuality' in latestScore.dimensions
-    ) {
-      priorReadiness.dimensions = latestScore.dimensions as typeof priorReadiness.dimensions;
+    const readiness = hydrateReadinessFromScore(latestScore);
+    const fallback = algorithmSuggestions(readiness);
+    let suggestions = fallback;
+    let modelVersion: string | null = null;
+
+    const grok = createGrokClient();
+    if (grok) {
+      try {
+        const ai = await suggestCvLines({ client: grok, facts, readiness });
+        suggestions = ai.suggestions;
+        modelVersion = ai.modelVersion;
+      } catch {
+        suggestions = fallback;
+        modelVersion = null;
+      }
     }
 
-    const debit = await this.credits.debitOnce({
-      workspaceId: user.workspaceId,
-      userId: user.id,
-      amount: SUPERCHARGE_CREDIT_COST,
-      reason: `cv_supercharge:${doc.id}:${extraction.id}`,
-    });
-
-    const boosted = await superchargeCvWithGrok({
-      client: grok,
-      facts,
-      readiness: priorReadiness,
-    });
-
-    const [pref] = await db
-      .select({ jobFamilies: preferences.jobFamilies })
-      .from(preferences)
-      .where(eq(preferences.userId, user.id))
-      .limit(1);
-
-    const finalized = finalizeSupercharge({
-      original: facts,
-      proposed: boosted.facts,
-      prior: priorReadiness,
-      targetHints: pref?.jobFamilies ?? [],
-    });
-    const readiness = finalized.readiness;
-    const rewrittenText = finalized.acceptedRewrite
-      ? boosted.rewrittenText
-      : factsToPlainText(finalized.facts);
-    if (readiness.total < priorReadiness.total) {
-      throw new ServiceUnavailableException('Supercharge refused to lower the readiness score');
-    }
-
-    const [nextExtraction] = await db
-      .insert(cvExtractions)
-      .values({
-        cvDocumentId: doc.id,
+    let charged = 0;
+    let balance = await this.credits.balance(user.workspaceId);
+    if (modelVersion) {
+      const debit = await this.credits.debitOnce({
+        workspaceId: user.workspaceId,
         userId: user.id,
-        schemaVersion: extraction.schemaVersion,
-        modelVersion: boosted.modelVersion,
-        promptVersion: 'cv-supercharge-v2',
-        facts: finalized.facts,
-        meta: {
-          superchargedFrom: extraction.id,
-          rewrittenText,
-          creditsCharged: debit.charged,
-          acceptedRewrite: finalized.acceptedRewrite,
-          scoreBefore: priorReadiness.total,
-          scoreAfter: readiness.total,
+        amount: SUPERCHARGE_CREDIT_COST,
+        reason: `cv_supercharge:${doc.id}:${extraction.id}`,
+      });
+      charged = debit.charged;
+      balance = debit.balance;
+    }
+
+    const stored = (latestScore.sendability ?? {}) as Record<string, unknown>;
+    await db
+      .update(cvReadinessScores)
+      .set({
+        sendability: {
+          ...stored,
+          suggestions,
+          suggestionModel: modelVersion,
         },
       })
-      .returning({ id: cvExtractions.id });
-    if (!nextExtraction) throw new ServiceUnavailableException('Could not save supercharge');
-
-    await db.insert(cvReadinessScores).values({
-      userId: user.id,
-      cvDocumentId: doc.id,
-      extractionId: nextExtraction.id,
-      total: readiness.total,
-      dimensions: readiness.dimensions,
-      gaps: readiness.gaps,
-      sendability: {
-        ...readiness.sendability,
-        band: readiness.band,
-        recommendation: readiness.recommendation,
-        genuineGaps: readiness.genuineGaps,
-        underEmphasised: readiness.underEmphasised,
-        checks: readiness.checks,
-        confidence: readiness.confidence,
-        parse: readiness.parse,
-        normalized: readiness.normalized,
-        supercharged: true,
-      },
-      algorithmVersion: readiness.algorithmVersion,
-    });
-
-    await db
-      .update(profiles)
-      .set({ onboardingStep: 'readiness', updatedAt: new Date() })
-      .where(eq(profiles.userId, user.id));
+      .where(eq(cvReadinessScores.id, latestScore.id));
 
     return {
       ok: true,
       cvDocumentId: doc.id,
-      extractionId: nextExtraction.id,
+      extractionId: extraction.id,
       readiness,
-      facts: finalized.facts,
-      rewrittenText,
-      creditsCharged: debit.charged,
-      creditBalance: debit.balance,
-      onboardingStep: 'readiness',
+      suggestions,
+      creditsCharged: charged,
+      creditBalance: balance,
+      onboardingStep: user.onboardingStep,
     };
   }
+}
+
+function storedSuggestions(sendability: unknown): string[] {
+  if (!sendability || typeof sendability !== 'object') return [];
+  const lines = (sendability as { suggestions?: unknown }).suggestions;
+  if (!Array.isArray(lines)) return [];
+  return lines
+    .filter((line): line is string => typeof line === 'string' && line.trim().length > 0)
+    .slice(0, 8);
 }

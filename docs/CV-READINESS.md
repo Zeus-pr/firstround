@@ -8,7 +8,7 @@ Deterministic scorer + Grok extraction + vision for hard PDFs. The model fills a
 - Career gaps and non-linear paths are never penalized.
 - Missing metrics lower proof quality; they do not invent failure.
 - Outcome and clarity count proof lines. Extra specific lines cannot dilute a score.
-- Supercharge never publishes a lower total than the score already stored.
+- Suggestions coach the CV already on the desk. They do not rewrite it and they do not change the stored score.
 - Low extract confidence softens certainty; it does not invent a harsh fail.
 - Dual coaching lists: **genuine gaps** vs **under-emphasised**.
 - Never claim this is a universal ATS score. It is First Round LetterProof.
@@ -18,7 +18,7 @@ Deterministic scorer + Grok extraction + vision for hard PDFs. The model fills a
 | Score  | Band          | CTA         |
 | ------ | ------------- | ----------- |
 | 80–100 | `ready`       | Continue    |
-| 60–79  | `supercharge` | Supercharge |
+| 60–79  | `supercharge` | Suggestions |
 | 0–59   | `strengthen`  | Strengthen  |
 
 ## Weights
@@ -47,28 +47,29 @@ Contact email, location, and links are a separate sendability checklist outside 
 2. Client PUT to R2
 3. `POST /cv/register` `{ fileKey, contentType, sizeBytes, originalFilename? }`
 4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized)
-5. `POST /cv/supercharge` `{ cvDocumentId }` → grounded rewrite + re-score (costs 5 credits; idempotent per extraction). The saved total is `max(previous, next)`. Dates, employers, and numbers from the source extraction are kept. Rewritten bullets are accepted only when they stay grounded and score at least as high.
-6. `GET /cv/readiness/latest`
+5. `POST /cv/suggestions` `{ cvDocumentId }` → short coaching lines from the stored score plus one fast model call (same handler as `POST /cv/supercharge`). Costs 5 credits when the model answers; a model failure returns the algorithm gaps and does not debit. The stored total does not change.
+6. `GET /cv/readiness/latest` → score plus any saved suggestions
 7. `GET /credits` → balance + supercharge cost
 
-## Supercharge credits
+## Suggestions credits
 
-| Item      | Value                                                                                           |
-| --------- | ----------------------------------------------------------------------------------------------- |
-| Cost      | 5 credits per Supercharge (production)                                                          |
-| Ledger    | `credit_ledger`                                                                                 |
-| Test mode | `CREDITS_TEST_MODE=1` (or non-production): free Supercharge, no debit, auto-top balance to 1000 |
+| Item      | Value                                                                                                    |
+| --------- | -------------------------------------------------------------------------------------------------------- |
+| Cost      | 5 credits when the model returns grounded lines (production)                                             |
+| Ledger    | `credit_ledger`, idempotent per CV extraction (`cv_supercharge:`)                                        |
+| Test mode | `CREDITS_TEST_MODE=1` (or non-production): no debit, auto-top balance to 1000                            |
+| Model     | `grok-4.20-0309-non-reasoning` (override with `XAI_SUGGESTIONS_MODEL`). 20s cap, then the algorithm gaps |
 
-Skip Supercharge on the web: show `genuineGaps` / `underEmphasised` suggestions; no debit.
+Skip the model on the web: show `genuineGaps` / `underEmphasised`; no debit.
 
 ## Env (api)
 
-| Variable                | Required    | Notes                          |
-| ----------------------- | ----------- | ------------------------------ |
-| `XAI_API_KEY`           | for analyze | xAI / Grok key                 |
-| `XAI_MODEL`             | optional    | extract default `grok-4.3`     |
-| `XAI_SUPERCHARGE_MODEL` | optional    | Supercharge default `grok-4.7` |
-| `XAI_BASE_URL`          | optional    | default `https://api.x.ai/v1`  |
+| Variable                | Required    | Notes                                              |
+| ----------------------- | ----------- | -------------------------------------------------- |
+| `XAI_API_KEY`           | for analyze | xAI / Grok key                                     |
+| `XAI_MODEL`             | optional    | extract default `grok-4.3`                         |
+| `XAI_SUGGESTIONS_MODEL` | optional    | suggestions default `grok-4.20-0309-non-reasoning` |
+| `XAI_BASE_URL`          | optional    | default `https://api.x.ai/v1`                      |
 
 Without `XAI_API_KEY`, register still works; analyze returns 503.
 Page render soft-fails to text-only if canvas/pdfjs fails; vision still needs `XAI_API_KEY`.
