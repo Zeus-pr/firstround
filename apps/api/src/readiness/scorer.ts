@@ -89,8 +89,8 @@ function recommendationFor(band: ReadinessBand, total: number): ReadinessRecomme
   if (band === 'supercharge') {
     return {
       action: 'supercharge',
-      headline: 'Good base. Supercharge it.',
-      body: `You are in the sweet middle (${total}). A short Supercharge pass will lift weak proof before letters leave.`,
+      headline: 'Good base. Tighten the proof.',
+      body: `You are in the sweet middle (${total}). Suggestions name the lines to sharpen. This score stays as it is.`,
     };
   }
   return {

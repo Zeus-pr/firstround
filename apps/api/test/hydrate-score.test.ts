@@ -55,4 +55,31 @@ describe('hydrateReadinessFromScore', () => {
     expect(readiness.gaps).toEqual([]);
     expect(readiness.dimensions.evidenceCompleteness).toBe(0);
   });
+
+  it('renames the stored Supercharge headline without moving the score', () => {
+    const readiness = hydrateReadinessFromScore({
+      total: 78,
+      algorithmVersion: 'readiness-v2',
+      gaps: [],
+      dimensions: {
+        evidenceCompleteness: 85,
+        outcomeQuality: 80,
+        targetRoleCoverage: 68,
+        careerConsistency: 96,
+        communicationClarity: 82,
+      },
+      sendability: {
+        ok: true,
+        band: 'supercharge',
+        recommendation: {
+          action: 'supercharge',
+          headline: 'Good base. Supercharge it.',
+          body: 'You are in the sweet middle (78). A short Supercharge pass will lift weak proof before letters leave.',
+        },
+      },
+    });
+    expect(readiness.total).toBe(78);
+    expect(readiness.recommendation.headline).toBe('Good base. Tighten the proof.');
+    expect(readiness.recommendation.body).not.toMatch(/Supercharge pass/);
+  });
 });

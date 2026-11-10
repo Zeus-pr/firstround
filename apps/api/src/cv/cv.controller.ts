@@ -67,6 +67,18 @@ export class CvController {
     return this.cv.analyze(user, body.cvDocumentId);
   }
 
+  @Post('suggestions')
+  @HttpCode(200)
+  async suggestions(
+    @Req() req: Request,
+    @CurrentUser() auth: AuthUser,
+    @Body(new ZodPipe(SuperchargeCvRequest)) body: SuperchargeCvRequest,
+  ): Promise<SuperchargeCvResponse> {
+    this.assertRate(req);
+    const user = await this.sessions.ensureUser(auth);
+    return this.cv.supercharge(user, body.cvDocumentId);
+  }
+
   @Post('supercharge')
   @HttpCode(200)
   async supercharge(
@@ -88,6 +100,7 @@ export class CvController {
       ok: true as const,
       readiness: latest?.readiness ?? null,
       cvDocumentId: latest?.cvDocumentId ?? null,
+      suggestions: latest?.suggestions ?? [],
     };
   }
 }

@@ -7,14 +7,16 @@ import * as schema from '@firstround/db';
 import type { CvFacts } from '@firstround/contracts';
 import { CreditsService } from '../src/credits/credits.service.js';
 import { CvService } from '../src/cv/cv.service.js';
-import { superchargeCvWithGrok } from '../src/cv/grok-supercharge.js';
+import { suggestCvLines } from '../src/cv/suggest-cv.js';
 import { scoreCvReadiness } from '../src/readiness/scorer.js';
 import { SessionService } from '../src/session/session.service.js';
 import type { StorageService } from '../src/files/storage.service.js';
 
-vi.mock('../src/cv/grok-supercharge.js', () => ({
-  superchargeCvWithGrok: vi.fn(),
-}));
+vi.mock('../src/cv/suggest-cv.js', async () => {
+  const actual =
+    await vi.importActual<typeof import('../src/cv/suggest-cv.js')>('../src/cv/suggest-cv.js');
+  return { ...actual, suggestCvLines: vi.fn() };
+});
 
 const migrationsFolder = path.join(process.cwd(), '../../packages/db/migrations');
 
@@ -59,6 +61,7 @@ const facts: CvFacts = {
 
 describe('CvService.supercharge', () => {
   let client: PGlite;
+  let db: ReturnType<typeof drizzle<typeof schema>>;
   let cv: CvService;
   let userId = '';
   let workspaceId = '';
@@ -69,7 +72,7 @@ describe('CvService.supercharge', () => {
     process.env.XAI_API_KEY = 'test-key';
     process.env.NODE_ENV = 'test';
     client = new PGlite();
-    const db = drizzle(client, { schema });
+    db = drizzle(client, { schema });
     await migrate(db, { migrationsFolder });
     const sessions = new SessionService(db as never);
     const user = await sessions.ensureUser({
@@ -132,29 +135,10 @@ describe('CvService.supercharge', () => {
     await client.close();
   });
 
-  it('keeps a stored 75 when the model returns a weaker CV', async () => {
-    vi.mocked(superchargeCvWithGrok).mockResolvedValue({
-      modelVersion: 'grok-4.7',
-      rewrittenText:
-        'Asha Rao raised revenue 99% after dropping the dated roles. This text is intentionally worse.',
-      facts: {
-        ...facts,
-        emails: [],
-        summary: 'Raised revenue 99% somewhere else entirely and dropped the proof.',
-        roles: [
-          {
-            title: 'Senior Product Manager',
-            company: 'Acme',
-            startDate: '2019-01',
-            endDate: '2020-01',
-            isCurrent: false,
-            bullets: ['Did stuff.', 'Raised revenue 99%.'],
-            tools: [],
-            metrics: ['99% revenue'],
-          },
-        ],
-        education: [],
-      },
+  it('keeps the stored 75 and saves grounded suggestions without a new score', async () => {
+    vi.mocked(suggestCvLines).mockResolvedValue({
+      modelVersion: 'grok-4.20-0309-non-reasoning',
+      suggestions: ['Move the 18% activation result to the first Acme bullet.'],
     });
 
     const result = await cv.supercharge(
@@ -170,16 +154,39 @@ describe('CvService.supercharge', () => {
       cvDocumentId,
     );
 
-    expect(result.readiness.total).toBeGreaterThanOrEqual(75);
-    expect(result.readiness.total).not.toBe(72);
-    expect(JSON.stringify(result.facts)).not.toMatch(/99/);
-    expect(result.rewrittenText).not.toMatch(/99/);
-    expect(result.facts.roles[0]?.startDate).toBe('2021-01');
-    expect(result.facts.roles).toHaveLength(2);
+    expect(result.readiness.total).toBe(75);
+    expect(result.suggestions).toEqual([
+      'Move the 18% activation result to the first Acme bullet.',
+    ]);
     expect(result.creditsCharged).toBe(0);
 
+    const scores = await db.select().from(schema.cvReadinessScores);
+    expect(scores).toHaveLength(1);
+    expect(scores[0]?.total).toBe(75);
+
     const latest = await cv.latestReadiness(userId);
-    expect(latest?.readiness.total).toBeGreaterThanOrEqual(75);
-    expect(latest?.readiness.total).toBe(result.readiness.total);
+    expect(latest?.readiness.total).toBe(75);
+    expect(latest?.suggestions).toEqual(result.suggestions);
+  });
+
+  it('falls back to the algorithm gaps when the model fails and still keeps 75', async () => {
+    vi.mocked(suggestCvLines).mockRejectedValue(new Error('timeout'));
+    const result = await cv.supercharge(
+      {
+        id: userId,
+        workspaceId,
+        firebaseUid,
+        email: 'asha@example.com',
+        displayName: null,
+        onboardingStep: 'readiness',
+        created: false,
+      },
+      cvDocumentId,
+    );
+    expect(result.readiness.total).toBe(75);
+    expect(result.suggestions.length).toBeGreaterThan(0);
+    expect(result.suggestions.join(' ')).not.toMatch(/99/);
+    const scores = await db.select().from(schema.cvReadinessScores);
+    expect(scores).toHaveLength(1);
   });
 });

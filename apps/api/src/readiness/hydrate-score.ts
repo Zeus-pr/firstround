@@ -20,6 +20,15 @@ export function hydrateReadinessFromScore(row: ScoreHydrateInput): ReadinessResu
   const band = (
     typeof blob.band === 'string' ? blob.band : recommendation.action
   ) as ReadinessResult['band'];
+  const shown =
+    recommendation.headline === 'Good base. Supercharge it.' ||
+    recommendation.body.includes('A short Supercharge pass')
+      ? {
+          action: 'supercharge' as const,
+          headline: 'Good base. Tighten the proof.',
+          body: `You are in the sweet middle (${row.total}). Suggestions name the lines to sharpen. This score stays as it is.`,
+        }
+      : recommendation;
   return {
     total: row.total,
     dimensions: {
@@ -59,7 +68,7 @@ export function hydrateReadinessFromScore(row: ScoreHydrateInput): ReadinessResu
       tools: [],
       roleFamilies: [],
     }) as ReadinessResult['normalized'],
-    recommendation,
+    recommendation: shown,
     algorithmVersion: row.algorithmVersion as ReadinessResult['algorithmVersion'],
     band,
   };
