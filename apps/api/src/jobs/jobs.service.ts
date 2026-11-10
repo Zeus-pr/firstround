@@ -184,19 +184,7 @@ export class JobsService {
         })
         .where(eq(jobSourceRuns.id, run.id));
 
-      // Keep last corpus; mark jobs previously linked from this source as stale.
-      const linked = await db
-        .select({ id: jobSourceLinks.canonicalJobId })
-        .from(jobSourceLinks)
-        .where(eq(jobSourceLinks.sourceKey, sourceKey));
-      const ids = [...new Set(linked.map((r) => r.id))];
-      for (const id of ids) {
-        await db
-          .update(canonicalJobs)
-          .set({ stale: true, updatedAt: new Date() })
-          .where(eq(canonicalJobs.id, id));
-      }
-
+      // A failed scrape did not see the jobs close. Leave the corpus searchable.
       throw new ServiceUnavailableException(message);
     }
   }
