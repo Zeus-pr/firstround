@@ -1982,11 +1982,123 @@ h1 {
 }
 
 .desk-letter-panel {
-  overflow: hidden;
   display: grid;
   gap: 0.85rem;
   padding: 0 0 1rem;
   animation: desk-letter-open 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desk-letter-subject {
+  margin: 0;
+  font-weight: 530;
+}
+
+.desk-letter-edit {
+  width: 100%;
+  min-height: 14rem;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.desk-shuffle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.desk-shuffle p {
+  margin: 0;
+  color: var(--quiet);
+}
+
+.desk-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background: transparent;
+  color: inherit;
+  padding: 0.35rem 0.6rem 0.35rem 0.4rem;
+  cursor: pointer;
+}
+
+.desk-switch-knob {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+.desk-switch.is-on .desk-switch-knob {
+  background: var(--wax);
+}
+
+.desk-pick {
+  display: grid;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.desk-pick-label {
+  font-size: 0.92rem;
+}
+
+.desk-pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.desk-chip,
+.desk-choice {
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.desk-choice.is-on,
+.desk-chip:hover {
+  background: color-mix(in srgb, var(--wax) 12%, transparent);
+  border-color: var(--wax);
+}
+
+.desk-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.desk-pick-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--sheet);
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.desk-pick-menu button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.desk-pick-menu button:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .desk-letter-body {

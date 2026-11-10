@@ -66,7 +66,7 @@ export function CvModal({
       <div className="desk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="desk-modal-top">
           <p className="desk-kicker" id={titleId}>
-            CV score
+            Reply mark
           </p>
           {!busy ? (
             <button className="text-button" type="button" onClick={onClose}>

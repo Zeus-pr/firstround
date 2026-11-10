@@ -86,11 +86,16 @@ export function ReadinessReveal({
   return (
     <div className="desk-reveal" ref={rootRef}>
       <p className={`desk-band desk-reveal-in band-${band}`}>{recommendation.headline}</p>
-      <div className="desk-score desk-reveal-in" aria-label={`CV score ${total}`}>
+      <p className="desk-kicker desk-reveal-in">Reply mark</p>
+      <div className="desk-score desk-reveal-in" aria-label={`Reply mark ${total}`}>
         <span className="desk-score-num">{total}</span>
         <span className="desk-score-of">/100</span>
       </div>
       <p className="desk-lead desk-reveal-in">{recommendation.body}</p>
+      <p className="desk-lead desk-reveal-in">
+        This is a suggestion. Continue even if the mark is low. A higher mark means the CV is easier
+        to place, a closer fit, and a better chance someone replies.
+      </p>
 
       <ul className="desk-dims desk-reveal-in" aria-label="Dimension scores">
         {DIMENSIONS.map((dim) => {
@@ -144,7 +149,7 @@ export function ReadinessReveal({
 
       <p className="desk-meta desk-reveal-in">
         {readiness.parse.visionUsed ? 'Hard PDF used vision. ' : null}
-        First Round CV score · {readiness.algorithmVersion}. Not a universal ATS score.
+        Reply mark · {readiness.algorithmVersion}. Not a pass mark and not an ATS score.
         {typeof creditBalance === 'number' ? ` · ${creditBalance} credits.` : null}
       </p>
 

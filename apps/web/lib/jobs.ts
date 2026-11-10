@@ -31,6 +31,7 @@ export type ReviewDraft = {
   draftHash: string | null;
   company?: string;
   role?: string;
+  subject?: string;
 };
 
 export async function fetchCorpusStatus(user: User): Promise<CorpusStatus> {
@@ -46,15 +47,31 @@ export async function fetchTodayDrafts(user: User): Promise<ReviewDraft[]> {
   return json.drafts ?? [];
 }
 
-export async function saveDraftBody(user: User, draftId: string, body: string): Promise<void> {
+export async function saveDraftBody(
+  user: User,
+  draftId: string,
+  body: string,
+  subject?: string,
+): Promise<void> {
   const res = await fetch(apiUrl(`/review/drafts/${draftId}`), {
     method: 'PUT',
     headers: await authHeaders(user),
-    body: JSON.stringify({ body }),
+    body: JSON.stringify({ body, subject }),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { message?: string } | null;
     throw new Error(err?.message ?? `Could not save draft (${res.status})`);
+  }
+}
+
+export async function cancelDraft(user: User, draftId: string): Promise<void> {
+  const res = await fetch(apiUrl(`/review/drafts/${draftId}/cancel`), {
+    method: 'POST',
+    headers: await authHeaders(user),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(err?.message ?? `Could not cancel the letter (${res.status})`);
   }
 }
 

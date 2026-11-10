@@ -27,7 +27,7 @@ export function AnalysisOrbs({
       <p className="desk-kicker">
         {mode === 'suggest' ? 'Writing suggestions' : 'Reading your CV'}
       </p>
-      <h1>CV score</h1>
+      <h1>Reply mark</h1>
       <p className="desk-lead">
         {mode === 'suggest'
           ? 'Short edits based on the score and the text already on your CV. The score does not change.'

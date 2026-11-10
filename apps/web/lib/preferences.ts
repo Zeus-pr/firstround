@@ -15,6 +15,7 @@ export type PreferencesCriteria = {
   openToRelocation?: boolean | null;
   minYearsExperience?: number | null;
   maxYearsExperience?: number | null;
+  letterShuffle?: boolean;
 };
 
 export type PreferencesPayload = {
@@ -49,6 +50,7 @@ export const EMPTY_CRITERIA: PreferencesCriteria = {
   openToRelocation: null,
   minYearsExperience: null,
   maxYearsExperience: null,
+  letterShuffle: true,
 };
 
 async function authHeaders(user: User): Promise<HeadersInit> {

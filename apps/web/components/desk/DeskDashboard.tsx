@@ -25,6 +25,10 @@ type Props = {
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
   onApproveDraft?: (draftId: string) => void;
+  onSaveDraft?: (draftId: string, subject: string, body: string) => void;
+  onCancelDraft?: (draftId: string) => void;
+  letterShuffle?: boolean;
+  onLetterShuffle?: (on: boolean) => void;
   onStartRound: () => void;
 };
 
@@ -48,6 +52,10 @@ export function DeskDashboard({
   onDisconnectGmail,
   onDismissSuggestions,
   onApproveDraft,
+  onSaveDraft,
+  onCancelDraft,
+  letterShuffle = true,
+  onLetterShuffle,
   onStartRound,
 }: Props) {
   const hasReadiness = Boolean(readiness);
@@ -86,11 +94,14 @@ export function DeskDashboard({
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
           <section className="desk-pane">
-            <p className="desk-kicker">CV score</p>
+            <p className="desk-kicker">Reply mark</p>
             {readiness?.recommendation ? (
               <>
                 <p className="desk-stat">{readiness.total}</p>
-                <p className="desk-pane-copy">{readiness.recommendation.headline}</p>
+                <p className="desk-pane-copy">
+                  A suggestion, not a gate. You can continue with this CV. A higher mark means a
+                  clearer story, a closer fit, and a better chance of a reply.
+                </p>
                 <button className="text-button" type="button" onClick={onReviewScore}>
                   Review score
                 </button>
@@ -231,7 +242,15 @@ export function DeskDashboard({
             <p className="desk-pane-copy">
               Open a letter, read it, approve when it sounds like you.
             </p>
-            <DraftLetters drafts={drafts} busyId={draftBusyId} onApprove={onApproveDraft} />
+            <DraftLetters
+              drafts={drafts}
+              busyId={draftBusyId}
+              shuffle={letterShuffle}
+              onShuffle={onLetterShuffle}
+              onApprove={onApproveDraft}
+              onSave={onSaveDraft}
+              onCancel={onCancelDraft}
+            />
           </section>
         </div>
       </div>

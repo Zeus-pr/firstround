@@ -15,7 +15,15 @@ import {
   type ReadinessResult,
 } from '@/lib/cv';
 import { disconnectGmail, fetchGmailStatus, startGmailConnect } from '@/lib/gmail';
-import { approveDraft, fetchTodayDrafts, startDeskRun, type ReviewDraft } from '@/lib/jobs';
+import {
+  approveDraft,
+  cancelDraft,
+  fetchTodayDrafts,
+  saveDraftBody,
+  startDeskRun,
+  type ReviewDraft,
+} from '@/lib/jobs';
+import { fetchPreferences, savePreferences } from '@/lib/preferences';
 import { CvModal, type CvModalStage } from './CvModal';
 import { DeskDashboard } from './DeskDashboard';
 import { PreferencesModal } from './PreferencesModal';
@@ -63,6 +71,7 @@ export function DeskOnboarding() {
   const [gmailBusy, setGmailBusy] = useState(false);
   const [drafts, setDrafts] = useState<ReviewDraft[]>([]);
   const [draftBusyId, setDraftBusyId] = useState<string | null>(null);
+  const [letterShuffle, setLetterShuffle] = useState(true);
   const [roundPhase, setRoundPhase] = useState<RoundPhase>('idle');
   const [roundMessage, setRoundMessage] = useState<string | undefined>();
 
@@ -115,13 +124,15 @@ export function DeskOnboarding() {
             setModalStage('upload');
           }
 
-          const [credits, latest, gmail, todayDrafts] = await Promise.all([
+          const [credits, latest, gmail, todayDrafts, prefs] = await Promise.all([
             fetchCredits(next).catch(() => null),
             fetchLatestReadiness(next).catch(() => null),
             fetchGmailStatus(next).catch(() => null),
             fetchTodayDrafts(next).catch(() => []),
+            fetchPreferences(next).catch(() => null),
           ]);
           setDrafts(todayDrafts);
+          if (prefs) setLetterShuffle(prefs.preferences.criteria.letterShuffle !== false);
           if (credits) setCreditBalance(credits.balance);
           if (gmail) {
             setGmailConnected(gmail.connected);
@@ -297,6 +308,45 @@ export function DeskOnboarding() {
               setRoundMessage(message);
               setNote(message);
             });
+        }}
+        letterShuffle={letterShuffle}
+        onLetterShuffle={(on) => {
+          setLetterShuffle(on);
+          if (!user) return;
+          void fetchPreferences(user)
+            .then((payload) =>
+              savePreferences(user, {
+                ...payload.preferences,
+                criteria: { ...payload.preferences.criteria, letterShuffle: on },
+              }),
+            )
+            .catch(() => setNote('Could not save smart shuffle.'));
+        }}
+        onSaveDraft={(draftId, subject, body) => {
+          if (!user) return;
+          setDraftBusyId(draftId);
+          void saveDraftBody(user, draftId, body, subject)
+            .then(async () => {
+              setDrafts(await fetchTodayDrafts(user).catch(() => []));
+              setNote('Letter saved.');
+            })
+            .catch((error) =>
+              setNote(error instanceof Error ? error.message : 'Could not save the letter.'),
+            )
+            .finally(() => setDraftBusyId(null));
+        }}
+        onCancelDraft={(draftId) => {
+          if (!user) return;
+          setDraftBusyId(draftId);
+          void cancelDraft(user, draftId)
+            .then(async () => {
+              setDrafts(await fetchTodayDrafts(user).catch(() => []));
+              setNote('Letter cancelled.');
+            })
+            .catch((error) =>
+              setNote(error instanceof Error ? error.message : 'Could not cancel the letter.'),
+            )
+            .finally(() => setDraftBusyId(null));
         }}
         onApproveDraft={(draftId) => {
           if (!user) return;
