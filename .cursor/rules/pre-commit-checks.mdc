@@ -1,0 +1,30 @@
+---
+description: Run format, lint, typecheck, and tests before every commit
+alwaysApply: true
+---
+
+# Checks before every commit
+
+Do not commit, push, or say a branch is ready until the checks below have been run on the changed code and are green. A typecheck or a single test file is not enough. CI starts with `pnpm run format:check`.
+
+## Required, in this order
+
+From the repo root:
+
+1. `pnpm run format:check` — if it fails, `pnpm exec prettier --write` the listed files, then run the check again
+2. `pnpm run lint`
+3. `pnpm run typecheck`
+4. `pnpm run test` (Vitest through Turbo, api and web)
+5. `pnpm run build` when the diff touches `apps/web` or `apps/api` (this is the Next.js and Nest build CI runs)
+
+## When those tools exist
+
+- Playwright: if `playwright.config.*` exists, run the Playwright suite
+- Cypress: if `cypress.config.*` exists, run the Cypress suite
+- If neither config exists, say that in the commit note. Do not invent a run.
+
+## Fail closed
+
+- A failing check blocks the commit. Fix it and rerun that check.
+- Do not use `--no-verify` to skip hooks.
+- Do not commit with a known red `format:check`, lint, typecheck, test, or build.
