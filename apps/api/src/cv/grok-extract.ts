@@ -1,4 +1,6 @@
 import OpenAI from 'openai';
+import { BadRequestException } from '@nestjs/common';
+import { ZodError } from 'zod';
 import {
   CvFacts,
   EXTRACTION_PROMPT_VERSION,
@@ -72,7 +74,17 @@ function parseModelJson(raw: string): ModelPayload {
   const parsed = JSON.parse(raw) as Record<string, unknown>;
   const confidenceRaw = parsed.confidence;
   delete parsed.confidence;
-  const facts = CvFacts.parse(coerceCvFactsPayload(parsed));
+  let facts: CvFactsType;
+  try {
+    facts = CvFacts.parse(coerceCvFactsPayload(parsed));
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new BadRequestException(
+        'We could not read the facts from this CV cleanly. Try another PDF or Word export.',
+      );
+    }
+    throw error;
+  }
   const confidence = FieldConfidence.safeParse(confidenceRaw);
   return confidence.success ? { ...facts, confidence: confidence.data } : facts;
 }
