@@ -221,6 +221,39 @@ export class CvService {
     };
   }
 
+  async removeDocument(user: SessionUser, cvDocumentId: string) {
+    const db = this.ready();
+    const [doc] = await db
+      .select()
+      .from(cvDocuments)
+      .where(and(eq(cvDocuments.id, cvDocumentId), eq(cvDocuments.userId, user.id)))
+      .limit(1);
+    if (!doc) throw new NotFoundException('CV not found');
+
+    await db
+      .delete(cvDocuments)
+      .where(and(eq(cvDocuments.id, doc.id), eq(cvDocuments.userId, user.id)));
+
+    const [remaining] = await db
+      .select({ id: cvDocuments.id })
+      .from(cvDocuments)
+      .where(eq(cvDocuments.userId, user.id))
+      .limit(1);
+    if (!remaining) {
+      await db
+        .update(profiles)
+        .set({ onboardingStep: 'account', updatedAt: new Date() })
+        .where(eq(profiles.userId, user.id));
+    }
+
+    const ownerSegment = doc.fileKey.split('/')[1];
+    if (ownerSegment === user.firebaseUid) {
+      await this.storage.remove(doc.fileKey).catch(() => undefined);
+    }
+
+    return { ok: true as const };
+  }
+
   async downloadUrl(user: SessionUser, cvDocumentId: string) {
     const db = this.ready();
     const [doc] = await db
