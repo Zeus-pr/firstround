@@ -4,11 +4,12 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ilike, not, or } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
   canonicalJobs,
+  cvExtractions,
   cvReadinessScores,
   preferences,
   type Db,
@@ -19,9 +20,12 @@ import {
   type PreferencesPayload,
   type SessionUser,
 } from '@firstround/contracts';
+import { createGrokClient } from '../cv/grok-extract.js';
 import { DB } from '../db/db.module.js';
-import { scoreSpecificity } from './draft.js';
+import { scoreSpecificity, type DraftEvidence } from './draft.js';
+import { composeLetter, finalizeLetter, polishLetter, type LetterCv } from './letter.js';
 import { rankMatches, type MatchableJob } from './match.js';
+import { primaryFamily, titleConstraints, type RoleFamily } from './role-family.js';
 
 const EMPTY_PREFS: PreferencesPayload = {
   jobFamilies: [],
@@ -55,29 +59,12 @@ function prefsFromRow(row: {
   };
 }
 
-/** Plain letter — short, specific, no “AI assistant” cadence. */
-function draftBody(opts: {
-  company: string;
-  role: string;
-  location: string | null;
-  skills: string[];
-}): string {
-  const where = opts.location ? ` in ${opts.location}` : '';
-  const skillBits = opts.skills
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 2);
-  const skillLine =
-    skillBits.length === 2
-      ? ` I've been working with ${skillBits[0]} and ${skillBits[1]}.`
-      : skillBits.length === 1
-        ? ` I've been working with ${skillBits[0]}.`
-        : '';
-  return (
-    `Hi — I'm reaching out about the ${opts.role} opening at ${opts.company}${where}.` +
-    skillLine +
-    ` I'd welcome a short conversation if the timing works.`
-  );
+function titleWhere(family: RoleFamily) {
+  const spec = titleConstraints(family);
+  if (!spec) return undefined;
+  const include = or(...spec.include.map((needle) => ilike(canonicalJobs.title, `%${needle}%`)));
+  const exclude = spec.exclude.map((needle) => not(ilike(canonicalJobs.title, `%${needle}%`)));
+  return and(include, ...exclude);
 }
 
 @Injectable()
@@ -96,6 +83,7 @@ export class DeskRunService {
       .select({
         total: cvReadinessScores.total,
         cvDocumentId: cvReadinessScores.cvDocumentId,
+        extractionId: cvReadinessScores.extractionId,
       })
       .from(cvReadinessScores)
       .where(eq(cvReadinessScores.userId, user.id))
@@ -113,12 +101,29 @@ export class DeskRunService {
       .limit(1);
     const prefs: PreferencesPayload = prefsRow ? prefsFromRow(prefsRow) : EMPTY_PREFS;
 
+    const [extraction] = await db
+      .select({ facts: cvExtractions.facts })
+      .from(cvExtractions)
+      .where(and(eq(cvExtractions.id, latestScore.extractionId), eq(cvExtractions.userId, user.id)))
+      .limit(1);
+    const cv = (extraction?.facts ?? {}) as LetterCv;
+    const family = primaryFamily(cv);
+    const titleFilter = titleWhere(family);
+
     const rows = await db
       .select()
       .from(canonicalJobs)
-      .where(and(eq(canonicalJobs.quarantined, false), eq(canonicalJobs.stale, false)))
-      .orderBy(desc(canonicalJobs.trustScore), desc(canonicalJobs.lastSeenAt))
-      .limit(200);
+      .where(
+        and(
+          ...[
+            eq(canonicalJobs.quarantined, false),
+            eq(canonicalJobs.stale, false),
+            titleFilter,
+          ].filter((clause) => clause != null),
+        ),
+      )
+      .orderBy(desc(canonicalJobs.lastSeenAt), desc(canonicalJobs.trustScore))
+      .limit(120);
 
     const matchable: MatchableJob[] = rows.map((r) => ({
       id: r.id,
@@ -141,20 +146,23 @@ export class DeskRunService {
         created: 0,
         considered: 0,
         drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
-        message: 'No openings ready yet. Try again later today.',
+        message: 'No openings close to your work yet. Try again after more roles land.',
         readinessTotal: latestScore.total,
       };
     }
 
-    const ranked = rankMatches(prefs, matchable, { minMatch: 48, limit: 5 });
+    const ranked = rankMatches(prefs, matchable, {
+      minMatch: family === 'other' ? 48 : 55,
+      limit: 5,
+      primaryFamily: family,
+    });
     if (ranked.length === 0) {
       return {
         ok: true as const,
         created: 0,
         considered: matchable.length,
         drafts: [],
-        message:
-          'Nothing close enough yet. Loosen a preference or try again after new openings land.',
+        message: 'Nothing close to your current work yet. Try again after more openings land.',
         readinessTotal: latestScore.total,
       };
     }
@@ -162,6 +170,7 @@ export class DeskRunService {
     const expiresAt = eveningCutoff();
     const created: Array<{ draftId: string; campaignId: string; company: string; role: string }> =
       [];
+    const grok = createGrokClient();
 
     for (const hit of ranked) {
       const existing = await db
@@ -171,13 +180,17 @@ export class DeskRunService {
         .limit(1);
       if (existing[0]) continue;
 
-      const skillFacts = hit.job.skills.slice(0, 3).filter(Boolean);
-      const body = draftBody({
+      const job = {
         company: hit.job.companyName,
         role: hit.job.title,
-        location: hit.job.location,
-        skills: skillFacts,
-      });
+        sourceUrl: hit.job.sourceUrl,
+      };
+      const composed = composeLetter(cv, job);
+      const body = await finalizeLetter(
+        composed,
+        job,
+        grok ? () => polishLetter(grok, composed.body, composed.source, job) : undefined,
+      );
 
       const [campaign] = await db
         .insert(campaigns)
@@ -188,18 +201,21 @@ export class DeskRunService {
           jobCanonicalId: hit.job.id,
           recipientEmail: hit.job.invitedEmail,
           policyVersions: {
-            match: 'desk-match-2',
+            match: 'desk-match-3',
             readiness: String(latestScore.total),
           },
         })
         .returning();
       if (!campaign) continue;
 
-      const evidence = {
+      const evidence: DraftEvidence = {
         company: hit.job.companyName,
         role: hit.job.title,
         person: '',
-        evidenceFacts: [hit.job.location, ...skillFacts].filter((v): v is string => Boolean(v)),
+        evidenceFacts: composed.evidenceFacts.filter((fact) =>
+          body.toLowerCase().includes(fact.toLowerCase()),
+        ),
+        priorCompanies: composed.priorCompanies,
       };
       const specificity = scoreSpecificity(body, evidence);
 

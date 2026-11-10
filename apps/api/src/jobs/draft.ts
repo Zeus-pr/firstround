@@ -8,6 +8,8 @@ export type DraftEvidence = {
   role: string;
   person: string;
   evidenceFacts: string[];
+  /** Employers from the CV that the letter may name. */
+  priorCompanies?: string[];
 };
 
 export type StoredDraft = {
@@ -62,14 +64,20 @@ export function validateDraftBody(
   if (company) {
     const companyMentioned = normalized.toLowerCase().includes(company);
     // Reject inventing a different company name that looks like a proper noun phrase.
-    const otherCompanies = normalized.match(/\b(?:at|join)\s+([A-Z][A-Za-z0-9&.\- ]{1,40})\b/g);
+    const allowed = [
+      company,
+      ...(evidence.priorCompanies ?? []).map((c) => c.toLowerCase()),
+    ].filter(Boolean);
+    const knownCompany = (named: string) =>
+      allowed.some((a) => a === named || a.includes(named) || named.includes(a));
+    const otherCompanies = normalized.match(/\b(?:at|join)\s+([A-Z][A-Za-z0-9&.\- ]{1,60})\b/g);
     if (otherCompanies) {
       for (const phrase of otherCompanies) {
         const named = phrase
           .replace(/^(at|join)\s+/i, '')
           .trim()
           .toLowerCase();
-        if (named && named !== company && !company.includes(named) && !named.includes(company)) {
+        if (named && !knownCompany(named)) {
           return {
             ok: false,
             reason: `Body names company "${named}" which is absent from evidence`,

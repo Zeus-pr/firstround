@@ -35,6 +35,14 @@ const goodBody =
   'Hi Priya Sharma — I am reaching out about the Backend Engineer role at Acme Labs on the Bengaluru platform team. I have shipped Node services on Postgres and would value a brief conversation.';
 
 describe('draft guard', () => {
+  it('allows a prior employer named in the CV', () => {
+    const result = validateDraftBody(`${goodBody} I did this work at Samsung Electronics.`, {
+      ...evidence,
+      priorCompanies: ['Samsung Electronics'],
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it('rejects a body that invents another company', () => {
     const result = validateDraftBody(
       'Hi — please join Globex Corporation as Backend Engineer with Postgres in Bengaluru.',

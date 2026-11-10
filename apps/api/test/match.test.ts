@@ -74,6 +74,30 @@ describe('desk job match', () => {
     expect(other.matchScore).toBeGreaterThanOrEqual(40);
   });
 
+  it('drops software titles for a category manager even if an older role was engineering', () => {
+    const prefs = emptyPrefs;
+    const software = scoreJobMatch(prefs, job({ title: 'Java Developer', companyName: 'Acme' }), {
+      primaryFamily: 'commercial',
+    });
+    const category = scoreJobMatch(
+      prefs,
+      job({ title: 'Category Manager — Demand', companyName: 'Myntra' }),
+      { primaryFamily: 'commercial' },
+    );
+    expect(software.matchScore).toBe(0);
+    expect(software.reasons).toContain('family_clash');
+    expect(category.matchScore).toBeGreaterThanOrEqual(55);
+    const ranked = rankMatches(
+      prefs,
+      [
+        job({ id: 'se', title: 'Backend Engineer' }),
+        job({ id: 'cat', title: 'Assistant Manager Revenue' }),
+      ],
+      { primaryFamily: 'commercial', minMatch: 55 },
+    );
+    expect(ranked.map((r) => r.job.id)).toEqual(['cat']);
+  });
+
   it('ranks and caps results', () => {
     const ranked = rankMatches(
       { ...emptyPrefs, jobFamilies: ['revenue'], locations: ['India'] },
