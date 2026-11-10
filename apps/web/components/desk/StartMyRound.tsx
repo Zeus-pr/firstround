@@ -34,10 +34,10 @@ export function StartMyRound({
     phase === 'done'
       ? 'Your 10 are in'
       : phase === 'error'
-        ? 'Try again'
+        ? 'That didn’t finish'
         : running
           ? 'Choosing the right roles'
-          : 'Find my 10';
+          : '';
 
   const lead = running
     ? BEATS[phase]
@@ -64,7 +64,7 @@ export function StartMyRound({
     >
       <div className="desk-round-copy">
         <p className="desk-kicker">Today</p>
-        <h2 className="desk-round-title">{title}</h2>
+        {title ? <h2 className="desk-round-title">{title}</h2> : null}
         <p className="desk-round-lead" aria-live="polite">
           {lead}
         </p>

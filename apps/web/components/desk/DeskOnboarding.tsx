@@ -72,7 +72,6 @@ export function DeskOnboarding() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
-  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [gmailBusy, setGmailBusy] = useState(false);
   const [drafts, setDrafts] = useState<ReviewDraft[]>([]);
   const [draftBusyId, setDraftBusyId] = useState<string | null>(null);
@@ -111,7 +110,6 @@ export function DeskOnboarding() {
         setSuggestions([]);
         setReadiness(null);
         setGmailConnected(false);
-        setGmailEmail(null);
         setDrafts([]);
         setRoundPhase('idle');
         setRoundMessage(undefined);
@@ -141,7 +139,6 @@ export function DeskOnboarding() {
           if (credits) setCreditBalance(credits.balance);
           if (gmail) {
             setGmailConnected(gmail.connected);
-            setGmailEmail(gmail.email);
             if (gmail.onboardingStep) {
               setSession((prev) =>
                 prev ? { ...prev, onboardingStep: gmail.onboardingStep } : prev,
@@ -261,13 +258,11 @@ export function DeskOnboarding() {
   return (
     <main className="desk-shell desk-shell-dash">
       <DeskDashboard
-        email={user.email}
         onboardingStep={session?.onboardingStep ?? 'account'}
         readiness={readiness}
-        suggestions={suggestions}
+        suggestions={modalOpen ? [] : suggestions}
         creditBalance={creditBalance}
         gmailConnected={gmailConnected}
-        gmailEmail={gmailEmail}
         gmailBusy={gmailBusy}
         drafts={drafts}
         draftBusyId={draftBusyId}
@@ -451,7 +446,6 @@ export function DeskOnboarding() {
           void disconnectGmail(user)
             .then((status) => {
               setGmailConnected(false);
-              setGmailEmail(null);
               setSession((prev) =>
                 prev ? { ...prev, onboardingStep: status.onboardingStep } : prev,
               );
@@ -476,7 +470,6 @@ export function DeskOnboarding() {
         fileName={fileName}
         note={note}
         readiness={readiness}
-        creditBalance={creditBalance}
         suggestions={suggestions}
         replacing={Boolean(readiness)}
         primaryBusy={primaryBusy}
