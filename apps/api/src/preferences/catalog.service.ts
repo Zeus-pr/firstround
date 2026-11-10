@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { asc } from 'drizzle-orm';
 import { preferenceCatalog, type Db } from '@firstround/db';
 import { DB } from '../db/db.module.js';
 import { CATALOG_KINDS, CATALOG_SEED, type CatalogKind } from './catalog-seed.js';

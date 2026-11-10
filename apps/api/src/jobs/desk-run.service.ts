@@ -204,7 +204,7 @@ export class DeskRunService {
     };
   }
 
-  async prepareRound(user: SessionUser, runId: string) {
+  async prepareRound(user: SessionUser, _runId: string) {
     const db = this.ready();
 
     const [latestScore] = await db
