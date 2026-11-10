@@ -60,7 +60,23 @@ export class ReviewService {
       .orderBy(desc(campaignDrafts.createdAt))
       .limit(50);
 
-    return { ok: true as const, drafts: fresh };
+    const drafts = fresh.map((row) => {
+      const evidence = (row.evidence ?? {}) as DraftEvidence;
+      return {
+        id: row.id,
+        campaignId: row.campaignId,
+        body: row.body,
+        status: row.status,
+        specificity: row.specificity,
+        draftHash: row.draftHash,
+        company: evidence.company ?? '',
+        role: evidence.role ?? '',
+        createdAt: row.createdAt,
+        expiresAt: row.expiresAt,
+      };
+    });
+
+    return { ok: true as const, drafts };
   }
 
   async saveBody(user: SessionUser, draftId: string, body: string) {

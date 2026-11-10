@@ -48,12 +48,30 @@ describe('PreferencesService', () => {
       locations: ['Remote'],
       targetLevel: 'Mid',
       links: { linkedin: 'https://linkedin.com/in/example' },
+      criteria: {
+        desiredCompanies: ['Stripe'],
+        expectedCtcMinLakh: 25,
+        expectedCtcMaxLakh: 40,
+        skills: ['SQL'],
+        workModes: ['remote'],
+        avoidCompanies: [],
+        industries: [],
+        employmentTypes: [],
+        keywords: [],
+        noticePeriodDays: 30,
+        openToRelocation: false,
+        minYearsExperience: 3,
+        maxYearsExperience: 8,
+      },
     });
     expect(saved.preferences.jobFamilies).toEqual(['Product']);
+    expect(saved.preferences.criteria.desiredCompanies).toEqual(['Stripe']);
+    expect(saved.preferences.criteria.expectedCtcMinLakh).toBe(25);
     expect(saved.onboardingStep).toBe('gmail');
 
     const again = await prefs.get({ ...refreshed, onboardingStep: 'gmail' });
     expect(again.preferences.locations).toEqual(['Remote']);
     expect(again.preferences.links.linkedin).toBe('https://linkedin.com/in/example');
+    expect(again.preferences.criteria.skills).toEqual(['SQL']);
   });
 });
