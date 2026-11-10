@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, ilike, inArray, ne, not, or } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, ne, not, or } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -133,33 +133,6 @@ export class DeskRunService {
     return this.db;
   }
 
-  /** Drop unsent letters from the last round so Find my 10 starts from an empty desk. */
-  private async clearPendingLetters(userId: string) {
-    const db = this.ready();
-    const pending = await db
-      .select({ campaignId: campaignDrafts.campaignId })
-      .from(campaignDrafts)
-      .where(and(eq(campaignDrafts.userId, userId), eq(campaignDrafts.status, 'pending_approval')));
-    if (pending.length === 0) return;
-    const now = new Date();
-    await db
-      .update(campaignDrafts)
-      .set({ status: 'cancelled', updatedAt: now })
-      .where(and(eq(campaignDrafts.userId, userId), eq(campaignDrafts.status, 'pending_approval')));
-    await db
-      .update(campaigns)
-      .set({ state: 'cancelled_by_user', updatedAt: now })
-      .where(
-        and(
-          eq(campaigns.userId, userId),
-          inArray(
-            campaigns.id,
-            pending.map((row) => row.campaignId),
-          ),
-        ),
-      );
-  }
-
   async runToday(user: SessionUser) {
     const db = this.ready();
     const [latestScore] = await db
@@ -171,7 +144,6 @@ export class DeskRunService {
     if (!latestScore) {
       throw new BadRequestException('Upload a CV and get a score before starting your round.');
     }
-    await this.clearPendingLetters(user.id);
     const [run] = await db
       .insert(deskRuns)
       .values({
@@ -331,7 +303,7 @@ export class DeskRunService {
         created: 0,
         considered: matchable.length,
         drafts: [],
-        message: 'Today’s 10 letters are already prepared. Come back tomorrow.',
+        message: 'Today’s 10 are already here. Cancel a letter if you want a different role.',
         readinessTotal: latestScore.total,
       };
     }
@@ -381,7 +353,10 @@ export class DeskRunService {
         created: 0,
         considered: matchable.length,
         drafts: [],
-        message: 'Nothing was close enough to your work.',
+        message:
+          madeToday.length > 0
+            ? 'No new roles this time. The letters already here stay until you cancel them.'
+            : 'Nothing was close enough to your work.',
         readinessTotal: latestScore.total,
       };
     }
@@ -466,8 +441,10 @@ export class DeskRunService {
       drafts: created,
       message:
         created.length > 0
-          ? `Found ${created.length} fit${created.length === 1 ? '' : 's'} for you to review.`
-          : 'Those openings already have a letter on your desk.',
+          ? madeToday.length > 0
+            ? `Added ${created.length} more. The earlier letters stay until you cancel them.`
+            : `Found ${created.length} fit${created.length === 1 ? '' : 's'} for you to review.`
+          : 'No new roles this time. The letters already here stay until you cancel them.',
       readinessTotal: latestScore.total,
     };
   }
