@@ -203,6 +203,26 @@ export function DeskDashboard({
         </aside>
 
         <div className="desk-main">
+          <section className="desk-pane desk-letters-pane" aria-label="Your drafts">
+            <p className="desk-kicker">Your drafts</p>
+            {choosing ? <ChoosingOrb /> : null}
+            <DraftLetters
+              hideEmpty={choosing}
+              drafts={drafts}
+              busyId={draftBusyId}
+              shuffle={letterShuffle}
+              onShuffle={onLetterShuffle}
+              onApprove={onApproveDraft}
+              onSave={onSaveDraft}
+              onCancel={onCancelDraft}
+            />
+          </section>
+
+          <section className="desk-pane" aria-label="Replies">
+            <p className="desk-kicker">Replies</p>
+            <p className="desk-pane-copy">Nothing to review yet.</p>
+          </section>
+
           <section className="desk-pane desk-autopilot">
             <div>
               <p className="desk-kicker">Autopilot</p>
@@ -251,26 +271,6 @@ export function DeskDashboard({
               </ul>
             </section>
           ) : null}
-
-          <section className="desk-pane">
-            <p className="desk-kicker">Replies</p>
-            <p className="desk-pane-copy">Nothing to review yet.</p>
-          </section>
-
-          <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
-            <p className="desk-kicker">Letters</p>
-            {choosing ? <ChoosingOrb /> : null}
-            <DraftLetters
-              hideEmpty={choosing}
-              drafts={drafts}
-              busyId={draftBusyId}
-              shuffle={letterShuffle}
-              onShuffle={onLetterShuffle}
-              onApprove={onApproveDraft}
-              onSave={onSaveDraft}
-              onCancel={onCancelDraft}
-            />
-          </section>
         </div>
       </div>
     </div>

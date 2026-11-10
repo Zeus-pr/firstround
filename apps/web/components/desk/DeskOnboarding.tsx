@@ -28,6 +28,7 @@ import {
 } from '@/lib/jobs';
 import { fetchPreferences, savePreferences } from '@/lib/preferences';
 import { CvModal, type CvModalStage } from './CvModal';
+import { DeskToast } from './DeskToast';
 import { DeskDashboard } from './DeskDashboard';
 import { PreferencesModal } from './PreferencesModal';
 import type { RoundPhase } from './StartMyRound';
@@ -458,9 +459,7 @@ export function DeskOnboarding() {
         onDismissSuggestions={() => setSuggestions([])}
       />
       {note && !modalOpen ? (
-        <p className="note desk-dash-note" role="status">
-          {note}
-        </p>
+        <DeskToast key={note} message={note} onDone={() => setNote('')} />
       ) : null}
 
       <CvModal
