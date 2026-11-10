@@ -8,9 +8,14 @@ type Props = {
   readiness: ReadinessResult | null;
   suggestions: string[];
   creditBalance?: number | null;
+  gmailConnected?: boolean;
+  gmailEmail?: string | null;
+  gmailBusy?: boolean;
   onOpenCv: () => void;
   onReviewScore: () => void;
   onOpenPreferences: () => void;
+  onConnectGmail?: () => void;
+  onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
 };
 
@@ -20,13 +25,17 @@ export function DeskDashboard({
   readiness,
   suggestions,
   creditBalance,
+  gmailConnected = false,
+  gmailEmail = null,
+  gmailBusy = false,
   onOpenCv,
   onReviewScore,
   onOpenPreferences,
+  onConnectGmail,
+  onDisconnectGmail,
   onDismissSuggestions,
 }: Props) {
   const hasReadiness = Boolean(readiness);
-  const gmailReady = onboardingStep === 'done' || onboardingStep === 'gmail';
 
   return (
     <div className="desk-dash">
@@ -88,11 +97,37 @@ export function DeskDashboard({
 
           <section className="desk-pane">
             <p className="desk-kicker">Gmail</p>
-            <p className="desk-pane-copy">
-              {gmailReady
-                ? 'Connect Gmail next so emails can send from your inbox.'
-                : 'Not connected. Emails will send from your Gmail after you connect.'}
-            </p>
+            {gmailConnected ? (
+              <>
+                <p className="desk-pane-copy">Connected{gmailEmail ? ` as ${gmailEmail}` : ''}.</p>
+                {onDisconnectGmail ? (
+                  <button
+                    className="text-button"
+                    type="button"
+                    disabled={gmailBusy}
+                    onClick={onDisconnectGmail}
+                  >
+                    {gmailBusy ? 'Working…' : 'Disconnect'}
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <p className="desk-pane-copy">
+                  Not connected. Connect the Gmail inbox emails should send from.
+                </p>
+                {onConnectGmail ? (
+                  <button
+                    className="wax desk-rail-btn"
+                    type="button"
+                    disabled={gmailBusy || onboardingStep === 'account' || onboardingStep === 'cv'}
+                    onClick={onConnectGmail}
+                  >
+                    {gmailBusy ? 'Opening Google…' : 'Connect Gmail'}
+                  </button>
+                ) : null}
+              </>
+            )}
           </section>
 
           <section className="desk-pane">

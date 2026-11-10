@@ -14,6 +14,7 @@ import {
   uploadAndAnalyzeCv,
   type ReadinessResult,
 } from '@/lib/cv';
+import { disconnectGmail, fetchGmailStatus, startGmailConnect } from '@/lib/gmail';
 import { CvModal, type CvModalStage } from './CvModal';
 import { DeskDashboard } from './DeskDashboard';
 import { PreferencesModal } from './PreferencesModal';
@@ -55,6 +56,22 @@ export function DeskOnboarding() {
   const [primaryBusy, setPrimaryBusy] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [gmailBusy, setGmailBusy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const gmail = params.get('gmail');
+    if (!gmail) return;
+    if (gmail === 'connected') setNote('Gmail connected.');
+    if (gmail === 'error') {
+      const reason = params.get('reason');
+      setNote(reason ? `Gmail connect failed: ${reason}` : 'Gmail connect failed. Try again.');
+    }
+    window.history.replaceState({}, '', '/desk');
+  }, []);
 
   useEffect(() => {
     const auth = firebaseAuth();
@@ -73,6 +90,8 @@ export function DeskOnboarding() {
         setCvDocumentId(null);
         setSuggestions([]);
         setReadiness(null);
+        setGmailConnected(false);
+        setGmailEmail(null);
         return;
       }
       void (async () => {
@@ -87,11 +106,21 @@ export function DeskOnboarding() {
             setModalStage('upload');
           }
 
-          const [credits, latest] = await Promise.all([
+          const [credits, latest, gmail] = await Promise.all([
             fetchCredits(next).catch(() => null),
             fetchLatestReadiness(next).catch(() => null),
+            fetchGmailStatus(next).catch(() => null),
           ]);
           if (credits) setCreditBalance(credits.balance);
+          if (gmail) {
+            setGmailConnected(gmail.connected);
+            setGmailEmail(gmail.email);
+            if (gmail.onboardingStep) {
+              setSession((prev) =>
+                prev ? { ...prev, onboardingStep: gmail.onboardingStep } : prev,
+              );
+            }
+          }
           if (isReadiness(latest?.readiness)) {
             setReadiness(coachReadiness(latest.readiness));
             if (latest.cvDocumentId) setCvDocumentId(latest.cvDocumentId);
@@ -209,6 +238,9 @@ export function DeskOnboarding() {
         readiness={readiness}
         suggestions={suggestions}
         creditBalance={creditBalance}
+        gmailConnected={gmailConnected}
+        gmailEmail={gmailEmail}
+        gmailBusy={gmailBusy}
         onOpenCv={() => {
           setNote('');
           setFileName(undefined);
@@ -221,6 +253,37 @@ export function DeskOnboarding() {
           setModalOpen(true);
         }}
         onOpenPreferences={() => setPrefsOpen(true)}
+        onConnectGmail={() => {
+          if (!user) return;
+          setGmailBusy(true);
+          setNote('');
+          void startGmailConnect(user)
+            .then(({ authorizeUrl }) => {
+              window.location.assign(authorizeUrl);
+            })
+            .catch((error) => {
+              setNote(error instanceof Error ? error.message : 'Could not start Gmail connect.');
+              setGmailBusy(false);
+            });
+        }}
+        onDisconnectGmail={() => {
+          if (!user) return;
+          setGmailBusy(true);
+          setNote('');
+          void disconnectGmail(user)
+            .then((status) => {
+              setGmailConnected(false);
+              setGmailEmail(null);
+              setSession((prev) =>
+                prev ? { ...prev, onboardingStep: status.onboardingStep } : prev,
+              );
+              setNote('Gmail disconnected.');
+            })
+            .catch((error) => {
+              setNote(error instanceof Error ? error.message : 'Could not disconnect Gmail.');
+            })
+            .finally(() => setGmailBusy(false));
+        }}
         onDismissSuggestions={() => setSuggestions([])}
       />
       {note && !modalOpen ? (
