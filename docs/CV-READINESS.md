@@ -49,7 +49,9 @@ Contact email, location, and links are a separate sendability checklist outside 
 4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized)
 5. `POST /cv/suggestions` `{ cvDocumentId }` → short coaching lines from the stored score plus one fast model call (same handler as `POST /cv/supercharge`). Costs 5 credits when the model answers; a model failure returns the algorithm gaps and does not debit. The stored total does not change.
 6. `GET /cv/readiness/latest` → score plus any saved suggestions
-7. `GET /credits` → balance + supercharge cost
+7. `GET /cv/documents/:id/download` → short-lived URL for that account's file
+8. `DELETE /cv/documents/:id` → removes that CV, its score, and the stored file. Another account's id returns 404. The last CV on the account sets onboarding back to `account`.
+9. `GET /credits` → balance + supercharge cost
 
 ## Suggestions credits
 

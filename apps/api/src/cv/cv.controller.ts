@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Post,
   Req,
   ServiceUnavailableException,
@@ -111,5 +113,17 @@ export class CvController {
     this.assertRate(req);
     const user = await this.sessions.ensureUser(auth);
     return this.cv.downloadUrl(user, id);
+  }
+
+  @Delete('documents/:id')
+  @HttpCode(200)
+  async remove(
+    @Req() req: Request,
+    @CurrentUser() auth: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    this.assertRate(req);
+    const user = await this.sessions.ensureUser(auth);
+    return this.cv.removeDocument(user, id);
   }
 }
