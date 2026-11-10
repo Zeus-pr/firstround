@@ -46,10 +46,10 @@ export function DraftLetters({
       </div>
       {pending.length === 0 ? (
         hideEmpty ? null : (
-          <p className="desk-pane-copy">No letters yet.</p>
+          <p className="desk-pane-copy">No drafts yet.</p>
         )
       ) : (
-        <ul className="desk-letters" aria-label="Draft letters">
+        <ul className="desk-letters" aria-label="Your drafts">
           {pending.map((draft) => {
             const open = openId === draft.id;
             const editing = edit?.id === draft.id;
