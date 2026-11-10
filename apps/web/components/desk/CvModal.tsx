@@ -14,7 +14,6 @@ type Props = {
   fileName?: string;
   note: string;
   readiness: ReadinessResult | null;
-  creditBalance?: number | null;
   suggestions?: string[];
   replacing?: boolean;
   primaryBusy?: boolean;
@@ -30,7 +29,6 @@ export function CvModal({
   fileName,
   note,
   readiness,
-  creditBalance,
   suggestions,
   replacing,
   primaryBusy,
@@ -86,9 +84,7 @@ export function CvModal({
               {replacing ? 'Replace your CV' : 'Upload your CV'}
             </h2>
             <p className="desk-lead">
-              {replacing
-                ? 'PDF or Word. We score the new file and replace the current score.'
-                : 'PDF or Word. We extract facts and score the CV. Ordinary CVs get coaching, not a fail.'}
+              {replacing ? 'PDF or Word. This replaces the current score.' : 'PDF or Word.'}
             </p>
             <input
               ref={inputRef}
@@ -122,7 +118,6 @@ export function CvModal({
               onPrimary={onPrimary}
               onSkip={onSkip}
               primaryBusy={primaryBusy}
-              creditBalance={creditBalance}
               suggestions={suggestions}
             />
             {note ? (

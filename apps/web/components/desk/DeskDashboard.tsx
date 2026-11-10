@@ -8,13 +8,11 @@ import { ScoreName } from './ScoreName';
 import { StartMyRound, type RoundPhase } from './StartMyRound';
 
 type Props = {
-  email: string | null;
   onboardingStep: string;
   readiness: ReadinessResult | null;
   suggestions: string[];
   creditBalance?: number | null;
   gmailConnected?: boolean;
-  gmailEmail?: string | null;
   gmailBusy?: boolean;
   drafts?: ReviewDraft[];
   draftBusyId?: string | null;
@@ -39,13 +37,11 @@ type Props = {
 };
 
 export function DeskDashboard({
-  email,
   onboardingStep,
   readiness,
   suggestions,
   creditBalance,
   gmailConnected = false,
-  gmailEmail = null,
   gmailBusy = false,
   drafts = [],
   draftBusyId = null,
@@ -76,22 +72,21 @@ export function DeskDashboard({
     roundPhase === 'scoring' ||
     roundPhase === 'drafting';
   const roundDisabled = !hasReadiness;
-  const roundDisabledReason = !hasReadiness ? 'Upload a CV and get a score first.' : undefined;
 
   return (
     <div className="desk-dash">
       <header className="desk-dash-top">
         <div>
-          <p className="desk-kicker">Dashboard</p>
-          <p className="desk-lead desk-dash-lead">
-            {email ?? 'Signed in'}
-            {typeof creditBalance === 'number' ? ` · ${creditBalance} credits` : null}
-          </p>
+          {typeof creditBalance === 'number' ? (
+            <p className="desk-lead desk-dash-lead">{creditBalance} credits</p>
+          ) : null}
         </div>
         <div className="desk-dash-actions">
-          <button className="desk-quiet" type="button" onClick={onOpenCv}>
-            {hasReadiness ? 'Update CV' : 'Add CV'}
-          </button>
+          {hasReadiness ? (
+            <button className="desk-quiet" type="button" onClick={onOpenCv}>
+              Update CV
+            </button>
+          ) : null}
           {hasReadiness && onDownloadCv ? (
             <button className="desk-quiet" type="button" onClick={onDownloadCv}>
               {cvFilename ? `Download ${cvFilename}` : 'Download CV'}
@@ -105,7 +100,6 @@ export function DeskDashboard({
 
       <StartMyRound
         disabled={roundDisabled}
-        disabledReason={roundDisabledReason}
         phase={roundPhase}
         resultMessage={roundMessage}
         onStart={onStartRound}
@@ -155,7 +149,7 @@ export function DeskDashboard({
             <p className="desk-kicker">Gmail</p>
             {gmailConnected ? (
               <>
-                <p className="desk-pane-copy">Connected{gmailEmail ? ` as ${gmailEmail}` : ''}.</p>
+                <p className="desk-pane-copy">Connected.</p>
                 {onDisconnectGmail ? (
                   <button
                     className="text-button"
@@ -169,9 +163,7 @@ export function DeskDashboard({
               </>
             ) : (
               <>
-                <p className="desk-pane-copy">
-                  Not connected. Connect the Gmail inbox emails should send from.
-                </p>
+                <p className="desk-pane-copy">Not connected. Letters send from this inbox.</p>
                 {onConnectGmail ? (
                   <button
                     className="wax desk-rail-btn"
@@ -186,28 +178,9 @@ export function DeskDashboard({
             )}
           </section>
 
-          <section className="desk-pane">
-            <p className="desk-kicker">Today’s letters</p>
-            {pendingDrafts.length === 0 ? (
-              <p className="desk-pane-copy">No letters waiting for approval.</p>
-            ) : (
-              <ul className="desk-rail-list">
-                {pendingDrafts.slice(0, 5).map((draft) => (
-                  <li key={draft.id}>
-                    <span>
-                      {(draft.company?.trim() || 'Company') +
-                        ' · ' +
-                        (draft.role?.trim() || 'Role')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
           <section className="desk-pane desk-pane-quiet">
             <p className="desk-kicker">Referrals</p>
-            <p className="desk-pane-copy">Referral invites open after Gmail. Not available yet.</p>
+            <p className="desk-pane-copy">Not available yet.</p>
           </section>
         </aside>
 
@@ -215,18 +188,12 @@ export function DeskDashboard({
           <section className="desk-pane desk-autopilot">
             <div>
               <p className="desk-kicker">Autopilot</p>
-              <p className="desk-pane-copy">
-                Off. Connect Gmail and set preferences before drafts send on their own.
-              </p>
+              <p className="desk-pane-copy">Off.</p>
             </div>
-            <button className="desk-ghost" type="button" disabled>
-              Pause
-            </button>
           </section>
 
           <section className="desk-pane">
             <p className="desk-kicker">Applications</p>
-            <p className="desk-pane-copy">Review drafts, follow-ups, and replies here.</p>
             <ul className="desk-stats" aria-label="Application stats">
               <li>
                 <span className="desk-stat">{pendingDrafts.length}</span>
@@ -274,12 +241,9 @@ export function DeskDashboard({
 
           <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
             <p className="desk-kicker">Letters</p>
-            {choosing ? (
-              <ChoosingOrb />
-            ) : (
-              <p className="desk-pane-copy">Open a letter and read it.</p>
-            )}
+            {choosing ? <ChoosingOrb /> : null}
             <DraftLetters
+              hideEmpty={choosing}
               drafts={drafts}
               busyId={draftBusyId}
               shuffle={letterShuffle}

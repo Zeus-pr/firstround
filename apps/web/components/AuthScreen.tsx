@@ -201,11 +201,12 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     return (
       <main className="auth-shell auth-shell-boot">
         <section className="auth-panel auth-panel-boot">
-          <h1>Opening your dashboard</h1>
-          <p>You are signed in as {user.email ?? 'this account'}.</p>
-          <p className="note" role="status">
-            {note || 'Taking you to the dashboard.'}
-          </p>
+          <h1>You’re signed in.</h1>
+          {note ? (
+            <p className="note" role="status">
+              {note}
+            </p>
+          ) : null}
           <Link className="wax desk-link-btn" href="/desk">
             Go to dashboard
           </Link>

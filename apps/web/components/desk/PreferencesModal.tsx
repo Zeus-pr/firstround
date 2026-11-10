@@ -348,7 +348,9 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
             disabled={!loaded || busy}
             onClick={() => setLetterShuffle((v) => !v)}
           >
-            {letterShuffle ? 'Smart shuffle on' : 'Smart shuffle off'}
+            {letterShuffle
+              ? 'Different subject line on each letter'
+              : 'Same subject line on each letter'}
           </button>
 
           <p className="desk-prefs-section">Links</p>
@@ -389,9 +391,6 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
           <div className="desk-reveal-actions">
             <button className="wax" type="submit" disabled={!loaded || busy}>
               {busy ? 'Saving…' : 'Save preferences'}
-            </button>
-            <button className="text-button" type="button" disabled={busy} onClick={onClose}>
-              Later
             </button>
           </div>
         </form>

@@ -3,15 +3,14 @@
 import { Orb } from '@yogesharc/thinking-orbs';
 
 const ANALYZE_BEATS = [
-  { state: 'searching' as const, line: 'Reading the CV' },
-  { state: 'reasoning' as const, line: 'Extracting work history and skills' },
-  { state: 'working' as const, line: 'Scoring the CV' },
+  { state: 'searching' as const, line: 'Work history' },
+  { state: 'reasoning' as const, line: 'Skills' },
+  { state: 'working' as const, line: 'Score' },
 ];
 
 const SUGGEST_BEATS = [
-  { state: 'searching' as const, line: 'Reading the score gaps' },
-  { state: 'working' as const, line: 'Writing concrete edit suggestions' },
-  { state: 'reasoning' as const, line: 'Keeping the score unchanged' },
+  { state: 'searching' as const, line: 'Gaps' },
+  { state: 'working' as const, line: 'Edits' },
 ];
 
 export function AnalysisOrbs({
@@ -24,16 +23,7 @@ export function AnalysisOrbs({
   const beats = mode === 'suggest' ? SUGGEST_BEATS : ANALYZE_BEATS;
   return (
     <div className="desk-analyze" aria-live="polite" aria-busy="true">
-      <p className="desk-kicker">
-        {mode === 'suggest' ? 'Writing suggestions' : 'Reading your CV'}
-      </p>
-      <p className="desk-lead">
-        {fileName
-          ? `Working through ${fileName}.`
-          : mode === 'suggest'
-            ? 'Writing a few edits from the CV you already uploaded.'
-            : 'Working through your CV.'}
-      </p>
+      {fileName ? <p className="desk-lead">{fileName}</p> : null}
       <ul className="desk-orbs">
         {beats.map((beat) => (
           <li key={beat.line}>

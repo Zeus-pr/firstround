@@ -8,6 +8,7 @@ type Props = {
   drafts: ReviewDraft[];
   busyId?: string | null;
   shuffle?: boolean;
+  hideEmpty?: boolean;
   onShuffle?: (on: boolean) => void;
   onApprove?: (draftId: string) => void;
   onSave?: (draftId: string, subject: string, body: string) => void;
@@ -18,6 +19,7 @@ export function DraftLetters({
   drafts,
   busyId = null,
   shuffle = true,
+  hideEmpty = false,
   onShuffle,
   onApprove,
   onSave,
@@ -43,7 +45,9 @@ export function DraftLetters({
         </button>
       </div>
       {pending.length === 0 ? (
-        <p className="desk-pane-copy">No letters waiting. Start my round when you’re ready.</p>
+        hideEmpty ? null : (
+          <p className="desk-pane-copy">No letters yet.</p>
+        )
       ) : (
         <ul className="desk-letters" aria-label="Draft letters">
           {pending.map((draft) => {

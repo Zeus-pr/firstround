@@ -18,18 +18,10 @@ type Props = {
   onPrimary: () => void;
   onSkip?: () => void;
   primaryBusy?: boolean;
-  creditBalance?: number | null;
   suggestions?: string[];
 };
 
-export function ReadinessReveal({
-  readiness,
-  onPrimary,
-  onSkip,
-  primaryBusy,
-  creditBalance,
-  suggestions,
-}: Props) {
+export function ReadinessReveal({ readiness, onPrimary, onSkip, primaryBusy, suggestions }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { recommendation, band, total } = readiness;
 
@@ -141,10 +133,6 @@ export function ReadinessReveal({
           </ul>
         </section>
       ) : null}
-
-      <p className="desk-meta desk-reveal-in">
-        {typeof creditBalance === 'number' ? `${creditBalance} credits` : null}
-      </p>
 
       <div className="desk-reveal-actions desk-reveal-in">
         <button className="wax" type="button" disabled={primaryBusy} onClick={onPrimary}>
