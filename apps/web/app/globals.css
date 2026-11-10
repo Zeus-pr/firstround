@@ -1568,15 +1568,9 @@ h1 {
   flex-wrap: wrap;
 }
 
-.desk-dash-title {
-  margin: 0.2rem 0 0;
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 520;
-  letter-spacing: -0.04em;
-  color: var(--sheet);
-}
-
 .desk-dash-lead {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
   color: #cfc6b8;
 }
 

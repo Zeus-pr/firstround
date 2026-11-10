@@ -69,18 +69,35 @@ export type CreditsBalanceResponse = {
 
 export const SUPERCHARGE_CREDIT_COST = 5;
 
+/** Straight copy for the desk UI. API wording can stay poetic; the page does not. */
 export function coachReadiness(readiness: ReadinessResult): ReadinessResult {
-  const headline = readiness.recommendation.headline;
-  const body = readiness.recommendation.body;
-  if (headline !== 'Good base. Supercharge it.' && !body.includes('A short Supercharge pass')) {
-    return readiness;
+  const total = readiness.total;
+  if (readiness.band === 'ready') {
+    return {
+      ...readiness,
+      recommendation: {
+        action: 'continue',
+        headline: 'Ready to email',
+        body: `CV score ${total}. Continue to job preferences, then connect Gmail.`,
+      },
+    };
+  }
+  if (readiness.band === 'supercharge') {
+    return {
+      ...readiness,
+      recommendation: {
+        action: 'supercharge',
+        headline: 'Good base. Get CV suggestions.',
+        body: `CV score ${total}. Get short edit suggestions, or keep the checklist. The score does not change.`,
+      },
+    };
   }
   return {
     ...readiness,
     recommendation: {
-      action: 'supercharge',
-      headline: 'Good base. Tighten the proof.',
-      body: `You are in the sweet middle (${readiness.total}). Suggestions name the lines to sharpen. This score stays as it is.`,
+      action: 'strengthen',
+      headline: 'Strengthen the CV first',
+      body: `CV score ${total}. Fix the gaps below before you email recruiters.`,
     },
   };
 }

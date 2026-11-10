@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
 import { ensureAppSession, type SessionPayload } from '@/lib/session';
 import {
@@ -101,7 +101,7 @@ export function DeskOnboarding() {
             }
           }
         } catch {
-          setNote('Signed in, but we could not open your desk yet. Refresh and try again.');
+          setNote('Signed in, but the dashboard did not load. Refresh and try again.');
           setBoot(false);
           setModalOpen(true);
           setModalStage('upload');
@@ -179,7 +179,7 @@ export function DeskOnboarding() {
   if (boot) {
     return (
       <main className="desk-shell desk-shell-center">
-        <p className="note desk-boot-copy">Opening your desk.</p>
+        <p className="note desk-boot-copy">Opening your dashboard.</p>
       </main>
     );
   }
@@ -188,8 +188,8 @@ export function DeskOnboarding() {
     return (
       <main className="desk-shell desk-shell-center">
         <section className="desk-sheet desk-sheet-center">
-          <h1>Your desk</h1>
-          <p className="desk-lead">Sign in to open the desk and LetterProof.</p>
+          <h1>Dashboard</h1>
+          <p className="desk-lead">Sign in to upload a CV and see your score.</p>
           <p className="note" role="status">
             {note}
           </p>
@@ -221,10 +221,6 @@ export function DeskOnboarding() {
           setModalOpen(true);
         }}
         onOpenPreferences={() => setPrefsOpen(true)}
-        onSignOut={() => {
-          const auth = firebaseAuth();
-          if (auth) void signOut(auth);
-        }}
         onDismissSuggestions={() => setSuggestions([])}
       />
       {note && !modalOpen ? (
@@ -261,7 +257,7 @@ export function DeskOnboarding() {
         onSaved={(onboardingStep) => {
           setSession((prev) => (prev ? { ...prev, onboardingStep } : prev));
           setPrefsOpen(false);
-          setNote('Preferences saved. Gmail connect is next.');
+          setNote('Preferences saved. Connect Gmail next.');
         }}
       />
     </main>

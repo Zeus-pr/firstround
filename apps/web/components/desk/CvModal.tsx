@@ -66,7 +66,7 @@ export function CvModal({
       <div className="desk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="desk-modal-top">
           <p className="desk-kicker" id={titleId}>
-            LetterProof
+            CV score
           </p>
           {!busy ? (
             <button className="text-button" type="button" onClick={onClose}>
@@ -82,12 +82,12 @@ export function CvModal({
         {stage === 'upload' ? (
           <div className="desk-upload">
             <h2 className="desk-modal-heading">
-              {replacing ? 'Replace the CV on the desk' : 'Place your CV on the desk'}
+              {replacing ? 'Replace your CV' : 'Upload your CV'}
             </h2>
             <p className="desk-lead">
               {replacing
-                ? 'PDF or Word. The new file is scored on its own and becomes the score on the desk.'
-                : 'PDF or Word. We read hard layouts, normalize skills, and score LetterProof. Ordinary CVs are coached, not failed.'}
+                ? 'PDF or Word. We score the new file and replace the current score.'
+                : 'PDF or Word. We extract facts and score the CV. Ordinary CVs get coaching, not a fail.'}
             </p>
             <input
               ref={inputRef}

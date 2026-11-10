@@ -6,7 +6,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'First Round',
-  description: 'A letter to the person who can say yes. You read it. It leaves from your Gmail.',
+  description:
+    'Find jobs, email recruiters from your Gmail. You approve every email before it sends.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

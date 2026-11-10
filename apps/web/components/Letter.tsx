@@ -11,7 +11,7 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const heroMesh = ['#f4efe6', '#1c1916', '#9d3b28'] as [string, string, string];
 
-const headline = 'The person who can hire you never sees the application.'.split(' ');
+const headline = 'The recruiter who can hire you never sees your application.'.split(' ');
 
 const roles = [
   { title: 'Product lead, payments', why: 'kept', kept: true },
@@ -28,7 +28,7 @@ const addresses = [
 
 const letterLines = [
   'I worked the retry path on payments.',
-  'The role you posted is that work again.',
+  'The job you posted is that work again.',
   'I can talk this week.',
 ];
 
@@ -36,7 +36,7 @@ type SeatTone = 'idle' | 'bad' | 'saved' | 'already';
 
 const messages: Record<Exclude<SeatTone, 'idle'>, string> = {
   bad: 'Use a full email address.',
-  saved: 'Saved. We write when a desk is free.',
+  saved: 'Saved. We will email you when a seat opens.',
   already: 'That address is already on the list.',
 };
 
@@ -302,7 +302,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
             ))}
           </h1>
           <p className="problem">
-            A hundred people apply before you finish the role. Yours stays in the pile.
+            A hundred people apply before you finish the job post. Yours stays in the pile.
           </p>
           <SeatForm id="email" initialNote={note} initialTone={tone} />
         </WaveMesh>
@@ -311,7 +311,8 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
           <div className="route-intro">
             <h2 id="route-heading">We skip the queue.</h2>
             <p>
-              One live role. One person behind it. A letter you read before it leaves your inbox.
+              One open job. One recruiter or hiring manager. An email you approve before it sends
+              from your Gmail.
             </p>
           </div>
 
@@ -326,7 +327,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
               <desc id="route-map-description">
                 A resume branches into two paths. The usual application passes through an applicant
                 tracking system, recruiter queue, and application pile. First Round matches the
-                resume to a role and sends it to the person who owns that role.
+                resume to a job and emails the recruiter or hiring manager.
               </desc>
 
               <path className="route-trunk" d="M145 226 H225" />
@@ -378,7 +379,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
                 <circle r="16" />
                 <path className="route-step-icon" d="M-6 -2h12v8h-12z M-2 -2v-3h4v3 M-6 1h12" />
                 <text className="route-step-title" y="45" textAnchor="middle">
-                  Right role
+                  Right job
                 </text>
               </g>
 
@@ -528,7 +529,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
                 <circle r="15" />
                 <path className="route-step-icon" d="M-6 -2h12v8h-12z M-2 -2v-3h4v3 M-6 1h12" />
                 <text className="route-mobile-step-title" y="38" textAnchor="middle">
-                  Right role
+                  Right job
                 </text>
               </g>
               <g className="route-mobile-destination" transform="translate(105 636)">
@@ -629,7 +630,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
         </section>
 
         <section className="chapter sort" id="sort">
-          <h2>Most roles are the wrong conversation.</h2>
+          <h2>Most jobs are the wrong conversation.</h2>
           <ul className="roles">
             {roles.map((role) => (
               <li key={role.title} className={role.kept ? 'kept' : undefined}>
@@ -645,7 +646,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
         </section>
 
         <section className="chapter name" id="name">
-          <h2>One person owns the role.</h2>
+          <h2>One person owns the job.</h2>
           <ul className="addresses">
             {addresses.map((item) => (
               <li key={item.line} className={item.kept ? 'kept' : undefined}>
@@ -661,7 +662,7 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
         </section>
 
         <section className="chapter write" id="letter">
-          <h2>You read it before it leaves.</h2>
+          <h2>You approve the email before it sends.</h2>
           <div className="letter-lines">
             {letterLines.map((line) => (
               <p className="letter-line" key={line}>
@@ -672,18 +673,18 @@ export function Letter({ initialSeat }: { initialSeat?: string }) {
         </section>
       </article>
 
-      <section className="stage" aria-label="The pile, then one letter">
+      <section className="stage" aria-label="The pile, then one email">
         <Pile progressRef={progressRef} />
         <div className="stage-caption">
           <p className="stage-problem">A hundred applications. Yours is buried in them.</p>
-          <p className="stage-solution">One letter reaches the person who can say yes.</p>
+          <p className="stage-solution">One email reaches the recruiter or hiring manager.</p>
         </div>
       </section>
 
       <article className="sheet reply" id="reply">
         <h2 className="reply-line">They write back.</h2>
         <p className="reply-line reply-body">
-          Forwarded to the person who owns the role. Thursday works.
+          Forwarded to the person who owns the job. Thursday works.
         </p>
         <p className="reply-line reply-close">Your only job is the call.</p>
         <SeatForm id="email-end" />

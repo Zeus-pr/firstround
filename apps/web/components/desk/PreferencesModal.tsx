@@ -121,9 +121,9 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
           </button>
         </header>
 
-        <h2 className="desk-modal-heading">Where should letters aim?</h2>
+        <h2 className="desk-modal-heading">What jobs are you targeting?</h2>
         <p className="desk-lead">
-          Role families, places, and level. Saved on the desk before Gmail connects.
+          Job families, locations, and level. Saved before you connect Gmail.
         </p>
 
         <form className="desk-prefs-form" onSubmit={(event) => void onSubmit(event)}>
@@ -197,7 +197,7 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
 
           <div className="desk-reveal-actions">
             <button className="wax" type="submit" disabled={!loaded || busy}>
-              {busy ? 'Saving…' : 'Save on desk'}
+              {busy ? 'Saving…' : 'Save preferences'}
             </button>
             <button className="text-button" type="button" disabled={busy} onClick={onClose}>
               Later
