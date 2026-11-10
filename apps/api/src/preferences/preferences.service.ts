@@ -1,12 +1,14 @@
 import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { preferences, profiles, type Db } from '@firstround/db';
-import type {
-  OnboardingStep,
-  PreferencesPayload,
-  PreferencesResponse,
-  SessionUser,
-  UpdatePreferencesRequest,
+import {
+  EMPTY_PREFERENCES_CRITERIA,
+  PreferencesCriteria,
+  type OnboardingStep,
+  type PreferencesPayload,
+  type PreferencesResponse,
+  type SessionUser,
+  type UpdatePreferencesRequest,
 } from '@firstround/contracts';
 import { DB } from '../db/db.module.js';
 
@@ -15,6 +17,7 @@ const EMPTY: PreferencesPayload = {
   locations: [],
   targetLevel: null,
   links: {},
+  criteria: EMPTY_PREFERENCES_CRITERIA,
 };
 
 function cleanLinks(links: UpdatePreferencesRequest['links']): Record<string, string> {
@@ -23,6 +26,30 @@ function cleanLinks(links: UpdatePreferencesRequest['links']): Record<string, st
   if (links.github) out.github = links.github;
   if (links.portfolio) out.portfolio = links.portfolio;
   return out;
+}
+
+function normalizeCriteria(raw: unknown): PreferencesCriteria {
+  const parsed = PreferencesCriteria.safeParse({
+    ...EMPTY_PREFERENCES_CRITERIA,
+    ...(raw && typeof raw === 'object' ? raw : {}),
+  });
+  return parsed.success ? parsed.data : EMPTY_PREFERENCES_CRITERIA;
+}
+
+function toPayload(row: {
+  jobFamilies: string[] | null;
+  locations: string[] | null;
+  targetLevel: string | null;
+  links: Record<string, string> | null;
+  criteria?: Record<string, unknown> | null;
+}): PreferencesPayload {
+  return {
+    jobFamilies: row.jobFamilies ?? [],
+    locations: row.locations ?? [],
+    targetLevel: row.targetLevel ?? null,
+    links: (row.links ?? {}) as PreferencesPayload['links'],
+    criteria: normalizeCriteria(row.criteria),
+  };
 }
 
 @Injectable()
@@ -49,14 +76,7 @@ export class PreferencesService {
 
     return {
       ok: true,
-      preferences: row
-        ? {
-            jobFamilies: row.jobFamilies ?? [],
-            locations: row.locations ?? [],
-            targetLevel: row.targetLevel ?? null,
-            links: (row.links ?? {}) as PreferencesPayload['links'],
-          }
-        : EMPTY,
+      preferences: row ? toPayload(row) : EMPTY,
       onboardingStep: (profile?.onboardingStep ?? user.onboardingStep) as OnboardingStep,
     };
   }
@@ -65,6 +85,7 @@ export class PreferencesService {
     const db = this.ready();
     const links = cleanLinks(body.links ?? {});
     const targetLevel = body.targetLevel === '' ? null : (body.targetLevel ?? null);
+    const criteria = normalizeCriteria(body.criteria);
 
     await db
       .insert(preferences)
@@ -74,6 +95,7 @@ export class PreferencesService {
         locations: body.locations,
         targetLevel,
         links,
+        criteria,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -83,6 +105,7 @@ export class PreferencesService {
           locations: body.locations,
           targetLevel,
           links,
+          criteria,
           updatedAt: new Date(),
         },
       });
@@ -106,6 +129,7 @@ export class PreferencesService {
           github: links.github,
           portfolio: links.portfolio,
         },
+        criteria,
       },
       onboardingStep: nextStep,
     };

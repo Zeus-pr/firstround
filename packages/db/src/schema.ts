@@ -393,6 +393,8 @@ export const preferences = pgTable('preferences', {
   locations: text('locations').array().notNull().default([]),
   targetLevel: text('target_level'),
   links: jsonb('links').$type<Record<string, string>>().default({}).notNull(),
+  /** Soft search signals (CTC, companies, skills, …). Empty never hard-excludes. */
+  criteria: jsonb('criteria').$type<Record<string, unknown>>().default({}).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
