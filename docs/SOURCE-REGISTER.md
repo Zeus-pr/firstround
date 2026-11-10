@@ -31,5 +31,5 @@ Set in Variables UI — do not paste into chat:
 
 - `APIFY_TOKEN`
 - `OPS_TOKEN` (Bearer for `POST /jobs/ingest/:sourceKey`)
-- Optional: `APIFY_NAUKRI_ACTOR_ID` (default `jobspipe~naukri-jobs-scraper`)
+- Optional: `APIFY_NAUKRI_ACTOR_ID` (default / pilot: `valig~naukri-jobs-scraper`)
 - Optional: `APIFY_LINKEDIN_ACTOR_ID` (default `jobspipe~jobspipe-job-search` with `sources: ["linkedin"]`)

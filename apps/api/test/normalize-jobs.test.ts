@@ -66,6 +66,51 @@ describe('job normalize + trust', () => {
     });
     expect(fp).toMatch(/^[a-f0-9]{64}$/);
   });
+
+  it('normalizes valig/naukri nested rows', () => {
+    const job = normalizeProviderJob({
+      id: '120526025748',
+      title: 'Software Developer',
+      url: 'https://www.naukri.com/job-listings-software-developer-example',
+      company: {
+        name: 'TECS Pvt Ltd',
+        websiteUrl: 'https://www.tecs.example',
+      },
+      description: {
+        full: '<p>Build .NET services for the Mumbai team. Preferred skills C# and SQL.</p>',
+        short: 'Graduate with strong .NET knowledge',
+      },
+      createdDateText: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      employmentType: 'Full Time, Permanent',
+      wfhType: '3',
+      consultant: false,
+      skills: { preferred: ['C#', '.Net'], other: ['SQL'] },
+      locations: [{ label: 'Mumbai (All Areas)' }, { label: 'Goregaon' }],
+    });
+    expect(job).not.toBeNull();
+    expect(job!.title).toBe('Software Developer');
+    expect(job!.companyName).toBe('TECS Pvt Ltd');
+    expect(job!.companyDomain).toBe('tecs.example');
+    expect(job!.location).toBe('Mumbai (All Areas)');
+    expect(job!.workMode).toBe('hybrid');
+    expect(job!.skills).toEqual(expect.arrayContaining(['C#', '.Net', 'SQL']));
+    expect(job!.descriptionText).toMatch(/Build \.NET services/);
+    const trust = scoreJobTrust(job!, 'naukri_apify');
+    expect(trust.quarantined).toBe(false);
+  });
+
+  it('marks consultant postings as consultancy poster type', () => {
+    const job = normalizeProviderJob({
+      id: 'c-1',
+      title: 'Backend Engineer',
+      company: { name: 'Staffing Co' },
+      description: { full: 'Role for our client in Bengaluru with Node and Postgres.' },
+      consultant: true,
+      locations: [{ label: 'Bengaluru' }],
+      createdDateText: new Date().toISOString().slice(0, 10),
+    });
+    expect(job?.posterType).toBe('consultancy');
+  });
 });
 
 describe('source register gate', () => {
@@ -108,13 +153,35 @@ describe('source register gate', () => {
 
 describe('apify source mapping', () => {
   it('maps naukri and linkedin actors and inputs', () => {
-    expect(actorForSource('naukri_apify')).toContain('naukri');
+    expect(actorForSource('naukri_apify')).toBe('valig~naukri-jobs-scraper');
     expect(actorForSource('linkedin_apify')).toContain('jobspipe');
-    expect(buildActorInput('naukri_apify', { keywords: 'java developer' }).keywords).toBe(
-      'java developer',
-    );
+    const naukriInput = buildActorInput('naukri_apify', {
+      keywords: 'java developer',
+      location: 'Bengaluru',
+      maxJobs: 25,
+    });
+    expect(naukriInput).toMatchObject({
+      keywords: 'java developer',
+      location: 'Bengaluru',
+      sort: 'f',
+      jobAge: '15',
+      limit: 25,
+    });
     expect(buildActorInput('linkedin_apify', { keywords: 'product manager' }).sources).toEqual([
       'linkedin',
     ]);
+  });
+
+  it('builds JobsPipe naukri input when actor override is jobspipe', () => {
+    const input = buildActorInput(
+      'naukri_apify',
+      { keywords: 'data analyst', maxJobs: 10 },
+      { APIFY_NAUKRI_ACTOR_ID: 'jobspipe~naukri-jobs-scraper' },
+    );
+    expect(input).toMatchObject({
+      keywords: 'data analyst',
+      maxJobs: 10,
+      postedWithinDays: 14,
+    });
   });
 });

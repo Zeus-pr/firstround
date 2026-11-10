@@ -6,7 +6,7 @@ Shared India job corpus. Desk never waits on a scraper.
 
 | source_key     | Provider                         | Default actor                  |
 | -------------- | -------------------------------- | ------------------------------ |
-| naukri_apify   | Apify Naukri                     | `jobspipe~naukri-jobs-scraper` |
+| naukri_apify   | Apify Naukri (valig)             | `valig~naukri-jobs-scraper`    |
 | linkedin_apify | Apify JobsPipe (LinkedIn filter) | `jobspipe~jobspipe-job-search` |
 
 ## API

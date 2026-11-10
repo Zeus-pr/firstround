@@ -6,28 +6,159 @@ export const JOB_TRUST_MINIMUM = 75;
 
 export type PosterType = 'direct' | 'consultancy' | 'confidential' | 'aggregator' | 'unknown';
 
-/** JobsPipe / Apify row shape (fields may be null). */
+/**
+ * Provider row: JobsPipe flat fields and/or valig/naukri nested fields.
+ * Unknown keys allowed so raw Apify payloads pass through untouched.
+ */
 export type ProviderJobRow = {
   id?: string | number | null;
   job_title?: string | null;
+  title?: string | null;
   normalized_title?: string | null;
-  company?: string | null;
+  company?: string | { name?: string | null; websiteUrl?: string | null } | null;
   company_domain?: string | null;
   url?: string | null;
   source_url?: string | null;
   location?: string | null;
+  locations?: Array<{ label?: string | null } | string> | null;
   cities?: string[] | null;
   remote?: boolean | null;
   work_arrangement?: string | null;
+  wfhType?: string | number | null;
   employment_statuses?: string[] | null;
+  employmentType?: string | null;
   seniority?: string | null;
-  description?: string | null;
+  description?: string | { full?: string | null; short?: string | null } | null;
   date_posted?: string | null;
-  skills?: string[] | null;
+  createdDate?: number | string | null;
+  createdDateText?: string | null;
+  skills?: string[] | { preferred?: string[]; other?: string[] } | null;
   recruiter_emails?: string[] | null;
+  consultant?: boolean | null;
   sources?: Array<{ name?: string; url?: string } | string> | null;
   [key: string]: unknown;
 };
+
+type FlatJobFields = {
+  id: string | null;
+  title: string | null;
+  normalizedTitle: string | null;
+  companyName: string | null;
+  companyDomain: string | null;
+  url: string | null;
+  location: string | null;
+  workMode: string | null;
+  employmentType: string | null;
+  seniority: string | null;
+  description: string | null;
+  postedAt: Date | null;
+  skills: string[];
+  recruiterEmails: string[];
+  consultant: boolean;
+};
+
+function domainFromWebsite(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  try {
+    const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.toLowerCase();
+    return host.replace(/^www\./, '') || null;
+  } catch {
+    return null;
+  }
+}
+
+function wfhToWorkMode(wfh: string | number | null | undefined): string | null {
+  const v = String(wfh ?? '');
+  if (v === '2') return 'remote';
+  if (v === '3') return 'hybrid';
+  if (v === '0') return 'onsite';
+  return null;
+}
+
+function coercePostedAt(row: ProviderJobRow): Date | null {
+  const text = asString(row.createdDateText) ?? asString(row.date_posted);
+  if (text && !Number.isNaN(Date.parse(text))) return new Date(text);
+  if (typeof row.createdDate === 'number' && Number.isFinite(row.createdDate)) {
+    return new Date(row.createdDate);
+  }
+  if (typeof row.createdDate === 'string' && /^\d+$/.test(row.createdDate)) {
+    return new Date(Number(row.createdDate));
+  }
+  return null;
+}
+
+function coerceSkills(skills: ProviderJobRow['skills']): string[] {
+  if (Array.isArray(skills)) {
+    return skills
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .slice(0, 40);
+  }
+  if (skills && typeof skills === 'object') {
+    const preferred = Array.isArray(skills.preferred) ? skills.preferred : [];
+    const other = Array.isArray(skills.other) ? skills.other : [];
+    return [...preferred, ...other]
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .slice(0, 40);
+  }
+  return [];
+}
+
+/** Flatten JobsPipe or valig Naukri rows into one shape for normalize. */
+export function coerceProviderJobFields(row: ProviderJobRow): FlatJobFields {
+  const companyObj = row.company && typeof row.company === 'object' ? row.company : null;
+  const companyName =
+    asString(typeof row.company === 'string' ? row.company : null) ??
+    asString(companyObj?.name ?? null);
+  const descriptionObj =
+    row.description && typeof row.description === 'object' ? row.description : null;
+  const description =
+    asString(typeof row.description === 'string' ? row.description : null) ??
+    asString(descriptionObj?.full ?? null) ??
+    asString(descriptionObj?.short ?? null);
+
+  let location = asString(row.location);
+  if (!location && Array.isArray(row.locations) && row.locations.length > 0) {
+    const labels = row.locations
+      .map((loc) => (typeof loc === 'string' ? loc : asString(loc.label ?? null)))
+      .filter(Boolean) as string[];
+    location = labels[0] ?? null;
+  }
+  if (!location && Array.isArray(row.cities) && row.cities[0]) {
+    location = String(row.cities[0]);
+  }
+
+  const workMode =
+    asString(row.work_arrangement) ??
+    wfhToWorkMode(row.wfhType) ??
+    (row.remote === true ? 'remote' : row.remote === false ? 'onsite' : null);
+
+  return {
+    id: row.id == null ? null : String(row.id).trim() || null,
+    title: asString(row.job_title) ?? asString(row.title),
+    normalizedTitle: asString(row.normalized_title),
+    companyName,
+    companyDomain:
+      asString(row.company_domain)?.toLowerCase() ?? domainFromWebsite(companyObj?.websiteUrl),
+    url: asString(row.url) ?? asString(row.source_url),
+    location,
+    workMode,
+    employmentType:
+      asString(row.employmentType) ??
+      (Array.isArray(row.employment_statuses)
+        ? asString(row.employment_statuses[0] ?? null)
+        : null),
+    seniority: asString(row.seniority),
+    description,
+    postedAt: coercePostedAt(row),
+    skills: coerceSkills(row.skills),
+    recruiterEmails: Array.isArray(row.recruiter_emails)
+      ? row.recruiter_emails.map((e) => String(e).trim()).filter(Boolean)
+      : [],
+    consultant: row.consultant === true,
+  };
+}
 
 export type NormalizedJob = {
   providerJobId: string;
@@ -132,70 +263,41 @@ function stripHtml(html: string): string {
 }
 
 export function normalizeProviderJob(row: ProviderJobRow): NormalizedJob | null {
-  const title = asString(row.job_title);
-  const companyName = asString(row.company);
-  if (!title || !companyName) return null;
+  const flat = coerceProviderJobFields(row);
+  if (!flat.title || !flat.companyName || !flat.id) return null;
 
-  const providerJobId = row.id == null ? null : String(row.id).trim();
-  if (!providerJobId) return null;
-
-  const descriptionText = stripHtml(asString(row.description) ?? '');
-  const companyDomain = asString(row.company_domain)?.toLowerCase() ?? null;
-  const location =
-    asString(row.location) ??
-    (Array.isArray(row.cities) && row.cities[0] ? String(row.cities[0]) : null);
-  const workMode =
-    asString(row.work_arrangement) ??
-    (row.remote === true ? 'remote' : row.remote === false ? 'onsite' : null);
-  const employmentType = Array.isArray(row.employment_statuses)
-    ? asString(row.employment_statuses[0] ?? null)
+  const descriptionText = stripHtml(flat.description ?? '');
+  const invitedFromList = flat.recruiterEmails[0]
+    ? { email: flat.recruiterEmails[0]!.toLowerCase(), span: flat.recruiterEmails[0]! }
     : null;
-  const seniority = asString(row.seniority);
-  const sourceUrl = asString(row.url) ?? asString(row.source_url);
-  const postedRaw = asString(row.date_posted);
-  const postedAt = postedRaw && !Number.isNaN(Date.parse(postedRaw)) ? new Date(postedRaw) : null;
-  const skills = Array.isArray(row.skills)
-    ? row.skills
-        .map((s) => String(s).trim())
-        .filter(Boolean)
-        .slice(0, 40)
-    : [];
-
-  const invitedFromList =
-    Array.isArray(row.recruiter_emails) && row.recruiter_emails[0]
-      ? {
-          email: String(row.recruiter_emails[0]).toLowerCase(),
-          span: String(row.recruiter_emails[0]),
-        }
-      : null;
   const invited = invitedFromList ?? parseInvitedEmail(descriptionText);
-  const normalizedTitle = asString(row.normalized_title);
-  const posterType = classifyPosterType(descriptionText, companyName);
+  let posterType = classifyPosterType(descriptionText, flat.companyName);
+  if (flat.consultant && posterType === 'direct') posterType = 'consultancy';
 
   return {
-    providerJobId,
-    title,
-    normalizedTitle,
-    companyName,
-    companyDomain,
-    location,
-    workMode,
-    employmentType,
-    seniority,
+    providerJobId: flat.id,
+    title: flat.title,
+    normalizedTitle: flat.normalizedTitle,
+    companyName: flat.companyName,
+    companyDomain: flat.companyDomain,
+    location: flat.location,
+    workMode: flat.workMode,
+    employmentType: flat.employmentType,
+    seniority: flat.seniority,
     descriptionText,
-    sourceUrl,
-    applicationUrl: sourceUrl,
-    postedAt,
+    sourceUrl: flat.url,
+    applicationUrl: flat.url,
+    postedAt: flat.postedAt,
     posterType,
-    skills,
+    skills: flat.skills,
     invitedEmail: invited?.email ?? null,
     invitedEmailSpan: invited?.span ?? null,
     fingerprint: fingerprintJob({
-      companyDomain,
-      companyName,
-      normalizedTitle,
-      title,
-      location,
+      companyDomain: flat.companyDomain,
+      companyName: flat.companyName,
+      normalizedTitle: flat.normalizedTitle,
+      title: flat.title,
+      location: flat.location,
       descriptionText,
     }),
   };

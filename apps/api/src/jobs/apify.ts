@@ -2,8 +2,14 @@ import type { ProviderJobRow } from './normalize.js';
 
 const APIFY_API = 'https://api.apify.com/v2';
 
-export const DEFAULT_NAUKRI_ACTOR = 'jobspipe~naukri-jobs-scraper';
+/** Pilot default: valig Naukri India actor (override with APIFY_NAUKRI_ACTOR_ID). */
+export const DEFAULT_NAUKRI_ACTOR = 'valig~naukri-jobs-scraper';
 export const DEFAULT_LINKEDIN_JOBS_ACTOR = 'jobspipe~jobspipe-job-search';
+
+function isValigNaukriActor(actorId: string): boolean {
+  const id = actorId.toLowerCase();
+  return id.includes('valig') || id === 'u5tcrmy1hebyd1fyf';
+}
 
 export type ApifyRunResult = {
   actorRunId: string;
@@ -29,9 +35,21 @@ export function actorForSource(sourceKey: string, env: NodeJS.ProcessEnv = proce
 export function buildActorInput(
   sourceKey: string,
   cluster: { keywords: string; location?: string; maxJobs?: number },
+  env: NodeJS.ProcessEnv = process.env,
 ): Record<string, unknown> {
   const maxJobs = Math.min(Math.max(cluster.maxJobs ?? 50, 1), 200);
   if (sourceKey === 'naukri_apify') {
+    const actorId = actorForSource(sourceKey, env);
+    if (isValigNaukriActor(actorId)) {
+      return {
+        keywords: cluster.keywords,
+        location: cluster.location ?? 'Bengaluru',
+        sort: 'f',
+        jobAge: '15',
+        limit: maxJobs,
+      };
+    }
+    // JobsPipe Naukri actor fallback
     return {
       keywords: cluster.keywords,
       location: cluster.location ?? 'India',
