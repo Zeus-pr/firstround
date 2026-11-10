@@ -29,11 +29,13 @@ export type ReviewDraft = {
   status: string;
   specificity: number;
   draftHash: string | null;
+  company?: string;
+  role?: string;
 };
 
 export async function fetchCorpusStatus(user: User): Promise<CorpusStatus> {
   const res = await fetch(apiUrl('/jobs/corpus/status'), { headers: await authHeaders(user) });
-  if (!res.ok) throw new Error(`Could not load job corpus (${res.status})`);
+  if (!res.ok) throw new Error(`Could not load today’s openings (${res.status})`);
   return (await res.json()) as CorpusStatus;
 }
 

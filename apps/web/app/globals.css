@@ -1867,13 +1867,165 @@ h1 {
 }
 
 .desk-modal-prefs {
-  width: min(32rem, 100%);
+  width: min(36rem, 100%);
+  max-height: min(92svh, 52rem);
+  overflow: auto;
 }
 
 .desk-prefs-form {
   display: grid;
   gap: 0.85rem;
   margin-top: 1.1rem;
+}
+
+.desk-prefs-section {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.desk-prefs-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.75rem;
+}
+
+.desk-prefs-modes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.desk-prefs-modes legend {
+  font-size: 0.92rem;
+  margin-bottom: 0.35rem;
+}
+
+.desk-prefs-mode-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.desk-prefs-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.desk-prefs-check-block {
+  display: flex;
+}
+
+.desk-letters {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.desk-letter {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.desk-letter:first-child {
+  border-top: 0;
+}
+
+.desk-letter-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-letter-meta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.desk-letter-company {
+  font-weight: 530;
+  letter-spacing: -0.02em;
+}
+
+.desk-letter-role {
+  color: var(--quiet);
+  font-size: 0.92rem;
+}
+
+.desk-letter-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: rotate(45deg);
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  flex: 0 0 auto;
+}
+
+.desk-letter.is-open .desk-letter-chevron {
+  transform: rotate(225deg);
+}
+
+.desk-letter-panel {
+  overflow: hidden;
+  display: grid;
+  gap: 0.85rem;
+  padding: 0 0 1rem;
+  animation: desk-letter-open 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desk-letter-body {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 40rem;
+}
+
+.desk-letter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.desk-letter-approve {
+  width: auto;
+  min-width: 9rem;
+}
+
+@keyframes desk-letter-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-letter-chevron,
+  .desk-letter-panel {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .desk-field {
