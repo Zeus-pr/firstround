@@ -105,6 +105,21 @@ export function DeskDashboard({
         onStart={onStartRound}
       />
 
+      <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
+        <p className="desk-kicker">Letters</p>
+        {choosing ? <ChoosingOrb /> : null}
+        <DraftLetters
+          hideEmpty={choosing}
+          drafts={drafts}
+          busyId={draftBusyId}
+          shuffle={letterShuffle}
+          onShuffle={onLetterShuffle}
+          onApprove={onApproveDraft}
+          onSave={onSaveDraft}
+          onCancel={onCancelDraft}
+        />
+      </section>
+
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
           <section className="desk-pane">
@@ -237,21 +252,6 @@ export function DeskDashboard({
           <section className="desk-pane">
             <p className="desk-kicker">Replies</p>
             <p className="desk-pane-copy">Nothing to review yet.</p>
-          </section>
-
-          <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
-            <p className="desk-kicker">Letters</p>
-            {choosing ? <ChoosingOrb /> : null}
-            <DraftLetters
-              hideEmpty={choosing}
-              drafts={drafts}
-              busyId={draftBusyId}
-              shuffle={letterShuffle}
-              onShuffle={onLetterShuffle}
-              onApprove={onApproveDraft}
-              onSave={onSaveDraft}
-              onCancel={onCancelDraft}
-            />
           </section>
         </div>
       </div>

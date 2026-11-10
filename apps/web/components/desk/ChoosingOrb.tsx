@@ -1,12 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Orb, type OrbState } from '@yogesharc/thinking-orbs';
+import { ThinkingOrb, type OrbState } from 'thinking-orbs';
 
 const BEATS: Array<{ state: OrbState; label: string }> = [
-  { state: 'searching', label: 'Solving' },
-  { state: 'reasoning', label: 'Thinking' },
   { state: 'working', label: 'Working' },
+  { state: 'searching', label: 'Searching' },
+  { state: 'solving', label: 'Solving' },
+  { state: 'listening', label: 'Listening' },
+  { state: 'connecting', label: 'Connecting' },
+  { state: 'composing', label: 'Composing' },
+  { state: 'breathing', label: 'Breathing' },
+  { state: 'weaving', label: 'Weaving' },
+  { state: 'shaping', label: 'Shaping' },
 ];
 
 export function ChoosingOrb() {
@@ -22,7 +28,9 @@ export function ChoosingOrb() {
 
   return (
     <div className="desk-choosing" aria-live="polite" aria-busy="true">
-      <Orb state={beat.state} size={168} label={beat.label} />
+      <div className="desk-choosing-orb">
+        <ThinkingOrb state={beat.state} size={64} theme="light" aria-label={beat.label} />
+      </div>
       <p>{beat.label}</p>
     </div>
   );
