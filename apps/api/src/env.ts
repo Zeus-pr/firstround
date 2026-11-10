@@ -43,6 +43,11 @@ export const ProdEnv = z.object({
     .refine((v) => v.includes('BEGIN PRIVATE KEY') || v.includes('BEGIN RSA PRIVATE KEY'), {
       message: 'must be a PEM private key (use \\n for newlines in env)',
     }),
+  /** Required once Gmail connect is enabled in production. */
+  GOOGLE_GMAIL_CLIENT_ID: nonEmpty.optional(),
+  GOOGLE_GMAIL_CLIENT_SECRET: nonEmpty.optional(),
+  GOOGLE_GMAIL_REDIRECT_URI: z.string().url().optional(),
+  PUBLIC_API_ORIGIN: z.string().url().optional(),
 });
 
 export type ProdEnv = z.infer<typeof ProdEnv>;
