@@ -327,7 +327,6 @@ export function DeskOnboarding() {
           }
           setNote('');
           setRoundMessage(undefined);
-          setDrafts([]);
           const phases: RoundPhase[] = ['thinking', 'scanning', 'scoring', 'drafting'];
           let i = 0;
           setRoundPhase(phases[0]!);

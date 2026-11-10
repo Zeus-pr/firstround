@@ -15,6 +15,7 @@ const BEATS: Record<Exclude<RoundPhase, 'idle' | 'done' | 'error'>, string> = {
 type Props = {
   disabled?: boolean;
   disabledReason?: string;
+  heldToday?: number;
   phase: RoundPhase;
   resultMessage?: string;
   onStart: () => void;
@@ -23,38 +24,49 @@ type Props = {
 export function StartMyRound({
   disabled = false,
   disabledReason,
+  heldToday = 0,
   phase,
   resultMessage,
   onStart,
 }: Props) {
   const running =
     phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
+  const full = heldToday >= 10;
 
   const title =
     phase === 'done'
-      ? 'Your 10 are in'
+      ? full
+        ? 'Today’s 10 are here'
+        : 'Letters are in'
       : phase === 'error'
         ? 'That didn’t finish'
         : running
           ? 'Choosing the right roles'
-          : '';
+          : full
+            ? 'Today’s 10 are here'
+            : '';
 
   const lead = running
     ? BEATS[phase]
     : phase === 'done' || phase === 'error'
       ? (resultMessage ??
         (phase === 'done'
-          ? 'Read the letters below. Keep the ones you want.'
+          ? 'Read the letters below. A letter stays until you cancel it.'
           : 'Something got stuck. Try once more.'))
-      : 'Up to 10 roles today, with a letter for each. That’s the daily limit.';
+      : full
+        ? 'A letter stays until you cancel it. Cancel one if you want a different role.'
+        : heldToday > 0
+          ? `You have ${heldToday} of today’s 10. A letter stays until you cancel it.`
+          : 'Up to 10 roles today, with a letter for each. A letter stays until you cancel it.';
 
-  const buttonLabel =
-    phase === 'done'
-      ? 'Look again'
-      : phase === 'error'
-        ? 'Try again'
-        : running
-          ? 'Working…'
+  const buttonLabel = running
+    ? 'Working…'
+    : full
+      ? 'Today’s 10'
+      : phase === 'done'
+        ? 'Look again'
+        : phase === 'error'
+          ? 'Try again'
           : 'Find my 10';
 
   return (
@@ -74,7 +86,7 @@ export function StartMyRound({
         <button
           type="button"
           className="wax desk-round-cta"
-          disabled={disabled || running}
+          disabled={disabled || running || full}
           aria-busy={running}
           onClick={onStart}
         >
