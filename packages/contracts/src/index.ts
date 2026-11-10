@@ -4,3 +4,4 @@ export * from './schemas/files';
 export * from './schemas/session';
 export * from './schemas/cv';
 export * from './schemas/preferences';
+export * from './schemas/gmail';
