@@ -7,9 +7,15 @@ import {
   fetchPreferences,
   parseOptionalNumber,
   savePreferences,
-  splitList,
   type PreferencesPayload,
 } from '@/lib/preferences';
+import {
+  addCatalogOption,
+  FALLBACK_CATALOG,
+  fetchCatalog,
+  type CatalogLists,
+} from '@/lib/preference-catalog';
+import { SearchMulti } from './SearchMulti';
 
 type Props = {
   open: boolean;
@@ -26,26 +32,28 @@ const EMPTY: PreferencesPayload = {
   criteria: EMPTY_CRITERIA,
 };
 
-const WORK_MODES: Array<'remote' | 'hybrid' | 'onsite'> = ['remote', 'hybrid', 'onsite'];
+const MODES = ['remote', 'hybrid', 'onsite'] as const;
 
 export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
   const titleId = useId();
-  const [families, setFamilies] = useState('');
-  const [locations, setLocations] = useState('');
-  const [targetLevel, setTargetLevel] = useState('');
+  const [catalog, setCatalog] = useState<CatalogLists>(FALLBACK_CATALOG);
+  const [families, setFamilies] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [targetLevel, setTargetLevel] = useState<string[]>([]);
   const [ctcMin, setCtcMin] = useState('');
   const [ctcMax, setCtcMax] = useState('');
-  const [desiredCompanies, setDesiredCompanies] = useState('');
-  const [avoidCompanies, setAvoidCompanies] = useState('');
-  const [industries, setIndustries] = useState('');
-  const [skills, setSkills] = useState('');
-  const [keywords, setKeywords] = useState('');
-  const [employmentTypes, setEmploymentTypes] = useState('');
-  const [workModes, setWorkModes] = useState<Array<'remote' | 'hybrid' | 'onsite'>>([]);
+  const [desiredCompanies, setDesiredCompanies] = useState<string[]>([]);
+  const [avoidCompanies, setAvoidCompanies] = useState<string[]>([]);
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [employmentTypes, setEmploymentTypes] = useState<string[]>([]);
+  const [workModes, setWorkModes] = useState<Array<(typeof MODES)[number]>>([]);
   const [noticePeriodDays, setNoticePeriodDays] = useState('');
   const [minYears, setMinYears] = useState('');
   const [maxYears, setMaxYears] = useState('');
   const [openToRelocation, setOpenToRelocation] = useState(false);
+  const [letterShuffle, setLetterShuffle] = useState(true);
   const [linkedin, setLinkedin] = useState('');
   const [github, setGithub] = useState('');
   const [portfolio, setPortfolio] = useState('');
@@ -58,27 +66,29 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
     let cancelled = false;
     setNote('');
     setLoaded(false);
-    void fetchPreferences(user)
-      .then((payload) => {
+    void Promise.all([fetchPreferences(user), fetchCatalog(user)])
+      .then(([payload, lists]) => {
         if (cancelled) return;
         const prefs = payload.preferences ?? EMPTY;
         const c = prefs.criteria ?? EMPTY_CRITERIA;
-        setFamilies(prefs.jobFamilies.join(', '));
-        setLocations(prefs.locations.join(', '));
-        setTargetLevel(prefs.targetLevel ?? '');
+        setCatalog(lists);
+        setFamilies(prefs.jobFamilies);
+        setLocations(prefs.locations);
+        setTargetLevel(prefs.targetLevel ? [prefs.targetLevel] : []);
         setCtcMin(c.expectedCtcMinLakh != null ? String(c.expectedCtcMinLakh) : '');
         setCtcMax(c.expectedCtcMaxLakh != null ? String(c.expectedCtcMaxLakh) : '');
-        setDesiredCompanies(c.desiredCompanies.join(', '));
-        setAvoidCompanies(c.avoidCompanies.join(', '));
-        setIndustries(c.industries.join(', '));
-        setSkills(c.skills.join(', '));
-        setKeywords(c.keywords.join(', '));
-        setEmploymentTypes(c.employmentTypes.join(', '));
+        setDesiredCompanies(c.desiredCompanies);
+        setAvoidCompanies(c.avoidCompanies);
+        setIndustries(c.industries);
+        setSkills(c.skills);
+        setKeywords(c.keywords);
+        setEmploymentTypes(c.employmentTypes);
         setWorkModes(c.workModes ?? []);
         setNoticePeriodDays(c.noticePeriodDays != null ? String(c.noticePeriodDays) : '');
         setMinYears(c.minYearsExperience != null ? String(c.minYearsExperience) : '');
         setMaxYears(c.maxYearsExperience != null ? String(c.maxYearsExperience) : '');
         setOpenToRelocation(c.openToRelocation === true);
+        setLetterShuffle(c.letterShuffle !== false);
         setLinkedin(prefs.links.linkedin ?? '');
         setGithub(prefs.links.github ?? '');
         setPortfolio(prefs.links.portfolio ?? '');
@@ -105,7 +115,14 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
 
   if (!open) return null;
 
-  function toggleMode(mode: 'remote' | 'hybrid' | 'onsite') {
+  function add(kind: keyof CatalogLists) {
+    return async (label: string) => {
+      const lists = await addCatalogOption(user, kind, label);
+      setCatalog(lists);
+    };
+  }
+
+  function toggleMode(mode: (typeof MODES)[number]) {
     setWorkModes((prev) =>
       prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode],
     );
@@ -117,28 +134,25 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
     setNote('');
     try {
       const result = await savePreferences(user, {
-        jobFamilies: splitList(families),
-        locations: splitList(locations),
-        targetLevel: targetLevel.trim() || null,
-        links: {
-          linkedin: linkedin.trim(),
-          github: github.trim(),
-          portfolio: portfolio.trim(),
-        },
+        jobFamilies: families,
+        locations,
+        targetLevel: targetLevel[0] ?? null,
+        links: { linkedin: linkedin.trim(), github: github.trim(), portfolio: portfolio.trim() },
         criteria: {
           expectedCtcMinLakh: parseOptionalNumber(ctcMin),
           expectedCtcMaxLakh: parseOptionalNumber(ctcMax),
-          desiredCompanies: splitList(desiredCompanies, 30),
-          avoidCompanies: splitList(avoidCompanies, 30),
-          industries: splitList(industries),
-          skills: splitList(skills, 40),
+          desiredCompanies,
+          avoidCompanies,
+          industries,
+          skills,
           workModes,
-          employmentTypes: splitList(employmentTypes, 10),
-          keywords: splitList(keywords, 30),
+          employmentTypes,
+          keywords,
           noticePeriodDays: parseOptionalNumber(noticePeriodDays),
           openToRelocation,
           minYearsExperience: parseOptionalNumber(minYears),
           maxYearsExperience: parseOptionalNumber(maxYears),
+          letterShuffle,
         },
       });
       onSaved(result.onboardingStep);
@@ -155,9 +169,7 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
         className="desk-modal-scrim"
         type="button"
         aria-label="Close preferences"
-        onClick={() => {
-          if (!busy) onClose();
-        }}
+        onClick={() => !busy && onClose()}
       />
       <div
         className="desk-modal desk-modal-prefs"
@@ -173,73 +185,110 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
             Close
           </button>
         </header>
-
         <h2 className="desk-modal-heading">What are you looking for?</h2>
         <p className="desk-lead">
-          Optional details help us rank openings. Leave anything blank — we still find fits.
+          Optional. Leave a list empty and we still look. Search, pick, or add anything missing.
         </p>
-
         <form className="desk-prefs-form" onSubmit={(event) => void onSubmit(event)}>
-          <p className="desk-prefs-section">Role</p>
-          <label className="desk-field">
-            <span>Job families</span>
-            <input
-              value={families}
-              onChange={(event) => setFamilies(event.target.value)}
-              placeholder="Product, Backend, Revenue"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Locations</span>
-            <input
-              value={locations}
-              onChange={(event) => setLocations(event.target.value)}
-              placeholder="Bengaluru, Mumbai, Remote"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Target level</span>
-            <input
-              value={targetLevel}
-              onChange={(event) => setTargetLevel(event.target.value)}
-              placeholder="Mid, Senior, Staff"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Keywords</span>
-            <input
-              value={keywords}
-              onChange={(event) => setKeywords(event.target.value)}
-              placeholder="P&amp;L, GTM, NestJS"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Skills you want in the role</span>
-            <input
-              value={skills}
-              onChange={(event) => setSkills(event.target.value)}
-              placeholder="SQL, React, category management"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
+          <SearchMulti
+            label="Job families"
+            options={catalog.family}
+            value={families}
+            onChange={setFamilies}
+            onAdd={add('family')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Locations"
+            placeholder="Search Indian cities"
+            options={catalog.location}
+            value={locations}
+            onChange={setLocations}
+            onAdd={add('location')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Target level"
+            options={catalog.level}
+            value={targetLevel}
+            onChange={setTargetLevel}
+            onAdd={add('level')}
+            single
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Keywords"
+            options={catalog.keyword}
+            value={keywords}
+            onChange={setKeywords}
+            onAdd={add('keyword')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Skills you want in the role"
+            options={catalog.skill}
+            value={skills}
+            onChange={setSkills}
+            onAdd={add('skill')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Companies you’d like"
+            options={catalog.company}
+            value={desiredCompanies}
+            onChange={setDesiredCompanies}
+            onAdd={add('company')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Companies to deprioritize"
+            options={catalog.company}
+            value={avoidCompanies}
+            onChange={setAvoidCompanies}
+            onAdd={add('company')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Industries"
+            options={catalog.industry}
+            value={industries}
+            onChange={setIndustries}
+            onAdd={add('industry')}
+            disabled={!loaded || busy}
+          />
+          <SearchMulti
+            label="Employment type"
+            options={catalog.employment}
+            value={employmentTypes}
+            onChange={setEmploymentTypes}
+            onAdd={add('employment')}
+            disabled={!loaded || busy}
+          />
 
-          <p className="desk-prefs-section">Pay &amp; companies</p>
+          <div className="desk-pick">
+            <span className="desk-pick-label">Work mode</span>
+            <div className="desk-choice-row">
+              {MODES.map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`desk-choice${workModes.includes(mode) ? ' is-on' : ''}`}
+                  aria-pressed={workModes.includes(mode)}
+                  disabled={!loaded || busy}
+                  onClick={() => toggleMode(mode)}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="desk-prefs-row">
             <label className="desk-field">
               <span>Expected CTC min (LPA)</span>
               <input
                 value={ctcMin}
-                onChange={(event) => setCtcMin(event.target.value)}
-                placeholder="18"
+                onChange={(e) => setCtcMin(e.target.value)}
                 inputMode="decimal"
                 disabled={!loaded || busy}
               />
@@ -248,77 +297,18 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
               <span>Expected CTC max (LPA)</span>
               <input
                 value={ctcMax}
-                onChange={(event) => setCtcMax(event.target.value)}
-                placeholder="35"
+                onChange={(e) => setCtcMax(e.target.value)}
                 inputMode="decimal"
                 disabled={!loaded || busy}
               />
             </label>
           </div>
-          <label className="desk-field">
-            <span>Companies you’d like</span>
-            <input
-              value={desiredCompanies}
-              onChange={(event) => setDesiredCompanies(event.target.value)}
-              placeholder="Razorpay, Swiggy, Atlassian"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Companies to deprioritize</span>
-            <input
-              value={avoidCompanies}
-              onChange={(event) => setAvoidCompanies(event.target.value)}
-              placeholder="Optional"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-          <label className="desk-field">
-            <span>Industries</span>
-            <input
-              value={industries}
-              onChange={(event) => setIndustries(event.target.value)}
-              placeholder="Fintech, Consumer, SaaS"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
-
-          <p className="desk-prefs-section">Work setup</p>
-          <fieldset className="desk-prefs-modes" disabled={!loaded || busy}>
-            <legend>Work mode</legend>
-            <div className="desk-prefs-mode-list">
-              {WORK_MODES.map((mode) => (
-                <label key={mode} className="desk-prefs-check">
-                  <input
-                    type="checkbox"
-                    checked={workModes.includes(mode)}
-                    onChange={() => toggleMode(mode)}
-                  />
-                  <span>{mode}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <label className="desk-field">
-            <span>Employment type</span>
-            <input
-              value={employmentTypes}
-              onChange={(event) => setEmploymentTypes(event.target.value)}
-              placeholder="Full-time, Contract"
-              disabled={!loaded || busy}
-              autoComplete="off"
-            />
-          </label>
           <div className="desk-prefs-row">
             <label className="desk-field">
               <span>Notice period (days)</span>
               <input
                 value={noticePeriodDays}
-                onChange={(event) => setNoticePeriodDays(event.target.value)}
-                placeholder="30"
+                onChange={(e) => setNoticePeriodDays(e.target.value)}
                 inputMode="numeric"
                 disabled={!loaded || busy}
               />
@@ -327,8 +317,7 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
               <span>Experience min (years)</span>
               <input
                 value={minYears}
-                onChange={(event) => setMinYears(event.target.value)}
-                placeholder="3"
+                onChange={(e) => setMinYears(e.target.value)}
                 inputMode="numeric"
                 disabled={!loaded || busy}
               />
@@ -337,62 +326,66 @@ export function PreferencesModal({ open, user, onClose, onSaved }: Props) {
               <span>Experience max (years)</span>
               <input
                 value={maxYears}
-                onChange={(event) => setMaxYears(event.target.value)}
-                placeholder="8"
+                onChange={(e) => setMaxYears(e.target.value)}
                 inputMode="numeric"
                 disabled={!loaded || busy}
               />
             </label>
           </div>
-          <label className="desk-prefs-check desk-prefs-check-block">
-            <input
-              type="checkbox"
-              checked={openToRelocation}
-              onChange={(event) => setOpenToRelocation(event.target.checked)}
-              disabled={!loaded || busy}
-            />
-            <span>Open to relocating for the right role</span>
-          </label>
+          <button
+            type="button"
+            className={`desk-choice${openToRelocation ? ' is-on' : ''}`}
+            aria-pressed={openToRelocation}
+            disabled={!loaded || busy}
+            onClick={() => setOpenToRelocation((v) => !v)}
+          >
+            Open to relocating
+          </button>
+          <button
+            type="button"
+            className={`desk-choice${letterShuffle ? ' is-on' : ''}`}
+            aria-pressed={letterShuffle}
+            disabled={!loaded || busy}
+            onClick={() => setLetterShuffle((v) => !v)}
+          >
+            {letterShuffle ? 'Smart shuffle on' : 'Smart shuffle off'}
+          </button>
 
           <p className="desk-prefs-section">Links</p>
           <label className="desk-field">
             <span>LinkedIn</span>
             <input
               value={linkedin}
-              onChange={(event) => setLinkedin(event.target.value)}
+              onChange={(e) => setLinkedin(e.target.value)}
               placeholder="https://"
-              disabled={!loaded || busy}
               inputMode="url"
-              autoComplete="url"
+              disabled={!loaded || busy}
             />
           </label>
           <label className="desk-field">
             <span>GitHub</span>
             <input
               value={github}
-              onChange={(event) => setGithub(event.target.value)}
+              onChange={(e) => setGithub(e.target.value)}
               placeholder="https://"
-              disabled={!loaded || busy}
               inputMode="url"
-              autoComplete="url"
+              disabled={!loaded || busy}
             />
           </label>
           <label className="desk-field">
             <span>Portfolio</span>
             <input
               value={portfolio}
-              onChange={(event) => setPortfolio(event.target.value)}
+              onChange={(e) => setPortfolio(e.target.value)}
               placeholder="https://"
-              disabled={!loaded || busy}
               inputMode="url"
-              autoComplete="url"
+              disabled={!loaded || busy}
             />
           </label>
 
           <p className="note" role="status">
             {note}
           </p>
-
           <div className="desk-reveal-actions">
             <button className="wax" type="submit" disabled={!loaded || busy}>
               {busy ? 'Saving…' : 'Save preferences'}

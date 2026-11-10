@@ -2,7 +2,9 @@
 
 import type { ReadinessResult } from '@/lib/cv';
 import type { ReviewDraft } from '@/lib/jobs';
+import { ChoosingOrb } from './ChoosingOrb';
 import { DraftLetters } from './DraftLetters';
+import { ScoreName } from './ScoreName';
 import { StartMyRound, type RoundPhase } from './StartMyRound';
 
 type Props = {
@@ -25,7 +27,13 @@ type Props = {
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
   onApproveDraft?: (draftId: string) => void;
+  onSaveDraft?: (draftId: string, subject: string, body: string) => void;
+  onCancelDraft?: (draftId: string) => void;
+  letterShuffle?: boolean;
+  onLetterShuffle?: (on: boolean) => void;
   onStartRound: () => void;
+  cvFilename?: string | null;
+  onDownloadCv?: () => void;
 };
 
 export function DeskDashboard({
@@ -48,10 +56,21 @@ export function DeskDashboard({
   onDisconnectGmail,
   onDismissSuggestions,
   onApproveDraft,
+  onSaveDraft,
+  onCancelDraft,
+  letterShuffle = true,
+  onLetterShuffle,
   onStartRound,
+  cvFilename = null,
+  onDownloadCv,
 }: Props) {
   const hasReadiness = Boolean(readiness);
-  const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval');
+  const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval').slice(0, 10);
+  const choosing =
+    roundPhase === 'thinking' ||
+    roundPhase === 'scanning' ||
+    roundPhase === 'scoring' ||
+    roundPhase === 'drafting';
   const roundDisabled = !hasReadiness;
   const roundDisabledReason = !hasReadiness ? 'Upload a CV and get a score first.' : undefined;
 
@@ -66,10 +85,15 @@ export function DeskDashboard({
           </p>
         </div>
         <div className="desk-dash-actions">
-          <button className="text-button" type="button" onClick={onOpenCv}>
+          <button className="desk-quiet" type="button" onClick={onOpenCv}>
             {hasReadiness ? 'Update CV' : 'Add CV'}
           </button>
-          <button className="text-button" type="button" onClick={onOpenPreferences}>
+          {hasReadiness && onDownloadCv ? (
+            <button className="desk-quiet" type="button" onClick={onDownloadCv}>
+              {cvFilename ? `Download ${cvFilename}` : 'Download CV'}
+            </button>
+          ) : null}
+          <button className="desk-quiet" type="button" onClick={onOpenPreferences}>
             Preferences
           </button>
         </div>
@@ -86,13 +110,19 @@ export function DeskDashboard({
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
           <section className="desk-pane">
-            <p className="desk-kicker">CV score</p>
+            <p className="desk-kicker">
+              <ScoreName />
+            </p>
             {readiness?.recommendation ? (
               <>
                 <p className="desk-stat">{readiness.total}</p>
-                <p className="desk-pane-copy">{readiness.recommendation.headline}</p>
-                <button className="text-button" type="button" onClick={onReviewScore}>
-                  Review score
+                <p className="desk-pane-copy">
+                  {readiness.total >= 75
+                    ? 'Good enough to start. A stronger CV gets more replies.'
+                    : 'You can keep going. A stronger CV gets more replies.'}
+                </p>
+                <button className="desk-quiet" type="button" onClick={onReviewScore}>
+                  See the breakdown
                 </button>
               </>
             ) : (
@@ -228,10 +258,20 @@ export function DeskDashboard({
 
           <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
             <p className="desk-kicker">Letters</p>
-            <p className="desk-pane-copy">
-              Open a letter, read it, approve when it sounds like you.
-            </p>
-            <DraftLetters drafts={drafts} busyId={draftBusyId} onApprove={onApproveDraft} />
+            {choosing ? (
+              <ChoosingOrb />
+            ) : (
+              <p className="desk-pane-copy">Open a letter and read it.</p>
+            )}
+            <DraftLetters
+              drafts={drafts}
+              busyId={draftBusyId}
+              shuffle={letterShuffle}
+              onShuffle={onLetterShuffle}
+              onApprove={onApproveDraft}
+              onSave={onSaveDraft}
+              onCancel={onCancelDraft}
+            />
           </section>
         </div>
       </div>
