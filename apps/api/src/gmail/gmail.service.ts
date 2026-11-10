@@ -1,10 +1,6 @@
 import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
-import {
-  encryptedTokens,
-  profiles,
-  type Db,
-} from '@firstround/db';
+import { encryptedTokens, profiles, type Db } from '@firstround/db';
 import type { GmailConnectResponse, GmailStatusResponse, SessionUser } from '@firstround/contracts';
 import { OnboardingStep } from '@firstround/contracts';
 import { KEY_PROVIDER } from '../crypto/crypto.module.js';
@@ -193,7 +189,10 @@ export class GmailService {
       .from(profiles)
       .where(eq(profiles.userId, userId))
       .limit(1);
-    if (profile && (profile.onboardingStep === 'gmail' || profile.onboardingStep === 'preferences')) {
+    if (
+      profile &&
+      (profile.onboardingStep === 'gmail' || profile.onboardingStep === 'preferences')
+    ) {
       await db
         .update(profiles)
         .set({ onboardingStep: 'done', updatedAt: new Date() })

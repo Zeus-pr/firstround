@@ -18,8 +18,8 @@ type OAuthStatePayload = {
 export function gmailOAuthConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(
     env.GOOGLE_GMAIL_CLIENT_ID?.trim() &&
-      env.GOOGLE_GMAIL_CLIENT_SECRET?.trim() &&
-      (env.GOOGLE_GMAIL_REDIRECT_URI?.trim() || env.PUBLIC_API_ORIGIN?.trim()),
+    env.GOOGLE_GMAIL_CLIENT_SECRET?.trim() &&
+    (env.GOOGLE_GMAIL_REDIRECT_URI?.trim() || env.PUBLIC_API_ORIGIN?.trim()),
   );
 }
 
@@ -45,7 +45,11 @@ export async function sealOAuthState(
   provider: KeyProvider,
 ): Promise<string> {
   const sealed = await seal(
-    JSON.stringify({ u: userId, v: codeVerifier, e: Date.now() + 10 * 60_000 } satisfies OAuthStatePayload),
+    JSON.stringify({
+      u: userId,
+      v: codeVerifier,
+      e: Date.now() + 10 * 60_000,
+    } satisfies OAuthStatePayload),
     provider,
   );
   return Buffer.from(JSON.stringify(sealed)).toString('base64url');
@@ -130,7 +134,9 @@ export async function exchangeGoogleCode(opts: {
     throw new Error(json.error_description || json.error || 'Google token exchange failed');
   }
   if (!json.refresh_token) {
-    throw new Error('Google did not return a refresh token. Disconnect the app in Google Account and try again.');
+    throw new Error(
+      'Google did not return a refresh token. Disconnect the app in Google Account and try again.',
+    );
   }
   if (!json.scope || !scopesIncludeRequired(json.scope)) {
     throw new Error('Gmail send and readonly scopes are both required.');
