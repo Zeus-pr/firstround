@@ -166,13 +166,155 @@ export const sourceRegister = pgTable(
     displayName: text('display_name').notNull(),
     jurisdiction: text('jurisdiction').notNull().default('IN'),
     legalStatus: text('legal_status').notNull().default('pending_counsel'),
+    /** When true, source is emergency-stopped and cannot ingest. */
     killSwitch: boolean('kill_switch').notNull().default(false),
+    /** When false, source stays registered but will not start new runs. */
+    enabled: boolean('enabled').notNull().default(false),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [uniqueIndex('source_register_source_key_uidx').on(table.sourceKey)],
 );
+
+export const jobSourceRunStatusEnum = pgEnum('job_source_run_status', [
+  'queued',
+  'running',
+  'succeeded',
+  'failed',
+  'cancelled',
+]);
+
+export const jobPosterTypeEnum = pgEnum('job_poster_type', [
+  'direct',
+  'consultancy',
+  'confidential',
+  'aggregator',
+  'unknown',
+]);
+
+export const jobSourceRuns = pgTable('job_source_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  sourceKey: text('source_key').notNull(),
+  status: jobSourceRunStatusEnum('status').notNull().default('queued'),
+  actorId: text('actor_id'),
+  actorRunId: text('actor_run_id'),
+  datasetId: text('dataset_id'),
+  input: jsonb('input').$type<Record<string, unknown>>().default({}).notNull(),
+  error: text('error'),
+  jobsFetched: integer('jobs_fetched').notNull().default(0),
+  jobsUpserted: integer('jobs_upserted').notNull().default(0),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const rawJobs = pgTable(
+  'raw_jobs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sourceKey: text('source_key').notNull(),
+    sourceRunId: uuid('source_run_id')
+      .notNull()
+      .references(() => jobSourceRuns.id, { onDelete: 'cascade' }),
+    providerJobId: text('provider_job_id').notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().default({}).notNull(),
+    sourceUrl: text('source_url'),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).defaultNow().notNull(),
+    parserVersion: text('parser_version').notNull().default('1'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('raw_jobs_source_provider_uidx').on(table.sourceKey, table.providerJobId),
+  ],
+);
+
+export const canonicalJobs = pgTable(
+  'canonical_jobs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    fingerprint: text('fingerprint').notNull(),
+    title: text('title').notNull(),
+    normalizedTitle: text('normalized_title'),
+    companyName: text('company_name').notNull(),
+    companyDomain: text('company_domain'),
+    location: text('location'),
+    workMode: text('work_mode'),
+    employmentType: text('employment_type'),
+    seniority: text('seniority'),
+    descriptionText: text('description_text').notNull().default(''),
+    sourceUrl: text('source_url'),
+    applicationUrl: text('application_url'),
+    postedAt: timestamp('posted_at', { withTimezone: true }),
+    closedAt: timestamp('closed_at', { withTimezone: true }),
+    posterType: jobPosterTypeEnum('poster_type').notNull().default('unknown'),
+    trustScore: integer('trust_score').notNull().default(0),
+    trustBreakdown: jsonb('trust_breakdown').$type<Record<string, number>>().default({}).notNull(),
+    quarantined: boolean('quarantined').notNull().default(true),
+    stale: boolean('stale').notNull().default(false),
+    invitedEmail: text('invited_email'),
+    invitedEmailSpan: text('invited_email_span'),
+    skills: text('skills').array().notNull().default([]),
+    meta: jsonb('meta').$type<Record<string, unknown>>().default({}).notNull(),
+    algorithmVersion: text('algorithm_version').notNull().default('job-trust-1'),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex('canonical_jobs_fingerprint_uidx').on(table.fingerprint)],
+);
+
+export const jobSourceLinks = pgTable(
+  'job_source_links',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    canonicalJobId: uuid('canonical_job_id')
+      .notNull()
+      .references(() => canonicalJobs.id, { onDelete: 'cascade' }),
+    rawJobId: uuid('raw_job_id')
+      .notNull()
+      .references(() => rawJobs.id, { onDelete: 'cascade' }),
+    sourceKey: text('source_key').notNull(),
+    sourceUrl: text('source_url'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex('job_source_links_raw_uidx').on(table.rawJobId)],
+);
+
+export const gateDecisions = pgTable('gate_decisions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  canonicalJobId: uuid('canonical_job_id')
+    .notNull()
+    .references(() => canonicalJobs.id, { onDelete: 'cascade' }),
+  overallPass: boolean('overall_pass').notNull(),
+  decisions: jsonb('decisions').$type<Record<string, unknown>[]>().default([]).notNull(),
+  skipReason: text('skip_reason'),
+  algorithmVersion: text('algorithm_version').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const campaignDrafts = pgTable('campaign_drafts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  campaignId: uuid('campaign_id')
+    .notNull()
+    .references(() => campaigns.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  body: text('body').notNull().default(''),
+  draftHash: text('draft_hash'),
+  specificity: integer('specificity').notNull().default(0),
+  evidence: jsonb('evidence').$type<Record<string, unknown>>().default({}).notNull(),
+  status: text('status').notNull().default('pending_approval'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const onboardingStepEnum = pgEnum('onboarding_step', [
   'account',

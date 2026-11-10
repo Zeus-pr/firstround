@@ -48,6 +48,12 @@ export const ProdEnv = z.object({
   GOOGLE_GMAIL_CLIENT_SECRET: nonEmpty.optional(),
   GOOGLE_GMAIL_REDIRECT_URI: z.string().url().optional(),
   PUBLIC_API_ORIGIN: z.string().url().optional(),
+  /** Required to run live Naukri/LinkedIn Apify ingest. */
+  APIFY_TOKEN: nonEmpty.optional(),
+  APIFY_NAUKRI_ACTOR_ID: nonEmpty.optional(),
+  APIFY_LINKEDIN_ACTOR_ID: nonEmpty.optional(),
+  /** Shared bearer for ops ingest/cron routes. */
+  OPS_TOKEN: nonEmpty.optional(),
 });
 
 export type ProdEnv = z.infer<typeof ProdEnv>;
