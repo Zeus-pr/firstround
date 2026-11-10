@@ -25,6 +25,7 @@ export function SearchMulti({
 }: Props) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -54,8 +55,12 @@ export function SearchMulti({
 
   function pick(option: string) {
     onChange(single ? [option] : [...value, option]);
-    setQuery('');
-    setOpen(false);
+    if (single) {
+      setQuery('');
+      setOpen(false);
+      return;
+    }
+    inputRef.current?.focus();
   }
 
   function remove(option: string) {
@@ -98,8 +103,9 @@ export function SearchMulti({
       ) : null}
       <div className="desk-pick-control">
         <input
+          ref={inputRef}
           aria-labelledby={listId}
-          aria-expanded={open}
+          aria-controls={open ? `${listId}-menu` : undefined}
           value={query}
           placeholder={placeholder}
           disabled={disabled}
@@ -122,18 +128,26 @@ export function SearchMulti({
           type="button"
           className="desk-pick-toggle"
           aria-label={open ? `Close ${label}` : `Open ${label}`}
+          aria-expanded={open}
+          aria-controls={`${listId}-menu`}
           disabled={disabled}
           onClick={() => setOpen((current) => !current)}
         />
       </div>
       {open ? (
-        <ul className="desk-pick-menu" role="listbox" aria-labelledby={listId}>
+        <ul
+          id={`${listId}-menu`}
+          className="desk-pick-menu"
+          role="listbox"
+          aria-labelledby={listId}
+        >
           {matches.map((option) => (
             <li key={option}>
               <button
                 type="button"
                 role="option"
                 aria-selected={false}
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => pick(option)}
               >
                 {option}
@@ -146,11 +160,15 @@ export function SearchMulti({
                 type="button"
                 className="desk-pick-add"
                 disabled={adding || !onAdd}
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => void addCustom()}
               >
                 {adding ? 'Adding…' : `Add “${query.trim()}” to the list`}
               </button>
             </li>
+          ) : null}
+          {matches.length === 0 && !canAdd ? (
+            <li className="desk-pick-empty">No more matches for this search.</li>
           ) : null}
         </ul>
       ) : null}

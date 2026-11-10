@@ -11,6 +11,7 @@ import {
   fetchCvSuggestions,
   fetchLatestReadiness,
   fetchCvDownload,
+  deleteCv,
   coachReadiness,
   uploadAndAnalyzeCv,
   type ReadinessResult,
@@ -62,6 +63,7 @@ export function DeskOnboarding() {
   const [fileName, setFileName] = useState<string>();
   const [cvDocumentId, setCvDocumentId] = useState<string | null>(null);
   const [cvFilename, setCvFilename] = useState<string | null>(null);
+  const [cvBusy, setCvBusy] = useState(false);
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -293,6 +295,36 @@ export function DeskOnboarding() {
             .catch((error) => {
               setNote(error instanceof Error ? error.message : 'Could not download the CV.');
             });
+        }}
+        cvBusy={cvBusy}
+        onDeleteCv={() => {
+          if (!user || !cvDocumentId || cvBusy) return;
+          if (!window.confirm('Delete this CV and its score?')) return;
+          setCvBusy(true);
+          setNote('');
+          void deleteCv(user, cvDocumentId)
+            .then(() => fetchLatestReadiness(user))
+            .then((latest) => {
+              if (isReadiness(latest.readiness)) {
+                setReadiness(coachReadiness(latest.readiness));
+                setCvDocumentId(latest.cvDocumentId);
+                setCvFilename(latest.cvFilename ?? null);
+                setSuggestions(latest.suggestions ?? []);
+              } else {
+                setReadiness(null);
+                setCvDocumentId(null);
+                setCvFilename(null);
+                setSuggestions([]);
+                setFileName(undefined);
+                setSession((prev) => (prev ? { ...prev, onboardingStep: 'account' } : prev));
+              }
+              setModalOpen(false);
+              setNote('CV deleted.');
+            })
+            .catch((error) => {
+              setNote(error instanceof Error ? error.message : 'Could not delete the CV.');
+            })
+            .finally(() => setCvBusy(false));
         }}
         onStartRound={() => {
           if (!user || (roundPhase !== 'idle' && roundPhase !== 'done' && roundPhase !== 'error')) {
