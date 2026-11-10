@@ -32,6 +32,7 @@ export type ReviewDraft = {
   company?: string;
   role?: string;
   subject?: string;
+  createdAt?: string;
 };
 
 export async function fetchCorpusStatus(user: User): Promise<CorpusStatus> {
