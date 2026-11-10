@@ -26,6 +26,7 @@ export function DraftLetters({
   const pending = drafts.filter((d) => d.status === 'pending_approval').slice(0, 10);
   const [openId, setOpenId] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ id: string; subject: string; body: string } | null>(null);
+  const [busyKind, setBusyKind] = useState<'approve' | 'save' | 'cancel' | null>(null);
 
   return (
     <div className="desk-letters-wrap">
@@ -104,18 +105,26 @@ export function DraftLetters({
                           disabled={
                             busyId === draft.id || !edit.subject.trim() || !edit.body.trim()
                           }
-                          onClick={() => onSave?.(draft.id, edit.subject.trim(), edit.body)}
+                          onClick={() => {
+                            setBusyKind('save');
+                            onSave?.(draft.id, edit.subject.trim(), edit.body);
+                          }}
                         >
-                          {busyId === draft.id ? 'Saving…' : 'Save'}
+                          {busyId === draft.id && busyKind === 'save' ? 'Saving…' : 'Save'}
                         </button>
                       ) : (
                         <button
                           type="button"
                           className="wax desk-letter-approve"
                           disabled={busyId === draft.id}
-                          onClick={() => onApprove?.(draft.id)}
+                          onClick={() => {
+                            setBusyKind('approve');
+                            onApprove?.(draft.id);
+                          }}
                         >
-                          {busyId === draft.id ? 'Approving…' : 'Approve letter'}
+                          {busyId === draft.id && busyKind === 'approve'
+                            ? 'Approving…'
+                            : 'Approve letter'}
                         </button>
                       )}
                       <button
@@ -136,9 +145,14 @@ export function DraftLetters({
                         type="button"
                         className="text-button"
                         disabled={busyId === draft.id}
-                        onClick={() => onCancel?.(draft.id)}
+                        onClick={() => {
+                          setBusyKind('cancel');
+                          onCancel?.(draft.id);
+                        }}
                       >
-                        Cancel letter
+                        {busyId === draft.id && busyKind === 'cancel'
+                          ? 'Cancelling…'
+                          : 'Cancel letter'}
                       </button>
                     </div>
                   </div>

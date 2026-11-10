@@ -1986,9 +1986,16 @@ h1 {
 }
 
 .score-name-logo {
-  height: 0.95rem;
+  height: 1.05rem;
   width: auto;
   display: block;
+}
+
+.score-name span {
+  font-size: 0.95rem;
+  font-weight: 530;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 
 .desk-letter-role {
