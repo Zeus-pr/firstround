@@ -46,7 +46,7 @@ Contact email, location, and links are a separate sendability checklist outside 
 1. `POST /files/upload-url` with purpose `cv`
 2. Client PUT to R2
 3. `POST /cv/register` `{ fileKey, contentType, sizeBytes, originalFilename? }`
-4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized)
+4. `POST /cv/analyze` `{ cvDocumentId }` → facts + readiness (band, recommendation, checks, confidence, parse, normalized). The API hashes the file bytes. If this account already has a score for that hash, that score is returned and the duplicate file is deleted.
 5. `POST /cv/suggestions` `{ cvDocumentId }` → short coaching lines from the stored score plus one fast model call (same handler as `POST /cv/supercharge`). Costs 5 credits when the model answers; a model failure returns the algorithm gaps and does not debit. The stored total does not change.
 6. `GET /cv/readiness/latest` → score plus any saved suggestions
 7. `GET /cv/documents/:id/download` → short-lived URL for that account's file

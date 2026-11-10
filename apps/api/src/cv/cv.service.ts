@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ne } from 'drizzle-orm';
 import {
   cvDocuments,
   cvExtractions,
@@ -83,12 +83,6 @@ export class CvService {
 
   async analyze(user: SessionUser, cvDocumentId: string): Promise<AnalyzeCvResponse> {
     const db = this.ready();
-    const grok = createGrokClient();
-    if (!grok) {
-      throw new ServiceUnavailableException(
-        'CV analysis is not configured yet (missing XAI_API_KEY)',
-      );
-    }
 
     const [doc] = await db
       .select()
@@ -103,6 +97,16 @@ export class CvService {
       .update(cvDocuments)
       .set({ sha256, status: 'analyzing', updatedAt: new Date() })
       .where(eq(cvDocuments.id, doc.id));
+
+    const reused = await this.reuseIdenticalCv(user, doc, sha256);
+    if (reused) return reused;
+
+    const grok = createGrokClient();
+    if (!grok) {
+      throw new ServiceUnavailableException(
+        'CV analysis is not configured yet (missing XAI_API_KEY)',
+      );
+    }
 
     const parsed = await extractTextFromCv(bytes, contentType ?? doc.contentType);
     if (parsed.text.length < 40 && parsed.pages.length === 0) {
@@ -195,6 +199,100 @@ export class CvService {
       extractionId: extraction.id,
       readiness,
       facts: extracted.facts,
+      onboardingStep: 'readiness',
+    };
+  }
+
+  /**
+   * Same file bytes keep the stored score. The hash is computed from this upload,
+   * written onto the kept CV, and the duplicate file is removed.
+   */
+  private async reuseIdenticalCv(
+    user: SessionUser,
+    doc: { id: string; fileKey: string; originalFilename: string | null },
+    sha256: string,
+  ): Promise<AnalyzeCvResponse | null> {
+    const db = this.ready();
+    const [prior] = await db
+      .select({
+        documentId: cvDocuments.id,
+        fileKey: cvDocuments.fileKey,
+        extractionId: cvReadinessScores.extractionId,
+        total: cvReadinessScores.total,
+        dimensions: cvReadinessScores.dimensions,
+        gaps: cvReadinessScores.gaps,
+        sendability: cvReadinessScores.sendability,
+        algorithmVersion: cvReadinessScores.algorithmVersion,
+      })
+      .from(cvReadinessScores)
+      .innerJoin(cvDocuments, eq(cvDocuments.id, cvReadinessScores.cvDocumentId))
+      .where(
+        and(
+          eq(cvReadinessScores.userId, user.id),
+          eq(cvDocuments.userId, user.id),
+          eq(cvDocuments.sha256, sha256),
+          ne(cvDocuments.id, doc.id),
+        ),
+      )
+      .orderBy(desc(cvReadinessScores.createdAt))
+      .limit(1);
+    if (!prior) return null;
+
+    const [extraction] = await db
+      .select()
+      .from(cvExtractions)
+      .where(and(eq(cvExtractions.id, prior.extractionId), eq(cvExtractions.userId, user.id)))
+      .limit(1);
+    if (!extraction) return null;
+    const parsedFacts = CvFacts.safeParse(extraction.facts);
+    if (!parsedFacts.success) return null;
+
+    await db
+      .update(cvDocuments)
+      .set({
+        sha256,
+        ...(doc.originalFilename ? { originalFilename: doc.originalFilename } : {}),
+        status: 'analyzed',
+        updatedAt: new Date(),
+      })
+      .where(and(eq(cvDocuments.id, prior.documentId), eq(cvDocuments.userId, user.id)));
+
+    await db.insert(cvReadinessScores).values({
+      userId: user.id,
+      cvDocumentId: prior.documentId,
+      extractionId: prior.extractionId,
+      total: prior.total,
+      dimensions: prior.dimensions,
+      gaps: prior.gaps ?? [],
+      sendability: prior.sendability ?? {},
+      algorithmVersion: prior.algorithmVersion,
+    });
+
+    const owner = doc.fileKey.split('/')[1];
+    if (owner === user.firebaseUid && doc.fileKey !== prior.fileKey) {
+      await this.storage.remove(doc.fileKey).catch(() => undefined);
+    }
+    await db
+      .delete(cvDocuments)
+      .where(and(eq(cvDocuments.id, doc.id), eq(cvDocuments.userId, user.id)));
+
+    await db
+      .update(profiles)
+      .set({ onboardingStep: 'readiness', updatedAt: new Date() })
+      .where(eq(profiles.userId, user.id));
+
+    return {
+      ok: true,
+      cvDocumentId: prior.documentId,
+      extractionId: prior.extractionId,
+      readiness: hydrateReadinessFromScore({
+        total: prior.total,
+        dimensions: prior.dimensions,
+        gaps: prior.gaps,
+        sendability: prior.sendability,
+        algorithmVersion: prior.algorithmVersion,
+      }),
+      facts: parsedFacts.data,
       onboardingStep: 'readiness',
     };
   }
