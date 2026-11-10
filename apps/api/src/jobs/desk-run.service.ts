@@ -9,6 +9,7 @@ import {
   campaignDrafts,
   campaigns,
   canonicalJobs,
+  cvExtractions,
   cvReadinessScores,
   preferences,
   type Db,
@@ -21,6 +22,7 @@ import {
 } from '@firstround/contracts';
 import { DB } from '../db/db.module.js';
 import { scoreSpecificity } from './draft.js';
+import { renderLetter } from './letter-templates.js';
 import { rankMatches, type MatchableJob } from './match.js';
 
 const EMPTY_PREFS: PreferencesPayload = {
@@ -55,29 +57,20 @@ function prefsFromRow(row: {
   };
 }
 
-/** Plain letter — short, specific, no “AI assistant” cadence. */
-function draftBody(opts: {
-  company: string;
-  role: string;
-  location: string | null;
-  skills: string[];
-}): string {
-  const where = opts.location ? ` in ${opts.location}` : '';
-  const skillBits = opts.skills
-    .map((s) => s.trim())
+type CvFactsLike = {
+  fullName?: string | null;
+  phones?: string[];
+  links?: { linkedin?: string | null };
+  roles?: Array<{ isCurrent?: boolean; bullets?: string[] }>;
+};
+
+function proofBullets(facts: CvFactsLike | null): string[] {
+  const roles = facts?.roles ?? [];
+  const current = roles.find((role) => role.isCurrent) ?? roles[0];
+  return (current?.bullets ?? [])
+    .map((b) => b.trim())
     .filter(Boolean)
     .slice(0, 2);
-  const skillLine =
-    skillBits.length === 2
-      ? ` I've been working with ${skillBits[0]} and ${skillBits[1]}.`
-      : skillBits.length === 1
-        ? ` I've been working with ${skillBits[0]}.`
-        : '';
-  return (
-    `Hi — I'm reaching out about the ${opts.role} opening at ${opts.company}${where}.` +
-    skillLine +
-    ` I'd welcome a short conversation if the timing works.`
-  );
 }
 
 @Injectable()
@@ -96,6 +89,7 @@ export class DeskRunService {
       .select({
         total: cvReadinessScores.total,
         cvDocumentId: cvReadinessScores.cvDocumentId,
+        extractionId: cvReadinessScores.extractionId,
       })
       .from(cvReadinessScores)
       .where(eq(cvReadinessScores.userId, user.id))
@@ -112,6 +106,13 @@ export class DeskRunService {
       .where(eq(preferences.userId, user.id))
       .limit(1);
     const prefs: PreferencesPayload = prefsRow ? prefsFromRow(prefsRow) : EMPTY_PREFS;
+    const [extraction] = await db
+      .select({ facts: cvExtractions.facts })
+      .from(cvExtractions)
+      .where(and(eq(cvExtractions.id, latestScore.extractionId), eq(cvExtractions.userId, user.id)))
+      .limit(1);
+    const facts = (extraction?.facts ?? null) as CvFactsLike | null;
+    const bullets = proofBullets(facts);
 
     const rows = await db
       .select()
@@ -171,12 +172,16 @@ export class DeskRunService {
         .limit(1);
       if (existing[0]) continue;
 
-      const skillFacts = hit.job.skills.slice(0, 3).filter(Boolean);
-      const body = draftBody({
+      const letter = renderLetter({
         company: hit.job.companyName,
         role: hit.job.title,
-        location: hit.job.location,
-        skills: skillFacts,
+        sourceUrl: hit.job.sourceUrl,
+        candidateName: facts?.fullName?.trim() || null,
+        phone: facts?.phones?.find((p) => p.trim())?.trim() ?? null,
+        linkedin: facts?.links?.linkedin?.trim() || null,
+        bullets,
+        shuffle: prefs.criteria.letterShuffle !== false,
+        seed: hit.job.id,
       });
 
       const [campaign] = await db
@@ -199,16 +204,18 @@ export class DeskRunService {
         company: hit.job.companyName,
         role: hit.job.title,
         person: '',
-        evidenceFacts: [hit.job.location, ...skillFacts].filter((v): v is string => Boolean(v)),
+        subject: letter.subject,
+        templateId: letter.templateId,
+        evidenceFacts: [hit.job.companyName, hit.job.title, ...bullets].filter(Boolean),
       };
-      const specificity = scoreSpecificity(body, evidence);
+      const specificity = scoreSpecificity(letter.body, evidence);
 
       const [draft] = await db
         .insert(campaignDrafts)
         .values({
           campaignId: campaign.id,
           userId: user.id,
-          body,
+          body: letter.body,
           specificity,
           evidence,
           status: 'pending_approval',

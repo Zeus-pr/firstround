@@ -21,6 +21,8 @@ export const PreferencesCriteria = z.object({
   openToRelocation: z.boolean().nullable().optional(),
   minYearsExperience: z.number().int().min(0).max(50).nullable().optional(),
   maxYearsExperience: z.number().int().min(0).max(50).nullable().optional(),
+  /** When on, each letter uses a different subject and opening. Off keeps one shape. */
+  letterShuffle: z.boolean().optional(),
 });
 export type PreferencesCriteria = z.infer<typeof PreferencesCriteria>;
 
@@ -38,6 +40,7 @@ export const EMPTY_PREFERENCES_CRITERIA: PreferencesCriteria = {
   openToRelocation: null,
   minYearsExperience: null,
   maxYearsExperience: null,
+  letterShuffle: true,
 };
 
 export const PreferencesPayload = z.object({
