@@ -4,6 +4,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -95,6 +96,18 @@ export const encryptedTokens = pgTable(
     ),
   ],
 );
+
+export const deskRuns = pgTable('desk_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status').notNull(),
+  message: text('message'),
+  createdCount: integer('created_count').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+});
 
 export const campaigns = pgTable('campaigns', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -384,6 +397,16 @@ export const cvReadinessScores = pgTable('cv_readiness_scores', {
   algorithmVersion: text('algorithm_version').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const preferenceCatalog = pgTable(
+  'preference_catalog',
+  {
+    kind: text('kind').notNull(),
+    label: text('label').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.kind, table.label] })],
+);
 
 export const preferences = pgTable('preferences', {
   userId: uuid('user_id')

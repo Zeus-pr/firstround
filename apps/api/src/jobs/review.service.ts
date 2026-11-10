@@ -61,7 +61,7 @@ export class ReviewService {
       .limit(50);
 
     const drafts = fresh.map((row) => {
-      const evidence = (row.evidence ?? {}) as DraftEvidence;
+      const evidence = (row.evidence ?? {}) as DraftEvidence & { subject?: string };
       return {
         id: row.id,
         campaignId: row.campaignId,
@@ -71,6 +71,7 @@ export class ReviewService {
         draftHash: row.draftHash,
         company: evidence.company ?? '',
         role: evidence.role ?? '',
+        subject: evidence.subject ?? '',
         createdAt: row.createdAt,
         expiresAt: row.expiresAt,
       };
@@ -79,7 +80,7 @@ export class ReviewService {
     return { ok: true as const, drafts };
   }
 
-  async saveBody(user: SessionUser, draftId: string, body: string) {
+  async saveBody(user: SessionUser, draftId: string, body: string, subject?: string) {
     const db = this.ready();
     const [row] = await db
       .select()
@@ -90,11 +91,39 @@ export class ReviewService {
     if (row.status !== 'pending_approval') {
       throw new BadRequestException(`Draft is ${row.status}`);
     }
+    const evidence = {
+      ...(row.evidence ?? {}),
+      ...(subject !== undefined ? { subject } : {}),
+    };
     const [updated] = await db
       .update(campaignDrafts)
-      .set({ body, updatedAt: new Date() })
+      .set({ body, evidence, updatedAt: new Date() })
       .where(eq(campaignDrafts.id, draftId))
       .returning();
+    return { ok: true as const, draft: updated };
+  }
+
+  async cancel(user: SessionUser, draftId: string) {
+    const db = this.ready();
+    const [row] = await db
+      .select()
+      .from(campaignDrafts)
+      .where(and(eq(campaignDrafts.id, draftId), eq(campaignDrafts.userId, user.id)))
+      .limit(1);
+    if (!row) throw new NotFoundException('Draft not found');
+    if (row.status !== 'pending_approval') {
+      throw new BadRequestException(`Draft is ${row.status}`);
+    }
+    const now = new Date();
+    const [updated] = await db
+      .update(campaignDrafts)
+      .set({ status: 'cancelled', updatedAt: now })
+      .where(eq(campaignDrafts.id, draftId))
+      .returning();
+    await db
+      .update(campaigns)
+      .set({ state: 'cancelled_by_user', updatedAt: now })
+      .where(and(eq(campaigns.id, row.campaignId), eq(campaigns.userId, user.id)));
     return { ok: true as const, draft: updated };
   }
 

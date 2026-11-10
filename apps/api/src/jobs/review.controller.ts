@@ -9,6 +9,7 @@ import { ReviewService } from './review.service.js';
 
 const SaveBody = z.object({
   body: z.string().min(1).max(20_000),
+  subject: z.string().trim().min(1).max(180).optional(),
 });
 
 const ApproveBody = z.object({
@@ -41,7 +42,14 @@ export class ReviewController {
     @Body(new ZodPipe(SaveBody)) body: z.infer<typeof SaveBody>,
   ) {
     const user = await this.sessions.ensureUser(auth);
-    return this.review.saveBody(user, id, body.body);
+    return this.review.saveBody(user, id, body.body, body.subject);
+  }
+
+  @Post('drafts/:id/cancel')
+  @UseGuards(FirebaseAuthGuard)
+  async cancel(@CurrentUser() auth: AuthUser, @Param('id') id: string) {
+    const user = await this.sessions.ensureUser(auth);
+    return this.review.cancel(user, id);
   }
 
   @Post('drafts/:id/approve')

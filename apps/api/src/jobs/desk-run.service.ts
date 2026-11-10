@@ -4,13 +4,14 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, ilike, not, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, not, or } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
   canonicalJobs,
   cvExtractions,
   cvReadinessScores,
+  deskRuns,
   preferences,
   type Db,
 } from '@firstround/db';
@@ -20,12 +21,18 @@ import {
   type PreferencesPayload,
   type SessionUser,
 } from '@firstround/contracts';
-import { createGrokClient } from '../cv/grok-extract.js';
 import { DB } from '../db/db.module.js';
-import { scoreSpecificity, type DraftEvidence } from './draft.js';
-import { composeLetter, finalizeLetter, polishLetter, type LetterCv } from './letter.js';
+import { createGrokClient } from '../cv/grok-extract.js';
+import { scoreSpecificity } from './draft.js';
+import { judgeJobFit } from './fit-review.js';
+import { renderLetter } from './letter-templates.js';
+import {
+  candidateProfession,
+  professionPool,
+  sameProfession,
+  type ProfessionCv,
+} from './profession.js';
 import { rankMatches, type MatchableJob } from './match.js';
-import { allowedFamilies, otherNeedles, poolConstraints } from './role-family.js';
 
 const EMPTY_PREFS: PreferencesPayload = {
   jobFamilies: [],
@@ -35,8 +42,21 @@ const EMPTY_PREFS: PreferencesPayload = {
   criteria: EMPTY_PREFERENCES_CRITERIA,
 };
 
+const DAILY_LETTER_CAP = 10;
+
 function eveningCutoff(now = new Date()): Date {
   return new Date(now.getTime() + 12 * 60 * 60_000);
+}
+
+/** Midnight in India. The daily letter cap follows that day, not UTC. */
+function startOfIndiaDay(now = new Date()): Date {
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  return new Date(`${day}T00:00:00+05:30`);
 }
 
 function prefsFromRow(row: {
@@ -59,23 +79,49 @@ function prefsFromRow(row: {
   };
 }
 
-const WORD_NEEDLES = new Set(['ios', 'ux', 'ui', 'qa', 'sre', 'node', 'ml', 'net']);
+type CvFactsLike = {
+  fullName?: string | null;
+  phones?: string[];
+  links?: { linkedin?: string | null };
+  roles?: Array<{ isCurrent?: boolean; title?: string; bullets?: string[] }>;
+  targetRoleHints?: string[];
+  skills?: string[];
+};
 
-function needleClause(needle: string): SQL {
-  const token = needle.trim();
-  if (token.length <= 3 || WORD_NEEDLES.has(token.toLowerCase())) {
-    const pattern = `\\y${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\y`;
-    return sql`${canonicalJobs.title} ~* ${pattern}`;
-  }
-  return ilike(canonicalJobs.title, `%${token}%`);
+const GENERIC_INBOX = new Set([
+  'hr',
+  'jobs',
+  'job',
+  'careers',
+  'career',
+  'info',
+  'hello',
+  'talent',
+  'hiring',
+  'recruit',
+  'recruiter',
+  'admin',
+  'team',
+  'apply',
+]);
+
+function titleCase(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }
 
-function titleWhere(families: ReturnType<typeof allowedFamilies>) {
-  const spec = poolConstraints(families);
-  if (!spec) return undefined;
-  const include = or(...spec.include.map((needle) => needleClause(needle)));
-  const exclude = spec.exclude.map((needle) => not(needleClause(needle)));
-  return and(include, ...exclude);
+function recruiterFirst(email: string | null): string | null {
+  const local = email?.split('@')[0]?.split(/[._+-]/)[0] ?? '';
+  if (!/^[a-z]{3,20}$/i.test(local) || GENERIC_INBOX.has(local.toLowerCase())) return null;
+  return titleCase(local);
+}
+
+function proofBullets(facts: CvFactsLike | null): string[] {
+  const roles = facts?.roles ?? [];
+  const current = roles.find((role) => role.isCurrent) ?? roles[0];
+  return (current?.bullets ?? [])
+    .map((b) => b.trim())
+    .filter(Boolean)
+    .slice(0, 2);
 }
 
 @Injectable()
@@ -88,6 +134,77 @@ export class DeskRunService {
   }
 
   async runToday(user: SessionUser) {
+    const db = this.ready();
+    const [latestScore] = await db
+      .select({ total: cvReadinessScores.total })
+      .from(cvReadinessScores)
+      .where(eq(cvReadinessScores.userId, user.id))
+      .orderBy(desc(cvReadinessScores.createdAt))
+      .limit(1);
+    if (!latestScore) {
+      throw new BadRequestException('Upload a CV and get a score before starting your round.');
+    }
+    const [run] = await db
+      .insert(deskRuns)
+      .values({
+        userId: user.id,
+        status: 'selecting',
+        message: 'We are choosing the right roles. Check back in a few minutes.',
+      })
+      .returning();
+    if (!run) throw new ServiceUnavailableException('Could not start the round');
+    void this.prepareRound(user, run.id)
+      .then(async (result) => {
+        await db
+          .update(deskRuns)
+          .set({
+            status: result.created > 0 ? 'ready' : 'empty',
+            message: result.message,
+            createdCount: result.created,
+            finishedAt: new Date(),
+          })
+          .where(eq(deskRuns.id, run.id));
+      })
+      .catch(async () => {
+        await db
+          .update(deskRuns)
+          .set({
+            status: 'failed',
+            message: 'Something got stuck. Try once more.',
+            finishedAt: new Date(),
+          })
+          .where(eq(deskRuns.id, run.id));
+      });
+    return {
+      ok: true as const,
+      status: 'selecting' as const,
+      runId: run.id,
+      created: 0,
+      considered: 0,
+      drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
+      message: 'We are choosing the right roles. Check back in a few minutes.',
+      readinessTotal: latestScore.total,
+    };
+  }
+
+  async getRun(user: SessionUser, runId: string) {
+    const db = this.ready();
+    const [run] = await db
+      .select()
+      .from(deskRuns)
+      .where(and(eq(deskRuns.id, runId), eq(deskRuns.userId, user.id)))
+      .limit(1);
+    if (!run) throw new BadRequestException('Round not found');
+    return {
+      ok: true as const,
+      status: run.status,
+      runId: run.id,
+      created: run.createdCount,
+      message: run.message ?? '',
+    };
+  }
+
+  async prepareRound(user: SessionUser, _runId: string) {
     const db = this.ready();
 
     const [latestScore] = await db
@@ -111,35 +228,23 @@ export class DeskRunService {
       .where(eq(preferences.userId, user.id))
       .limit(1);
     const prefs: PreferencesPayload = prefsRow ? prefsFromRow(prefsRow) : EMPTY_PREFS;
-
     const [extraction] = await db
       .select({ facts: cvExtractions.facts })
       .from(cvExtractions)
       .where(and(eq(cvExtractions.id, latestScore.extractionId), eq(cvExtractions.userId, user.id)))
       .limit(1);
-    const cv = (extraction?.facts ?? {}) as LetterCv & {
-      targetRoleHints?: string[];
-      skills?: string[];
-    };
-    const families = allowedFamilies(cv, prefs.jobFamilies);
-    const loose = families.length === 0 ? otherNeedles(cv) : [];
-    if (families.length === 0 && loose.length === 0) {
-      return {
-        ok: true as const,
-        created: 0,
-        considered: 0,
-        drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
-        message: 'Add the kind of role you want in preferences, then start again.',
-        readinessTotal: latestScore.total,
-      };
-    }
-    const titleFilter =
-      families.length > 0
-        ? titleWhere(families)
-        : loose.length > 0
-          ? or(...loose.map((needle) => needleClause(needle)))
-          : undefined;
+    const facts = (extraction?.facts ?? null) as CvFactsLike | null;
+    const bullets = proofBullets(facts);
+    const candidateFirst = titleCase((facts?.fullName ?? '').trim().split(/\s+/)[0] ?? '');
 
+    const profession = candidateProfession((extraction?.facts ?? {}) as ProfessionCv);
+    const pool = professionPool(profession);
+    const titleFilter = pool
+      ? and(
+          or(...pool.include.map((needle) => ilike(canonicalJobs.title, `%${needle}%`))),
+          ...pool.exclude.map((needle) => not(ilike(canonicalJobs.title, `%${needle}%`))),
+        )
+      : undefined;
     const rows = await db
       .select()
       .from(canonicalJobs)
@@ -153,7 +258,7 @@ export class DeskRunService {
         ),
       )
       .orderBy(desc(canonicalJobs.lastSeenAt), desc(canonicalJobs.trustScore))
-      .limit(120);
+      .limit(80);
 
     const matchable: MatchableJob[] = rows.map((r) => ({
       id: r.id,
@@ -176,23 +281,65 @@ export class DeskRunService {
         created: 0,
         considered: 0,
         drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
-        message: 'No openings close to your work yet. Try again after more roles land.',
+        message: 'No openings in your line of work yet.',
         readinessTotal: latestScore.total,
       };
     }
 
-    const ranked = rankMatches(prefs, matchable, {
-      minMatch: families.length === 0 ? 48 : 55,
-      limit: 5,
-      allowedFamilies: families,
-    });
-    if (ranked.length === 0) {
+    const madeToday = await db
+      .select({ id: campaigns.id })
+      .from(campaigns)
+      .where(and(eq(campaigns.userId, user.id), gte(campaigns.createdAt, startOfIndiaDay())));
+    const room = DAILY_LETTER_CAP - madeToday.length;
+    if (room <= 0) {
       return {
         ok: true as const,
         created: 0,
         considered: matchable.length,
         drafts: [],
-        message: 'Nothing close to your current work yet. Try again after more openings land.',
+        message: 'Today’s 10 letters are already prepared. Come back tomorrow.',
+        readinessTotal: latestScore.total,
+      };
+    }
+
+    const ranked = rankMatches(
+      prefs,
+      matchable.filter((job) => profession === 'other' || sameProfession(profession, job.title)),
+      { minMatch: 48, limit: room },
+    );
+    const grok = createGrokClient();
+    const cvLines = [
+      ...(((extraction?.facts as { roles?: Array<{ title?: string }> } | undefined)?.roles ?? [])
+        .map((role) => role.title)
+        .filter(Boolean) as string[]),
+      ...((extraction?.facts as { skills?: string[] } | undefined)?.skills ?? []).slice(0, 12),
+    ];
+    const accepted = [];
+    for (const hit of ranked) {
+      if (profession !== 'other' && !sameProfession(profession, hit.job.title)) continue;
+      if (!grok) {
+        accepted.push(hit);
+        continue;
+      }
+      const verdict = await judgeJobFit(grok, {
+        profession,
+        cvLines,
+        title: hit.job.title,
+        company: hit.job.companyName,
+        skills: hit.job.skills,
+        description: hit.job.descriptionText,
+      }).catch(() => null);
+      if (verdict?.sameProfession && verdict.fit >= 70) accepted.push(hit);
+      if (accepted.length >= room) break;
+    }
+    const chosen = (grok ? accepted : ranked).slice(0, room);
+    if (chosen.length === 0) {
+      return {
+        ok: true as const,
+        created: 0,
+        considered: matchable.length,
+        drafts: [],
+        message: 'Nothing was close enough to your work.',
         readinessTotal: latestScore.total,
       };
     }
@@ -200,9 +347,8 @@ export class DeskRunService {
     const expiresAt = eveningCutoff();
     const created: Array<{ draftId: string; campaignId: string; company: string; role: string }> =
       [];
-    const grok = createGrokClient();
 
-    for (const hit of ranked) {
+    for (const hit of chosen) {
       const existing = await db
         .select({ id: campaigns.id })
         .from(campaigns)
@@ -210,17 +356,18 @@ export class DeskRunService {
         .limit(1);
       if (existing[0]) continue;
 
-      const job = {
+      const letter = renderLetter({
         company: hit.job.companyName,
         role: hit.job.title,
         sourceUrl: hit.job.sourceUrl,
-      };
-      const composed = composeLetter(cv, job);
-      const body = await finalizeLetter(
-        composed,
-        job,
-        grok ? () => polishLetter(grok, composed.body, composed.source, job) : undefined,
-      );
+        candidateName: candidateFirst || facts?.fullName?.trim() || null,
+        recruiterName: recruiterFirst(hit.job.invitedEmail),
+        phone: facts?.phones?.find((p) => p.trim())?.trim() ?? null,
+        linkedin: facts?.links?.linkedin?.trim() || null,
+        bullets,
+        shuffle: prefs.criteria.letterShuffle !== false,
+        seed: hit.job.id,
+      });
 
       const [campaign] = await db
         .insert(campaigns)
@@ -231,30 +378,29 @@ export class DeskRunService {
           jobCanonicalId: hit.job.id,
           recipientEmail: hit.job.invitedEmail,
           policyVersions: {
-            match: 'desk-match-3',
+            match: 'desk-match-2',
             readiness: String(latestScore.total),
           },
         })
         .returning();
       if (!campaign) continue;
 
-      const evidence: DraftEvidence = {
+      const evidence = {
         company: hit.job.companyName,
         role: hit.job.title,
         person: '',
-        evidenceFacts: composed.evidenceFacts.filter((fact) =>
-          body.toLowerCase().includes(fact.toLowerCase()),
-        ),
-        priorCompanies: composed.priorCompanies,
+        subject: letter.subject,
+        templateId: letter.templateId,
+        evidenceFacts: [hit.job.companyName, hit.job.title, ...bullets].filter(Boolean),
       };
-      const specificity = scoreSpecificity(body, evidence);
+      const specificity = scoreSpecificity(letter.body, evidence);
 
       const [draft] = await db
         .insert(campaignDrafts)
         .values({
           campaignId: campaign.id,
           userId: user.id,
-          body,
+          body: letter.body,
           specificity,
           evidence,
           status: 'pending_approval',

@@ -208,10 +208,32 @@ export class CvService {
       .orderBy(desc(cvReadinessScores.createdAt))
       .limit(1);
     if (!row) return null;
+    const [doc] = await db
+      .select({ originalFilename: cvDocuments.originalFilename })
+      .from(cvDocuments)
+      .where(and(eq(cvDocuments.id, row.cvDocumentId), eq(cvDocuments.userId, userId)))
+      .limit(1);
     return {
       readiness: hydrateReadinessFromScore(row),
       cvDocumentId: row.cvDocumentId,
+      cvFilename: doc?.originalFilename ?? null,
       suggestions: storedSuggestions(row.sendability),
+    };
+  }
+
+  async downloadUrl(user: SessionUser, cvDocumentId: string) {
+    const db = this.ready();
+    const [doc] = await db
+      .select()
+      .from(cvDocuments)
+      .where(and(eq(cvDocuments.id, cvDocumentId), eq(cvDocuments.userId, user.id)))
+      .limit(1);
+    if (!doc) throw new NotFoundException('CV not found');
+    const signed = await this.storage.downloadUrl(user.firebaseUid, doc.fileKey);
+    return {
+      ok: true as const,
+      filename: doc.originalFilename ?? 'cv.pdf',
+      ...signed,
     };
   }
 

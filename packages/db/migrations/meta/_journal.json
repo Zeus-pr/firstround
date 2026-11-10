@@ -29,6 +29,20 @@
       "when": 1794312000000,
       "tag": "0003_preferences_criteria",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794320000000,
+      "tag": "0004_preference_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794330000000,
+      "tag": "0005_desk_runs",
+      "breakpoints": true
     }
   ]
 }
