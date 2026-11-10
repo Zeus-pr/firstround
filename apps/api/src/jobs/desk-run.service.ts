@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, ilike, not, or } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, inArray, ne, not, or } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -133,6 +133,33 @@ export class DeskRunService {
     return this.db;
   }
 
+  /** Drop unsent letters from the last round so Find my 10 starts from an empty desk. */
+  private async clearPendingLetters(userId: string) {
+    const db = this.ready();
+    const pending = await db
+      .select({ campaignId: campaignDrafts.campaignId })
+      .from(campaignDrafts)
+      .where(and(eq(campaignDrafts.userId, userId), eq(campaignDrafts.status, 'pending_approval')));
+    if (pending.length === 0) return;
+    const now = new Date();
+    await db
+      .update(campaignDrafts)
+      .set({ status: 'cancelled', updatedAt: now })
+      .where(and(eq(campaignDrafts.userId, userId), eq(campaignDrafts.status, 'pending_approval')));
+    await db
+      .update(campaigns)
+      .set({ state: 'cancelled_by_user', updatedAt: now })
+      .where(
+        and(
+          eq(campaigns.userId, userId),
+          inArray(
+            campaigns.id,
+            pending.map((row) => row.campaignId),
+          ),
+        ),
+      );
+  }
+
   async runToday(user: SessionUser) {
     const db = this.ready();
     const [latestScore] = await db
@@ -144,6 +171,7 @@ export class DeskRunService {
     if (!latestScore) {
       throw new BadRequestException('Upload a CV and get a score before starting your round.');
     }
+    await this.clearPendingLetters(user.id);
     const [run] = await db
       .insert(deskRuns)
       .values({
@@ -289,7 +317,13 @@ export class DeskRunService {
     const madeToday = await db
       .select({ id: campaigns.id })
       .from(campaigns)
-      .where(and(eq(campaigns.userId, user.id), gte(campaigns.createdAt, startOfIndiaDay())));
+      .where(
+        and(
+          eq(campaigns.userId, user.id),
+          gte(campaigns.createdAt, startOfIndiaDay()),
+          ne(campaigns.state, 'cancelled_by_user'),
+        ),
+      );
     const room = DAILY_LETTER_CAP - madeToday.length;
     if (room <= 0) {
       return {
