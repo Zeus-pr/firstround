@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { validateDraftBody } from '../src/jobs/draft.js';
-import { composeLetter, letterIsGrounded, linkOnOwnLine } from '../src/jobs/letter.js';
+import {
+  composeLetter,
+  letterIsGrounded,
+  linkOnOwnLine,
+  proofBullets,
+} from '../src/jobs/letter.js';
 
 const cv = {
   fullName: 'SHUBHAYAN MITRA',
@@ -45,5 +50,32 @@ describe('composeLetter', () => {
       priorCompanies: letter.priorCompanies,
     });
     expect(check.ok).toBe(true);
+  });
+
+  it('keeps a mixed-case name and still writes when the current role has no bullets', () => {
+    const letter = composeLetter(
+      {
+        fullName: 'Ada Lovelace',
+        roles: [
+          { title: 'Research Intern', company: 'Analytical Engines', isCurrent: true, bullets: [] },
+          {
+            title: 'Backend Engineer',
+            company: 'Acme',
+            bullets: ['Cut API latency by 40% on the checkout path.'],
+          },
+        ],
+      },
+      { company: 'Razorpay', role: 'Backend Engineer', sourceUrl: null },
+    );
+    expect(letter.body).toContain('Ada Lovelace');
+    expect(letter.body).toContain('40%');
+    expect(letter.body).not.toContain('http');
+    expect(linkOnOwnLine(letter.body, null)).toBe(true);
+  });
+
+  it('does not treat a year as the proof line when a metric bullet exists', () => {
+    expect(proofBullets(['Joined in 2024.', 'Raised revenue 22% YoY.'])).toEqual([
+      'Raised revenue 22% YoY.',
+    ]);
   });
 });

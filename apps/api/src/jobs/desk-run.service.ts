@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, ilike, not, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, not, or, sql, type SQL } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -25,7 +25,7 @@ import { DB } from '../db/db.module.js';
 import { scoreSpecificity, type DraftEvidence } from './draft.js';
 import { composeLetter, finalizeLetter, polishLetter, type LetterCv } from './letter.js';
 import { rankMatches, type MatchableJob } from './match.js';
-import { primaryFamily, titleConstraints, type RoleFamily } from './role-family.js';
+import { allowedFamilies, otherNeedles, poolConstraints } from './role-family.js';
 
 const EMPTY_PREFS: PreferencesPayload = {
   jobFamilies: [],
@@ -59,11 +59,22 @@ function prefsFromRow(row: {
   };
 }
 
-function titleWhere(family: RoleFamily) {
-  const spec = titleConstraints(family);
+const WORD_NEEDLES = new Set(['ios', 'ux', 'ui', 'qa', 'sre', 'node', 'ml', 'net']);
+
+function needleClause(needle: string): SQL {
+  const token = needle.trim();
+  if (token.length <= 3 || WORD_NEEDLES.has(token.toLowerCase())) {
+    const pattern = `\\y${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\y`;
+    return sql`${canonicalJobs.title} ~* ${pattern}`;
+  }
+  return ilike(canonicalJobs.title, `%${token}%`);
+}
+
+function titleWhere(families: ReturnType<typeof allowedFamilies>) {
+  const spec = poolConstraints(families);
   if (!spec) return undefined;
-  const include = or(...spec.include.map((needle) => ilike(canonicalJobs.title, `%${needle}%`)));
-  const exclude = spec.exclude.map((needle) => not(ilike(canonicalJobs.title, `%${needle}%`)));
+  const include = or(...spec.include.map((needle) => needleClause(needle)));
+  const exclude = spec.exclude.map((needle) => not(needleClause(needle)));
   return and(include, ...exclude);
 }
 
@@ -106,9 +117,28 @@ export class DeskRunService {
       .from(cvExtractions)
       .where(and(eq(cvExtractions.id, latestScore.extractionId), eq(cvExtractions.userId, user.id)))
       .limit(1);
-    const cv = (extraction?.facts ?? {}) as LetterCv;
-    const family = primaryFamily(cv);
-    const titleFilter = titleWhere(family);
+    const cv = (extraction?.facts ?? {}) as LetterCv & {
+      targetRoleHints?: string[];
+      skills?: string[];
+    };
+    const families = allowedFamilies(cv, prefs.jobFamilies);
+    const loose = families.length === 0 ? otherNeedles(cv) : [];
+    if (families.length === 0 && loose.length === 0) {
+      return {
+        ok: true as const,
+        created: 0,
+        considered: 0,
+        drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
+        message: 'Add the kind of role you want in preferences, then start again.',
+        readinessTotal: latestScore.total,
+      };
+    }
+    const titleFilter =
+      families.length > 0
+        ? titleWhere(families)
+        : loose.length > 0
+          ? or(...loose.map((needle) => needleClause(needle)))
+          : undefined;
 
     const rows = await db
       .select()
@@ -152,9 +182,9 @@ export class DeskRunService {
     }
 
     const ranked = rankMatches(prefs, matchable, {
-      minMatch: family === 'other' ? 48 : 55,
+      minMatch: families.length === 0 ? 48 : 55,
       limit: 5,
-      primaryFamily: family,
+      allowedFamilies: families,
     });
     if (ranked.length === 0) {
       return {

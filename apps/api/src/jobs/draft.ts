@@ -63,14 +63,19 @@ export function validateDraftBody(
   const company = evidence.company.trim().toLowerCase();
   if (company) {
     const companyMentioned = normalized.toLowerCase().includes(company);
-    // Reject inventing a different company name that looks like a proper noun phrase.
+    // CV bullets are evidence. Only scan the letter outside those bullets for invented employers.
+    let outsideEvidence = normalized.toLowerCase();
+    for (const fact of evidence.evidenceFacts) {
+      const token = fact.trim().toLowerCase();
+      if (token) outsideEvidence = outsideEvidence.replaceAll(token, ' ');
+    }
     const allowed = [
       company,
       ...(evidence.priorCompanies ?? []).map((c) => c.toLowerCase()),
     ].filter(Boolean);
     const knownCompany = (named: string) =>
       allowed.some((a) => a === named || a.includes(named) || named.includes(a));
-    const otherCompanies = normalized.match(/\b(?:at|join)\s+([A-Z][A-Za-z0-9&.\- ]{1,60})\b/g);
+    const otherCompanies = outsideEvidence.match(/\b(?:at|join)\s+([a-z0-9][a-z0-9&.\- ]{1,60})/g);
     if (otherCompanies) {
       for (const phrase of otherCompanies) {
         const named = phrase

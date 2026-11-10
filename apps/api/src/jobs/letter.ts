@@ -35,18 +35,42 @@ export type ComposedLetter = {
 function personName(raw: string | null | undefined): string | null {
   const t = raw?.trim();
   if (!t) return null;
+  const uniform = t === t.toUpperCase() || t === t.toLowerCase();
+  if (!uniform) return t;
   return t.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 }
 
-function currentRole(cv: LetterCv): LetterRole | null {
-  return cv.roles?.find((r) => r.isCurrent) ?? cv.roles?.[0] ?? null;
+function orderedRoles(cv: LetterCv): LetterRole[] {
+  const roles = cv.roles ?? [];
+  const current = roles.filter((r) => r.isCurrent);
+  const rest = roles.filter((r) => !r.isCurrent);
+  return [...current, ...rest];
 }
 
-/** Prefer bullets that already contain a number. Keep the source wording. */
+const METRIC = /\d+(?:\.\d+)?\s*%|\b(?:cr|lpa|rs\.?|₹|pp|mape|yoy)\b|\d+(?:\.\d+)?\s*(?:cr|x)\b/i;
+const YEAR_ONLY = /^(?:19|20)\d{2}$/;
+
+/** Prefer measured bullets. A bare year is not proof. Fall back to any bullet. */
 export function proofBullets(bullets: string[] | undefined, limit = 2): string[] {
   const clean = (bullets ?? []).map((b) => b.replace(/\s+/g, ' ').trim()).filter(Boolean);
-  const numbered = clean.filter((b) => /\d/.test(b));
+  const measured = clean.filter((b) => METRIC.test(b));
+  if (measured.length > 0) return measured.slice(0, limit);
+  const numbered = clean.filter((b) =>
+    (b.match(/\d+(?:\.\d+)?/g) ?? []).some((n) => !YEAR_ONLY.test(n)),
+  );
   return (numbered.length > 0 ? numbered : clean).slice(0, limit);
+}
+
+function proofFromCv(cv: LetterCv, limit = 2): string[] {
+  const picked: string[] = [];
+  for (const role of orderedRoles(cv)) {
+    for (const bullet of proofBullets(role.bullets, limit)) {
+      if (!picked.includes(bullet)) picked.push(bullet);
+      if (picked.length >= limit) return picked;
+    }
+    if (picked.length > 0) return picked;
+  }
+  return picked;
 }
 
 export function numbersIn(text: string): string[] {
@@ -66,8 +90,7 @@ export function linkOnOwnLine(body: string, url: string | null): boolean {
 }
 
 export function composeLetter(cv: LetterCv, job: LetterJob): ComposedLetter {
-  const role = currentRole(cv);
-  const bits = proofBullets(role?.bullets);
+  const bits = proofFromCv(cv);
   const name = personName(cv.fullName);
   const phone = cv.phones?.find((p) => p.trim())?.trim() ?? null;
   const linkedin = cv.links?.linkedin?.trim() || null;
@@ -154,7 +177,11 @@ export async function finalizeLetter(
       next &&
       letterIsGrounded(next, composed.source) &&
       linkOnOwnLine(next, job.sourceUrl) &&
-      next.toLowerCase().includes(job.company.toLowerCase())
+      next.toLowerCase().includes(job.company.toLowerCase()) &&
+      next.toLowerCase().includes(job.role.toLowerCase()) &&
+      composed.evidenceFacts.every((fact) =>
+        numbersIn(fact).every((n) => numbersIn(next).includes(n)),
+      )
     ) {
       return next;
     }

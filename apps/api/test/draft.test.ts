@@ -35,6 +35,15 @@ const goodBody =
   'Hi Priya Sharma — I am reaching out about the Backend Engineer role at Acme Labs on the Bengaluru platform team. I have shipped Node services on Postgres and would value a brief conversation.';
 
 describe('draft guard', () => {
+  it('does not treat words inside a CV bullet as an invented employer', () => {
+    const bullet = 'Closed the gap at East India against a live revenue target.';
+    const result = validateDraftBody(`${goodBody} ${bullet}`, {
+      ...evidence,
+      evidenceFacts: [...evidence.evidenceFacts, bullet],
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it('allows a prior employer named in the CV', () => {
     const result = validateDraftBody(`${goodBody} I did this work at Samsung Electronics.`, {
       ...evidence,

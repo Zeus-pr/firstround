@@ -77,12 +77,12 @@ describe('desk job match', () => {
   it('drops software titles for a category manager even if an older role was engineering', () => {
     const prefs = emptyPrefs;
     const software = scoreJobMatch(prefs, job({ title: 'Java Developer', companyName: 'Acme' }), {
-      primaryFamily: 'commercial',
+      allowedFamilies: ['commercial'],
     });
     const category = scoreJobMatch(
       prefs,
       job({ title: 'Category Manager — Demand', companyName: 'Myntra' }),
-      { primaryFamily: 'commercial' },
+      { allowedFamilies: ['commercial'] },
     );
     expect(software.matchScore).toBe(0);
     expect(software.reasons).toContain('family_clash');
@@ -93,7 +93,7 @@ describe('desk job match', () => {
         job({ id: 'se', title: 'Backend Engineer' }),
         job({ id: 'cat', title: 'Assistant Manager Revenue' }),
       ],
-      { primaryFamily: 'commercial', minMatch: 55 },
+      { allowedFamilies: ['commercial'], minMatch: 55 },
     );
     expect(ranked.map((r) => r.job.id)).toEqual(['cat']);
   });

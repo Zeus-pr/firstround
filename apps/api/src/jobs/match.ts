@@ -50,27 +50,26 @@ function criteriaOf(prefs: PreferencesPayload): PreferencesCriteria {
 }
 
 /**
- * Soft job↔preference match (Instahyre / Naukri-style).
- * Empty fields are neutral. Hits boost. Misses demote mildly — never hard-exclude here.
+ * Preference fields rank. Family is the one hard line: a known CV or stated target
+ * never receives a different profession. Empty preferences do not exclude.
  */
 export function scoreJobMatch(
   prefs: PreferencesPayload,
   job: MatchableJob,
-  signal?: { primaryFamily?: RoleFamily | null },
+  signal?: { allowedFamilies?: RoleFamily[] | null },
 ): MatchResult {
   const reasons: string[] = [];
   let score = 40;
   const c = criteriaOf(prefs);
-  const primary =
-    signal?.primaryFamily && signal.primaryFamily !== 'other' ? signal.primaryFamily : null;
-  if (primary) {
+  const allowed = (signal?.allowedFamilies ?? []).filter((family) => family !== 'other');
+  if (allowed.length > 0) {
     const jobFamily = familyOfText(job.title);
-    if (jobFamily !== primary) {
+    if (jobFamily === 'other' || !allowed.includes(jobFamily)) {
       return { job, matchScore: 0, reasons: ['family_clash', `job:${jobFamily}`] };
     }
     score += 28;
     reasons.push(`family:${jobFamily}`);
-    if (primary === 'commercial' && /\bsales executive\b/i.test(job.title)) {
+    if (allowed.includes('commercial') && /\bsales executive\b/i.test(job.title)) {
       score -= 18;
       reasons.push('sales_exec_soft');
     }
@@ -229,12 +228,12 @@ export function scoreJobMatch(
 export function rankMatches(
   prefs: PreferencesPayload,
   jobs: MatchableJob[],
-  opts: { minMatch?: number; limit?: number; primaryFamily?: RoleFamily | null } = {},
+  opts: { minMatch?: number; limit?: number; allowedFamilies?: RoleFamily[] | null } = {},
 ): MatchResult[] {
   const minMatch = opts.minMatch ?? 48;
   const limit = opts.limit ?? 5;
   return jobs
-    .map((job) => scoreJobMatch(prefs, job, { primaryFamily: opts.primaryFamily }))
+    .map((job) => scoreJobMatch(prefs, job, { allowedFamilies: opts.allowedFamilies }))
     .filter((r) => r.matchScore >= minMatch && !r.reasons.includes('family_clash'))
     .sort((a, b) => b.matchScore - a.matchScore || b.job.trustScore - a.job.trustScore)
     .slice(0, limit);
