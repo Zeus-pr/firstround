@@ -19,7 +19,7 @@ type Props = {
   onSkip?: () => void;
   primaryBusy?: boolean;
   creditBalance?: number | null;
-  rewrittenText?: string | null;
+  suggestions?: string[];
 };
 
 export function ReadinessReveal({
@@ -28,7 +28,7 @@ export function ReadinessReveal({
   onSkip,
   primaryBusy,
   creditBalance,
-  rewrittenText,
+  suggestions,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { recommendation, band, total } = readiness;
@@ -80,7 +80,7 @@ export function ReadinessReveal({
     band === 'ready'
       ? 'Continue'
       : band === 'supercharge'
-        ? `Supercharge (${SUPERCHARGE_CREDIT_COST} credits)`
+        ? `Get suggestions (${SUPERCHARGE_CREDIT_COST} credits)`
         : 'Show suggestions';
 
   return (
@@ -131,19 +131,14 @@ export function ReadinessReveal({
         </section>
       ) : null}
 
-      {rewrittenText ? (
-        <section className="desk-rewrite desk-reveal-in">
-          <div className="desk-suggestions-top">
-            <h2>Rewritten sheet</h2>
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => void navigator.clipboard.writeText(rewrittenText)}
-            >
-              Copy
-            </button>
-          </div>
-          <pre className="desk-rewrite-body">{rewrittenText}</pre>
+      {suggestions && suggestions.length > 0 ? (
+        <section className="desk-gaps soft desk-reveal-in">
+          <h2>Suggestions</h2>
+          <ul>
+            {suggestions.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
         </section>
       ) : null}
 
@@ -159,7 +154,7 @@ export function ReadinessReveal({
         </button>
         {band === 'supercharge' && onSkip ? (
           <button className="text-button" type="button" disabled={primaryBusy} onClick={onSkip}>
-            Not now — show suggestions
+            Not now — keep the checklist
           </button>
         ) : null}
       </div>
