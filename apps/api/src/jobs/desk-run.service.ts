@@ -166,15 +166,15 @@ export class DeskRunService {
           .where(eq(deskRuns.id, run.id));
       })
       .catch(async () => {
-      await db
-        .update(deskRuns)
-        .set({
-          status: 'failed',
-          message: 'Something got stuck. Try once more.',
-          finishedAt: new Date(),
-        })
-        .where(eq(deskRuns.id, run.id));
-    });
+        await db
+          .update(deskRuns)
+          .set({
+            status: 'failed',
+            message: 'Something got stuck. Try once more.',
+            finishedAt: new Date(),
+          })
+          .where(eq(deskRuns.id, run.id));
+      });
     return {
       ok: true as const,
       status: 'selecting' as const,
@@ -312,7 +312,7 @@ export class DeskRunService {
       ...(((extraction?.facts as { roles?: Array<{ title?: string }> } | undefined)?.roles ?? [])
         .map((role) => role.title)
         .filter(Boolean) as string[]),
-      ...(((extraction?.facts as { skills?: string[] } | undefined)?.skills ?? []).slice(0, 12)),
+      ...((extraction?.facts as { skills?: string[] } | undefined)?.skills ?? []).slice(0, 12),
     ];
     const accepted = [];
     for (const hit of ranked) {

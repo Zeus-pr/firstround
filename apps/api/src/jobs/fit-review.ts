@@ -19,7 +19,10 @@ export function parseFitVerdict(raw: string): FitVerdict | null {
     if (typeof json.sameProfession !== 'boolean') return null;
     const fit = Number(json.fit);
     if (!Number.isFinite(fit)) return null;
-    return { sameProfession: json.sameProfession, fit: Math.max(0, Math.min(100, Math.round(fit))) };
+    return {
+      sameProfession: json.sameProfession,
+      fit: Math.max(0, Math.min(100, Math.round(fit))),
+    };
   } catch {
     return null;
   }

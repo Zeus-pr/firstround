@@ -30,7 +30,9 @@ function subjectFor(id: LetterTemplateId, input: LetterInput): string {
   const recruiter = input.recruiterName?.trim() || null;
   const candidate = firstName(input.candidateName);
   if (id === 'work-with') {
-    return recruiter ? `${recruiter}, I would love to work with you` : 'I would love to work with you';
+    return recruiter
+      ? `${recruiter}, I would love to work with you`
+      : 'I would love to work with you';
   }
   if (id === 'put-forward') {
     if (recruiter && candidate) return `Hi ${recruiter}, ${candidate} here.`;

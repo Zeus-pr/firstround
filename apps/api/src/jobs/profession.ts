@@ -1,13 +1,7 @@
 /** Profession is decided from the job title, or the current CV role. Description keywords do not count. */
 
 export type Profession =
-  | 'mainframe'
-  | 'software'
-  | 'data'
-  | 'product'
-  | 'design'
-  | 'commercial'
-  | 'other';
+  'mainframe' | 'software' | 'data' | 'product' | 'design' | 'commercial' | 'other';
 
 export type ProfessionCv = {
   roles?: Array<{ title?: string | null; isCurrent?: boolean }>;
@@ -15,8 +9,7 @@ export type ProfessionCv = {
   skills?: string[];
 };
 
-const MAINFRAME =
-  /\b(mainframe|cobol|cics|rexx|\bjcl\b|as\/?400|\bims\b|\bvsam\b|\bdb2\b)\b/i;
+const MAINFRAME = /\b(mainframe|cobol|cics|rexx|\bjcl\b|as\/?400|\bims\b|\bvsam\b|\bdb2\b)\b/i;
 const COMMERCIAL =
   /\b(category|merchandis\w*|revenue|pricing|assortment|\bgtm\b|go[\s-]?to[\s-]?market|demand planner|buyer)\b/i;
 const PRODUCT = /\bproduct (manager|owner|management)\b/i;
@@ -70,7 +63,17 @@ const POOL: Record<Exclude<Profession, 'other'>, { include: string[]; exclude: s
     ],
   },
   software: {
-    include: ['developer', 'engineer', 'java', 'aws', 'react', 'fullstack', 'devops', 'node', 'python'],
+    include: [
+      'developer',
+      'engineer',
+      'java',
+      'aws',
+      'react',
+      'fullstack',
+      'devops',
+      'node',
+      'python',
+    ],
     exclude: ['cobol', 'mainframe', 'cics', 'rexx', 'category manager', 'revenue manager'],
   },
   data: {
