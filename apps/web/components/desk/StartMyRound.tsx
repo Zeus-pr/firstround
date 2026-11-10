@@ -1,21 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Orb } from '@yogesharc/thinking-orbs';
 
 export type RoundPhase =
   'idle' | 'thinking' | 'scanning' | 'scoring' | 'drafting' | 'done' | 'error';
 
-const BEATS: Array<{
-  phase: RoundPhase;
-  line: string;
-  state: 'searching' | 'reasoning' | 'working';
-}> = [
-  { phase: 'thinking', line: 'Reading your CV and preferences', state: 'searching' },
-  { phase: 'scanning', line: 'Scanning today’s openings', state: 'working' },
-  { phase: 'scoring', line: 'Scoring the strongest fits', state: 'reasoning' },
-  { phase: 'drafting', line: 'Preparing letters for review', state: 'working' },
-];
+const BEATS: Record<Exclude<RoundPhase, 'idle' | 'done' | 'error'>, string> = {
+  thinking: 'Reading your CV and preferences…',
+  scanning: 'Scanning today’s openings…',
+  scoring: 'Scoring the strongest fits…',
+  drafting: 'Preparing letters for review…',
+};
 
 type Props = {
   disabled?: boolean;
@@ -32,72 +27,62 @@ export function StartMyRound({
   resultMessage,
   onStart,
 }: Props) {
-  const running = phase !== 'idle' && phase !== 'done' && phase !== 'error';
-  const [tick, setTick] = useState(0);
+  const running =
+    phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
 
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setTick((n) => n + 1), 1600);
-    return () => window.clearInterval(id);
-  }, [running]);
+  const title =
+    phase === 'done'
+      ? 'Round ready'
+      : phase === 'error'
+        ? 'Couldn’t finish'
+        : running
+          ? 'Working on it'
+          : 'Start my round';
 
-  const activeBeat =
-    BEATS.find((b) => b.phase === phase) ?? BEATS[Math.min(tick % BEATS.length, BEATS.length - 1)]!;
+  const lead = running
+    ? BEATS[phase]
+    : phase === 'done' || phase === 'error'
+      ? (resultMessage ??
+        (phase === 'done' ? 'Drafts are ready to review.' : 'Try again in a moment.'))
+      : 'We match your CV to today’s openings and draft letters for you to approve.';
+
+  const buttonLabel =
+    phase === 'done'
+      ? 'Run again'
+      : phase === 'error'
+        ? 'Try again'
+        : running
+          ? 'Working…'
+          : 'Start my round';
 
   return (
     <section
-      className={`desk-round ${running ? 'is-running' : ''} ${phase === 'done' ? 'is-done' : ''} ${phase === 'error' ? 'is-error' : ''}`}
+      className={`desk-round${phase === 'error' ? ' is-error' : ''}`}
       aria-label="Start my round"
     >
       <div className="desk-round-copy">
         <p className="desk-kicker">Your round</p>
-        {running ? (
-          <>
-            <h2 className="desk-round-title">Working on it</h2>
-            <p className="desk-round-lead" aria-live="polite">
-              {activeBeat.line}
-            </p>
-          </>
-        ) : phase === 'done' ? (
-          <>
-            <h2 className="desk-round-title">Round ready</h2>
-            <p className="desk-round-lead">{resultMessage ?? 'Drafts are ready to review.'}</p>
-          </>
-        ) : phase === 'error' ? (
-          <>
-            <h2 className="desk-round-title">Couldn’t finish</h2>
-            <p className="desk-round-lead">{resultMessage ?? 'Try again in a moment.'}</p>
-          </>
-        ) : (
-          <>
-            <h2 className="desk-round-title">Start my round</h2>
-            <p className="desk-round-lead">
-              We match your CV to today’s openings and draft letters for you to approve. Scraping
-              stays under the hood.
-            </p>
-          </>
-        )}
+        <h2 className="desk-round-title">{title}</h2>
+        <p className="desk-round-lead" aria-live="polite">
+          {lead}
+        </p>
       </div>
 
       <div className="desk-round-action">
-        {running ? (
-          <div className="desk-round-process" role="status" aria-busy="true">
-            <span className="desk-round-orb">
-              <Orb state={activeBeat.state} size={56} label={activeBeat.line} />
+        <button
+          type="button"
+          className="wax desk-round-cta"
+          disabled={disabled || running}
+          aria-busy={running}
+          onClick={onStart}
+        >
+          {running ? (
+            <span className="desk-round-orb" aria-hidden="true">
+              <Orb state="working" size={22} label={lead} />
             </span>
-            <span className="desk-round-process-label">{activeBeat.line}</span>
-            <span className="desk-round-glow" aria-hidden="true" />
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="wax desk-round-cta"
-            disabled={disabled || running}
-            onClick={onStart}
-          >
-            {phase === 'done' ? 'Run again' : phase === 'error' ? 'Try again' : 'Start my round'}
-          </button>
-        )}
+          ) : null}
+          <span>{buttonLabel}</span>
+        </button>
         {disabled && disabledReason && phase === 'idle' ? (
           <p className="desk-round-hint">{disabledReason}</p>
         ) : null}
