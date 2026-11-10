@@ -130,7 +130,12 @@ export function SearchMulti({
         <ul className="desk-pick-menu" role="listbox" aria-labelledby={listId}>
           {matches.map((option) => (
             <li key={option}>
-              <button type="button" role="option" aria-selected={false} onClick={() => pick(option)}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => pick(option)}
+              >
                 {option}
               </button>
             </li>

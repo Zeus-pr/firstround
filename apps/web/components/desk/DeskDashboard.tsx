@@ -258,7 +258,11 @@ export function DeskDashboard({
 
           <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
             <p className="desk-kicker">Letters</p>
-            {choosing ? <ChoosingOrb /> : <p className="desk-pane-copy">Open a letter and read it.</p>}
+            {choosing ? (
+              <ChoosingOrb />
+            ) : (
+              <p className="desk-pane-copy">Open a letter and read it.</p>
+            )}
             <DraftLetters
               drafts={drafts}
               busyId={draftBusyId}
