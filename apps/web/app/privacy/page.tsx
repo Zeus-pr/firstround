@@ -7,7 +7,7 @@ export default function PrivacyPage() {
   return (
     <LegalSheet title="Privacy policy">
       <p>
-        First Round helps you send reviewed outreach from your own Gmail. This page explains what we
+        First Round helps you email recruiters from your own Gmail. This page explains what we
         collect and why.
       </p>
       <h2>What we collect</h2>
@@ -18,8 +18,8 @@ export default function PrivacyPage() {
       </p>
       <h2>How we use it</h2>
       <p>
-        To run your desk: readiness scoring, matching later, and sending only letters you approve.
-        We do not sell your data. We do not train public models on your CV.
+        To run your account: CV scoring, job matching later, and sending only emails you approve. We
+        do not sell your data. We do not train public models on your CV.
       </p>
       <h2>Processors</h2>
       <p>

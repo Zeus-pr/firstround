@@ -13,7 +13,7 @@ export default function TermsPage() {
       <h2>Your account</h2>
       <p>
         You must use accurate sign-in details and only upload a CV you have the right to use. You
-        approve every letter before it leaves your Gmail.
+        approve every email before it sends from your Gmail.
       </p>
       <h2>Acceptable use</h2>
       <p>

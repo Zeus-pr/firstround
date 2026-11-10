@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { DeskOnboarding } from '@/components/desk/DeskOnboarding';
 
 export const metadata: Metadata = {
-  title: 'Desk · First Round',
-  description: 'Upload your CV and see First Round LetterProof readiness.',
+  title: 'Dashboard · First Round',
+  description: 'Upload your CV and see your First Round CV score.',
 };
 
 export default function DeskPage() {

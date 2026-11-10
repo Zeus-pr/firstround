@@ -20,9 +20,9 @@ import { ensureAppSession } from '@/lib/session';
 type Mode = 'signin' | 'signup';
 
 const STAGE_BEATS = [
-  { state: 'searching' as const, line: 'Finding live roles' },
-  { state: 'reasoning' as const, line: 'Naming who can say yes' },
-  { state: 'working' as const, line: 'Drafting in your voice' },
+  { state: 'searching' as const, line: 'Finding open jobs' },
+  { state: 'reasoning' as const, line: 'Finding the recruiter or hiring manager' },
+  { state: 'working' as const, line: 'Drafting your emails' },
 ];
 
 function GoogleMark() {
@@ -120,7 +120,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
           setNote(
             unreachable
               ? 'Signed in, but the API is unreachable. Start the local API (port 4000) or point NEXT_PUBLIC_API_URL at a live API, then refresh.'
-              : 'Signed in, but we could not open your desk yet. Refresh and try again.',
+              : 'Signed in, but the dashboard did not load. Refresh and try again.',
           );
         });
     });
@@ -173,12 +173,12 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     setNote('');
     try {
       await sendPasswordResetEmail(auth, email);
-      setNote('A reset letter is on its way to that address.');
+      setNote('Password reset email sent.');
     } catch (error) {
       const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
       setNote(
         code === 'auth/user-not-found'
-          ? 'If that address has an account, a reset letter is on its way.'
+          ? 'If that address has an account, a password reset email was sent.'
           : authNote(code),
       );
     } finally {
@@ -201,13 +201,13 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     return (
       <main className="auth-shell auth-shell-boot">
         <section className="auth-panel auth-panel-boot">
-          <h1>Opening your desk</h1>
+          <h1>Opening your dashboard</h1>
           <p>You are signed in as {user.email ?? 'this account'}.</p>
           <p className="note" role="status">
-            {note || 'Taking you to LetterProof.'}
+            {note || 'Taking you to the dashboard.'}
           </p>
           <Link className="wax desk-link-btn" href="/desk">
-            Go to desk
+            Go to dashboard
           </Link>
           <button
             className="text-button"
@@ -233,8 +233,8 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         <h1>{signingUp ? 'Create an account' : 'Sign in'}</h1>
         <p>
           {signingUp
-            ? 'This is the address the letters should leave from. '
-            : 'Use the address on the account. '}
+            ? 'Use the Gmail address you want emails to send from. '
+            : 'Use the email on your account. '}
           {signingUp ? (
             <Link href="/login">Sign in</Link>
           ) : (

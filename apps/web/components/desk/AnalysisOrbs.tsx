@@ -3,15 +3,15 @@
 import { Orb } from '@yogesharc/thinking-orbs';
 
 const ANALYZE_BEATS = [
-  { state: 'searching' as const, line: 'Reading the sheet' },
-  { state: 'reasoning' as const, line: 'Sorting proof from noise' },
-  { state: 'working' as const, line: 'Scoring LetterProof' },
+  { state: 'searching' as const, line: 'Reading the CV' },
+  { state: 'reasoning' as const, line: 'Extracting work history and skills' },
+  { state: 'working' as const, line: 'Scoring the CV' },
 ];
 
 const SUGGEST_BEATS = [
-  { state: 'searching' as const, line: 'Reading the gaps already scored' },
-  { state: 'working' as const, line: 'Writing a few concrete edits' },
-  { state: 'reasoning' as const, line: 'Leaving the score as it is' },
+  { state: 'searching' as const, line: 'Reading the score gaps' },
+  { state: 'working' as const, line: 'Writing concrete edit suggestions' },
+  { state: 'reasoning' as const, line: 'Keeping the score unchanged' },
 ];
 
 export function AnalysisOrbs({
@@ -25,15 +25,15 @@ export function AnalysisOrbs({
   return (
     <div className="desk-analyze" aria-live="polite" aria-busy="true">
       <p className="desk-kicker">
-        {mode === 'suggest' ? 'First Round is writing suggestions' : 'First Round is reading'}
+        {mode === 'suggest' ? 'Writing suggestions' : 'Reading your CV'}
       </p>
-      <h1>LetterProof</h1>
+      <h1>CV score</h1>
       <p className="desk-lead">
         {mode === 'suggest'
-          ? 'Short edits from the score and the lines already on the CV. The number does not move.'
+          ? 'Short edits based on the score and the text already on your CV. The score does not change.'
           : fileName
-            ? `Working through ${fileName}. The model extracts facts. Our algorithm owns the score.`
-            : 'Working through your CV. The model extracts facts. Our algorithm owns the score.'}
+            ? `Working through ${fileName}. AI extracts facts. Our algorithm sets the score.`
+            : 'Working through your CV. AI extracts facts. Our algorithm sets the score.'}
       </p>
       <ul className="desk-orbs">
         {beats.map((beat) => (

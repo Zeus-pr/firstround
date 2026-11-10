@@ -11,7 +11,6 @@ type Props = {
   onOpenCv: () => void;
   onReviewScore: () => void;
   onOpenPreferences: () => void;
-  onSignOut: () => void;
   onDismissSuggestions?: () => void;
 };
 
@@ -24,7 +23,6 @@ export function DeskDashboard({
   onOpenCv,
   onReviewScore,
   onOpenPreferences,
-  onSignOut,
   onDismissSuggestions,
 }: Props) {
   const hasReadiness = Boolean(readiness);
@@ -34,10 +32,9 @@ export function DeskDashboard({
     <div className="desk-dash">
       <header className="desk-dash-top">
         <div>
-          <p className="desk-kicker">Your desk</p>
-          <h1 className="desk-dash-title">firstround</h1>
+          <p className="desk-kicker">Dashboard</p>
           <p className="desk-lead desk-dash-lead">
-            Signed in as {email ?? 'this account'}
+            {email ?? 'Signed in'}
             {typeof creditBalance === 'number' ? ` · ${creditBalance} credits` : null}
           </p>
         </div>
@@ -48,30 +45,29 @@ export function DeskDashboard({
           <button className="text-button" type="button" onClick={onOpenPreferences}>
             Preferences
           </button>
-          <button className="text-button" type="button" onClick={onSignOut}>
-            Sign out
-          </button>
         </div>
       </header>
 
-      <section className="desk-add-role" aria-label="Add a role">
-        <p className="desk-kicker">Seen a role you want?</p>
-        <p className="desk-add-role-copy">Add it and we email the person who can say yes.</p>
+      <section className="desk-add-role" aria-label="Add a job">
+        <p className="desk-kicker">Found a job you want?</p>
+        <p className="desk-add-role-copy">
+          Add the posting. We draft an email to the recruiter or hiring manager.
+        </p>
         <div className="desk-add-role-row">
           <button className="desk-ghost" type="button" disabled>
             Screenshot
           </button>
           <button className="desk-ghost" type="button" disabled>
-            Link or type
+            Link or paste
           </button>
           <span className="desk-coming">Coming next</span>
         </div>
       </section>
 
       <div className="desk-dash-grid">
-        <aside className="desk-rail" aria-label="Desk side">
+        <aside className="desk-rail" aria-label="Sidebar">
           <section className="desk-pane">
-            <p className="desk-kicker">LetterProof</p>
+            <p className="desk-kicker">CV score</p>
             {readiness?.recommendation ? (
               <>
                 <p className="desk-stat">{readiness.total}</p>
@@ -82,9 +78,9 @@ export function DeskDashboard({
               </>
             ) : (
               <>
-                <p className="desk-pane-copy">No CV on the desk yet.</p>
+                <p className="desk-pane-copy">No CV uploaded yet.</p>
                 <button className="wax desk-rail-btn" type="button" onClick={onOpenCv}>
-                  Place CV
+                  Upload CV
                 </button>
               </>
             )}
@@ -94,13 +90,13 @@ export function DeskDashboard({
             <p className="desk-kicker">Gmail</p>
             <p className="desk-pane-copy">
               {gmailReady
-                ? 'Connect step is next in onboarding.'
-                : 'Not connected. Letters leave from your inbox later.'}
+                ? 'Connect Gmail next so emails can send from your inbox.'
+                : 'Not connected. Emails will send from your Gmail after you connect.'}
             </p>
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Your emails</p>
+            <p className="desk-kicker">Email drafts</p>
             <ul className="desk-rail-list">
               <li>
                 <span>Subject lines</span>
@@ -122,8 +118,8 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane desk-pane-quiet">
-            <p className="desk-kicker">Pass it on</p>
-            <p className="desk-pane-copy">Referral seats come after Gmail. Not open yet.</p>
+            <p className="desk-kicker">Referrals</p>
+            <p className="desk-pane-copy">Referral invites open after Gmail. Not available yet.</p>
           </section>
         </aside>
 
@@ -132,7 +128,7 @@ export function DeskDashboard({
             <div>
               <p className="desk-kicker">Autopilot</p>
               <p className="desk-pane-copy">
-                Paused. Connect Gmail and preferences before drafts run.
+                Off. Connect Gmail and set preferences before drafts run.
               </p>
             </div>
             <button className="desk-ghost" type="button" disabled>
@@ -141,9 +137,9 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Your outreach</p>
-            <p className="desk-pane-copy">Review drafts, track follow-ups, and monitor replies.</p>
-            <ul className="desk-stats" aria-label="Outreach stats">
+            <p className="desk-kicker">Job applications</p>
+            <p className="desk-pane-copy">Review drafts, follow-ups, and replies here.</p>
+            <ul className="desk-stats" aria-label="Application stats">
               <li>
                 <span className="desk-stat">0</span>
                 <span>Companies contacted</span>
@@ -166,7 +162,7 @@ export function DeskDashboard({
           {suggestions.length > 0 ? (
             <section className="desk-pane desk-suggestions" aria-label="CV suggestions">
               <div className="desk-suggestions-top">
-                <p className="desk-kicker">Improve before letters</p>
+                <p className="desk-kicker">CV suggestions</p>
                 {onDismissSuggestions ? (
                   <button className="text-button" type="button" onClick={onDismissSuggestions}>
                     Dismiss
@@ -182,20 +178,18 @@ export function DeskDashboard({
           ) : null}
 
           <section className="desk-pane">
-            <p className="desk-kicker">Responses</p>
+            <p className="desk-kicker">Replies</p>
             <p className="desk-pane-copy">Nothing to review yet.</p>
           </section>
 
-          <section className="desk-pane desk-log" aria-label="Outreach log">
+          <section className="desk-pane desk-log" aria-label="Application log">
             <div className="desk-log-head">
               <span>Company</span>
-              <span>Role</span>
+              <span>Job</span>
               <span>To</span>
               <span>Status</span>
             </div>
-            <p className="desk-log-empty">
-              No letters on the desk. Add a role when that layer ships.
-            </p>
+            <p className="desk-log-empty">No emails yet. Add a job when that feature ships.</p>
           </section>
         </div>
       </div>

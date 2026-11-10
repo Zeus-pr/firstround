@@ -8,7 +8,7 @@ import { SUPERCHARGE_CREDIT_COST } from '@/lib/cv';
 const DIMENSIONS: { key: keyof ReadinessResult['dimensions']; label: string }[] = [
   { key: 'evidenceCompleteness', label: 'Evidence' },
   { key: 'outcomeQuality', label: 'Outcomes' },
-  { key: 'targetRoleCoverage', label: 'Role fit' },
+  { key: 'targetRoleCoverage', label: 'Job fit' },
   { key: 'careerConsistency', label: 'Consistency' },
   { key: 'communicationClarity', label: 'Clarity' },
 ];
@@ -86,7 +86,7 @@ export function ReadinessReveal({
   return (
     <div className="desk-reveal" ref={rootRef}>
       <p className={`desk-band desk-reveal-in band-${band}`}>{recommendation.headline}</p>
-      <div className="desk-score desk-reveal-in" aria-label={`LetterProof score ${total}`}>
+      <div className="desk-score desk-reveal-in" aria-label={`CV score ${total}`}>
         <span className="desk-score-num">{total}</span>
         <span className="desk-score-of">/100</span>
       </div>
@@ -122,7 +122,7 @@ export function ReadinessReveal({
 
       {readiness.underEmphasised.length > 0 ? (
         <section className="desk-gaps soft desk-reveal-in">
-          <h2>Under-emphasised</h2>
+          <h2>Could be clearer</h2>
           <ul>
             {readiness.underEmphasised.map((gap) => (
               <li key={gap}>{gap}</li>
@@ -143,9 +143,9 @@ export function ReadinessReveal({
       ) : null}
 
       <p className="desk-meta desk-reveal-in">
-        {readiness.parse.visionUsed ? 'Hard PDF path used (vision). ' : null}
-        First Round LetterProof · {readiness.algorithmVersion}. Not a universal ATS score.
-        {typeof creditBalance === 'number' ? ` · ${creditBalance} credits on the desk.` : null}
+        {readiness.parse.visionUsed ? 'Hard PDF used vision. ' : null}
+        First Round CV score · {readiness.algorithmVersion}. Not a universal ATS score.
+        {typeof creditBalance === 'number' ? ` · ${creditBalance} credits.` : null}
       </p>
 
       <div className="desk-reveal-actions desk-reveal-in">
@@ -154,7 +154,7 @@ export function ReadinessReveal({
         </button>
         {band === 'supercharge' && onSkip ? (
           <button className="text-button" type="button" disabled={primaryBusy} onClick={onSkip}>
-            Not now — keep the checklist
+            Skip suggestions
           </button>
         ) : null}
       </div>
