@@ -1,6 +1,8 @@
 import type OpenAI from 'openai';
 
-const MODEL = 'grok-4.20-0309-non-reasoning';
+function fitModel(): string {
+  return process.env.XAI_MODEL?.trim() || 'grok-4.7';
+}
 
 export type FitVerdict = {
   sameProfession: boolean;
@@ -41,7 +43,7 @@ export async function judgeJobFit(
   },
 ): Promise<FitVerdict | null> {
   const res = await client.chat.completions.create({
-    model: MODEL,
+    model: fitModel(),
     temperature: 0,
     max_tokens: 120,
     messages: [

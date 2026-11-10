@@ -349,20 +349,28 @@ export class DeskRunService {
       ...((extraction?.facts as { skills?: string[] } | undefined)?.skills ?? []).slice(0, 12),
     ];
     const accepted = [];
+    let modelDown = false;
     for (const hit of ranked) {
       if (profession !== 'other' && !sameProfession(profession, hit.job.title)) continue;
-      if (!grok) {
+      if (!grok || modelDown) {
         accepted.push(hit);
         continue;
       }
-      const verdict = await judgeJobFit(grok, {
-        profession,
-        cvLines,
-        title: hit.job.title,
-        company: hit.job.companyName,
-        skills: hit.job.skills,
-        description: hit.job.descriptionText,
-      }).catch(() => null);
+      let verdict = null;
+      try {
+        verdict = await judgeJobFit(grok, {
+          profession,
+          cvLines,
+          title: hit.job.title,
+          company: hit.job.companyName,
+          skills: hit.job.skills,
+          description: hit.job.descriptionText,
+        });
+      } catch {
+        modelDown = true;
+        accepted.push(hit);
+        continue;
+      }
       if (verdict?.sameProfession && verdict.fit >= 70) accepted.push(hit);
       if (accepted.length >= room) break;
     }

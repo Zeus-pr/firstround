@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { candidateProfession, professionOfText, sameProfession } from '../src/jobs/profession.js';
-import { parseFitVerdict } from '../src/jobs/fit-review.js';
+import { judgeJobFit, parseFitVerdict } from '../src/jobs/fit-review.js';
 
 const mainframe = {
   roles: [{ title: 'Mainframe Developer', isCurrent: true }],
@@ -34,6 +34,23 @@ describe('profession gate', () => {
       }),
     ).toBe('commercial');
     expect(professionOfText('Senior Java Developer')).toBe('software');
+  });
+
+  it('asks the configured model whether the job fits', async () => {
+    process.env.XAI_MODEL = 'grok-4.7';
+    const create = async (body: { model: string }) => {
+      expect(body.model).toBe('grok-4.7');
+      return { choices: [{ message: { content: '{"sameProfession":true,"fit":84}' } }] };
+    };
+    const verdict = await judgeJobFit({ chat: { completions: { create } } } as never, {
+      profession: 'commercial',
+      cvLines: ['Assistant Manager — Category & Revenue Management'],
+      title: 'Category Manager',
+      company: 'Acme',
+      skills: [],
+      description: 'Own the category.',
+    });
+    expect(verdict).toEqual({ sameProfession: true, fit: 84 });
   });
 
   it('parses a fit verdict and rejects a wrong profession', () => {
