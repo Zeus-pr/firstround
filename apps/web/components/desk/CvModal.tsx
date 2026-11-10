@@ -64,9 +64,11 @@ export function CvModal({
       />
       <div className="desk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="desk-modal-top">
-          <p className="desk-kicker" id={titleId}>
-            {busy ? stage === 'suggesting' ? 'Suggestions' : 'Reading your CV' : <ScoreName />}
-          </p>
+          {stage === 'analyzing' ? null : (
+            <p className="desk-kicker" id={titleId}>
+              {busy ? 'Suggestions' : <ScoreName />}
+            </p>
+          )}
           {!busy ? (
             <button className="text-button" type="button" onClick={onClose}>
               Close
@@ -75,7 +77,11 @@ export function CvModal({
         </header>
 
         {stage === 'analyzing' || stage === 'suggesting' ? (
-          <AnalysisOrbs fileName={fileName} mode={stage === 'suggesting' ? 'suggest' : 'analyze'} />
+          <AnalysisOrbs
+            fileName={fileName}
+            titleId={stage === 'analyzing' ? titleId : undefined}
+            mode={stage === 'suggesting' ? 'suggest' : 'analyze'}
+          />
         ) : null}
 
         {stage === 'upload' ? (
