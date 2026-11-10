@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Post, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import type { Request } from 'express';
 import type { AuthUser } from '../auth/auth-user.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -24,5 +24,12 @@ export class DeskRunController {
     }
     const user = await this.sessions.ensureUser(auth);
     return this.deskRun.runToday(user);
+  }
+
+  @Get('run/:id')
+  @UseGuards(FirebaseAuthGuard)
+  async status(@CurrentUser() auth: AuthUser, @Param('id') id: string) {
+    const user = await this.sessions.ensureUser(auth);
+    return this.deskRun.getRun(user, id);
   }
 }

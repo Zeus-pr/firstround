@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Post,
   Req,
   ServiceUnavailableException,
@@ -100,7 +101,15 @@ export class CvController {
       ok: true as const,
       readiness: latest?.readiness ?? null,
       cvDocumentId: latest?.cvDocumentId ?? null,
+      cvFilename: latest?.cvFilename ?? null,
       suggestions: latest?.suggestions ?? [],
     };
+  }
+
+  @Get('documents/:id/download')
+  async download(@Req() req: Request, @CurrentUser() auth: AuthUser, @Param('id') id: string) {
+    this.assertRate(req);
+    const user = await this.sessions.ensureUser(auth);
+    return this.cv.downloadUrl(user, id);
   }
 }

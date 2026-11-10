@@ -5,6 +5,7 @@ export type LetterInput = {
   role: string;
   sourceUrl: string | null;
   candidateName: string | null;
+  recruiterName?: string | null;
   phone: string | null;
   linkedin: string | null;
   bullets: string[];
@@ -20,10 +21,25 @@ export function pickTemplate(shuffle: boolean, seed: string): LetterTemplateId {
   return TEMPLATES[n % TEMPLATES.length] ?? 'join';
 }
 
+function firstName(full: string | null | undefined): string | null {
+  const word = full?.trim().split(/\s+/)[0];
+  return word || null;
+}
+
 function subjectFor(id: LetterTemplateId, input: LetterInput): string {
-  if (id === 'work-with') return 'I would love to work with you';
-  if (id === 'put-forward') return `${input.role} at ${input.company}`;
-  return `I would love to join ${input.company}`;
+  const recruiter = input.recruiterName?.trim() || null;
+  const candidate = firstName(input.candidateName);
+  if (id === 'work-with') {
+    return recruiter ? `${recruiter}, I would love to work with you` : 'I would love to work with you';
+  }
+  if (id === 'put-forward') {
+    if (recruiter && candidate) return `Hi ${recruiter}, ${candidate} here.`;
+    if (candidate) return `Hi, ${candidate} here.`;
+    return `I would love to join ${input.company}`;
+  }
+  return recruiter
+    ? `${recruiter}, I would love to join ${input.company}`
+    : `I would love to join ${input.company}`;
 }
 
 function openingFor(id: LetterTemplateId, input: LetterInput): string {

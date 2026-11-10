@@ -17,6 +17,8 @@ describe('letter templates', () => {
     const letter = renderLetter({ ...base, shuffle: false });
     expect(letter.templateId).toBe('join');
     expect(letter.subject).toBe('I would love to join Myntra');
+    const named = renderLetter({ ...base, shuffle: false, recruiterName: 'Ishika' });
+    expect(named.subject).toBe('Ishika, I would love to join Myntra');
     expect(letter.body.split('\n')).toContain('https://www.naukri.com/job/1');
     expect(letter.body).toContain('A bit about me:');
     expect(letter.body).not.toMatch(/i've been working with/i);

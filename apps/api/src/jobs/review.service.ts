@@ -61,7 +61,7 @@ export class ReviewService {
       .limit(50);
 
     const drafts = fresh.map((row) => {
-      const evidence = (row.evidence ?? {}) as DraftEvidence;
+      const evidence = (row.evidence ?? {}) as DraftEvidence & { subject?: string };
       return {
         id: row.id,
         campaignId: row.campaignId,
@@ -71,10 +71,7 @@ export class ReviewService {
         draftHash: row.draftHash,
         company: evidence.company ?? '',
         role: evidence.role ?? '',
-        subject:
-          typeof (row.evidence as { subject?: unknown })?.subject === 'string'
-            ? (row.evidence as { subject: string }).subject
-            : '',
+        subject: evidence.subject ?? '',
         createdAt: row.createdAt,
         expiresAt: row.expiresAt,
       };
