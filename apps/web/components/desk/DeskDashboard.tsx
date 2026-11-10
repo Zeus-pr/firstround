@@ -2,6 +2,7 @@
 
 import type { ReadinessResult } from '@/lib/cv';
 import type { ReviewDraft } from '@/lib/jobs';
+import { DraftLetters } from './DraftLetters';
 import { StartMyRound, type RoundPhase } from './StartMyRound';
 
 type Props = {
@@ -140,26 +141,18 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane">
-            <p className="desk-kicker">Today’s drafts</p>
+            <p className="desk-kicker">Today’s letters</p>
             {pendingDrafts.length === 0 ? (
-              <p className="desk-pane-copy">No drafts waiting for approval.</p>
+              <p className="desk-pane-copy">No letters waiting for approval.</p>
             ) : (
               <ul className="desk-rail-list">
                 {pendingDrafts.slice(0, 5).map((draft) => (
                   <li key={draft.id}>
-                    <span>Draft · {draft.specificity}</span>
-                    {onApproveDraft ? (
-                      <button
-                        className="text-button"
-                        type="button"
-                        disabled={draftBusyId === draft.id}
-                        onClick={() => onApproveDraft(draft.id)}
-                      >
-                        {draftBusyId === draft.id ? 'Approving…' : 'Approve'}
-                      </button>
-                    ) : (
-                      <span className="desk-muted">{draft.status}</span>
-                    )}
+                    <span>
+                      {(draft.company?.trim() || 'Company') +
+                        ' · ' +
+                        (draft.role?.trim() || 'Role')}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -233,29 +226,12 @@ export function DeskDashboard({
             <p className="desk-pane-copy">Nothing to review yet.</p>
           </section>
 
-          <section className="desk-pane desk-log" aria-label="Application log">
-            <div className="desk-log-head">
-              <span>Company</span>
-              <span>Job</span>
-              <span>To</span>
-              <span>Status</span>
-            </div>
-            {pendingDrafts.length === 0 ? (
-              <p className="desk-log-empty">
-                No applications yet. Start my round when you’re ready.
-              </p>
-            ) : (
-              <ul className="desk-log-list">
-                {pendingDrafts.slice(0, 8).map((draft) => (
-                  <li key={draft.id}>
-                    <span>Draft</span>
-                    <span>Pending approval</span>
-                    <span>—</span>
-                    <span>{draft.status}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <section className="desk-pane desk-letters-pane" aria-label="Letters to review">
+            <p className="desk-kicker">Letters</p>
+            <p className="desk-pane-copy">
+              Open a letter, read it, approve when it sounds like you.
+            </p>
+            <DraftLetters drafts={drafts} busyId={draftBusyId} onApprove={onApproveDraft} />
           </section>
         </div>
       </div>

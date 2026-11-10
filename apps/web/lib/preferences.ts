@@ -1,6 +1,22 @@
 import type { User } from 'firebase/auth';
 import { apiUrl } from './api-url';
 
+export type PreferencesCriteria = {
+  expectedCtcMinLakh?: number | null;
+  expectedCtcMaxLakh?: number | null;
+  desiredCompanies: string[];
+  avoidCompanies: string[];
+  industries: string[];
+  skills: string[];
+  workModes: Array<'remote' | 'hybrid' | 'onsite'>;
+  employmentTypes: string[];
+  keywords: string[];
+  noticePeriodDays?: number | null;
+  openToRelocation?: boolean | null;
+  minYearsExperience?: number | null;
+  maxYearsExperience?: number | null;
+};
+
 export type PreferencesPayload = {
   jobFamilies: string[];
   locations: string[];
@@ -10,12 +26,29 @@ export type PreferencesPayload = {
     github?: string;
     portfolio?: string;
   };
+  criteria: PreferencesCriteria;
 };
 
 export type PreferencesResponse = {
   ok: true;
   preferences: PreferencesPayload;
   onboardingStep: string;
+};
+
+export const EMPTY_CRITERIA: PreferencesCriteria = {
+  expectedCtcMinLakh: null,
+  expectedCtcMaxLakh: null,
+  desiredCompanies: [],
+  avoidCompanies: [],
+  industries: [],
+  skills: [],
+  workModes: [],
+  employmentTypes: [],
+  keywords: [],
+  noticePeriodDays: null,
+  openToRelocation: null,
+  minYearsExperience: null,
+  maxYearsExperience: null,
 };
 
 async function authHeaders(user: User): Promise<HeadersInit> {
@@ -30,7 +63,14 @@ async function authHeaders(user: User): Promise<HeadersInit> {
 export async function fetchPreferences(user: User): Promise<PreferencesResponse> {
   const res = await fetch(apiUrl('/preferences'), { headers: await authHeaders(user) });
   if (!res.ok) throw new Error(`Could not load preferences (${res.status})`);
-  return (await res.json()) as PreferencesResponse;
+  const json = (await res.json()) as PreferencesResponse;
+  return {
+    ...json,
+    preferences: {
+      ...json.preferences,
+      criteria: { ...EMPTY_CRITERIA, ...(json.preferences.criteria ?? {}) },
+    },
+  };
 }
 
 export async function savePreferences(
@@ -49,10 +89,17 @@ export async function savePreferences(
   return (await res.json()) as PreferencesResponse;
 }
 
-export function splitList(value: string): string[] {
+export function splitList(value: string, max = 20): string[] {
   return value
     .split(/[,;\n]/)
     .map((part) => part.trim())
     .filter(Boolean)
-    .slice(0, 20);
+    .slice(0, max);
+}
+
+export function parseOptionalNumber(value: string): number | null {
+  const t = value.trim();
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
 }
