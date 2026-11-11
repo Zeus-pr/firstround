@@ -2392,6 +2392,11 @@ h1 {
   max-width: 40rem;
 }
 
+.desk-letter-body a {
+  color: var(--ink);
+  text-underline-offset: 0.15em;
+}
+
 .desk-letter-actions {
   display: flex;
   align-items: center;

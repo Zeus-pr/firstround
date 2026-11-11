@@ -4,6 +4,57 @@ import { useState } from 'react';
 import type { ReviewDraft } from '@/lib/jobs';
 import { JobSourceMark } from './NaukriMark';
 
+const URL_LINE = /^https?:\/\/\S+$/i;
+
+function isProfileUrl(value: string) {
+  return /linkedin\.com\/in\//i.test(value);
+}
+
+function LetterBody({ body }: { body: string }) {
+  const lines = body.replace(/\s+$/, '').split('\n');
+  const jobUrl = lines
+    .map((line) => line.trim())
+    .find((line) => URL_LINE.test(line) && !isProfileUrl(line));
+  return (
+    <div className="desk-letter-body">
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+        if (URL_LINE.test(trimmed)) {
+          if (!isProfileUrl(trimmed)) return null;
+          return (
+            <span key={index}>
+              <a href={trimmed} target="_blank" rel="noreferrer">
+                LinkedIn
+              </a>
+              {'\n'}
+            </span>
+          );
+        }
+        if (jobUrl && /opening at|name forward for/i.test(line) && !/link here/i.test(line)) {
+          const linked = line.replace(/\.?\s*$/, ' (link here).');
+          const [before, after] = linked.split('link here');
+          return (
+            <span key={index}>
+              {before}
+              <a href={jobUrl} target="_blank" rel="noreferrer">
+                link here
+              </a>
+              {after}
+              {'\n'}
+            </span>
+          );
+        }
+        return (
+          <span key={index}>
+            {line}
+            {'\n'}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 type Props = {
   drafts: ReviewDraft[];
   busyId?: string | null;
@@ -104,7 +155,7 @@ export function DraftLetters({
                         {draft.subject ? (
                           <p className="desk-letter-subject">{draft.subject}</p>
                         ) : null}
-                        <pre className="desk-letter-body">{draft.body}</pre>
+                        <LetterBody body={draft.body} />
                       </>
                     )}
                     <div className="desk-letter-actions">
