@@ -26,6 +26,7 @@ import { DB } from '../db/db.module.js';
 import { createGrokClient } from '../cv/grok-extract.js';
 import { scoreSpecificity } from './draft.js';
 import { judgeJobFit } from './fit-review.js';
+import { writeRoleInterest } from './interest.js';
 import { renderLetter } from './letter-templates.js';
 import {
   candidateProfession,
@@ -407,6 +408,14 @@ export class DeskRunService {
       if (existing[0]) continue;
 
       const recipient = await this.recipientFor(hit.job.companyName, hit.job.invitedEmail);
+      const interest = grok
+        ? await writeRoleInterest(grok, {
+            company: hit.job.companyName,
+            role: hit.job.title,
+            description: hit.job.descriptionText,
+            bullets,
+          })
+        : null;
       const letter = renderLetter({
         company: hit.job.companyName,
         role: hit.job.title,
@@ -416,6 +425,7 @@ export class DeskRunService {
         phone: facts?.phones?.find((p) => p.trim())?.trim() ?? null,
         linkedin: facts?.links?.linkedin?.trim() || null,
         bullets,
+        interest,
         shuffle: prefs.criteria.letterShuffle !== false,
         seed: hit.job.id,
       });
