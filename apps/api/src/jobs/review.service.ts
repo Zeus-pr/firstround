@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
   BadRequestException,
 } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { campaignDrafts, campaigns, type Db } from '@firstround/db';
 import type { SessionUser } from '@firstround/contracts';
 import { DB } from '../db/db.module.js';
@@ -60,6 +60,18 @@ export class ReviewService {
       .orderBy(desc(campaignDrafts.createdAt))
       .limit(50);
 
+    const campaignIds = [...new Set(fresh.map((row) => row.campaignId))];
+    const campaignRows =
+      campaignIds.length === 0
+        ? []
+        : await db
+            .select({ id: campaigns.id, recipientEmail: campaigns.recipientEmail })
+            .from(campaigns)
+            .where(and(inArray(campaigns.id, campaignIds), eq(campaigns.userId, user.id)));
+    const emailByCampaign = new Map(
+      campaignRows.map((row) => [row.id, row.recipientEmail?.trim() || null]),
+    );
+
     const drafts = fresh.map((row) => {
       const evidence = (row.evidence ?? {}) as DraftEvidence & { subject?: string };
       return {
@@ -72,6 +84,7 @@ export class ReviewService {
         company: evidence.company ?? '',
         role: evidence.role ?? '',
         subject: evidence.subject ?? '',
+        recipientEmail: emailByCampaign.get(row.campaignId) ?? null,
         createdAt: row.createdAt,
         expiresAt: row.expiresAt,
       };
