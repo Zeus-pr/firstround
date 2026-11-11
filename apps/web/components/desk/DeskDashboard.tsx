@@ -153,9 +153,6 @@ export function DeskDashboard({
                         : 'You can keep going. A stronger CV gets more replies.'}
                     </p>
                     {cvFilename ? <p className="desk-pane-file">{cvFilename}</p> : null}
-                    {typeof creditBalance === 'number' ? (
-                      <p className="desk-pane-file">{creditBalance} credits</p>
-                    ) : null}
                     <div className="desk-score-actions">
                       <button className="desk-btn" type="button" onClick={onOpenCv}>
                         Update CV
@@ -257,7 +254,18 @@ export function DeskDashboard({
 
         <div className="desk-main">
           <section className="desk-outreach" aria-label="Your outreach">
-            <h2 className="desk-pane-title">Your outreach</h2>
+            <div className="desk-outreach-head">
+              <h2 className="desk-pane-title">Your outreach</h2>
+              {typeof creditBalance === 'number' ? (
+                <p className="desk-credits">
+                  <span className="desk-credits-mark" aria-hidden="true" />
+                  <span className="desk-credits-count">
+                    {creditBalance.toLocaleString('en-IN')}
+                  </span>
+                  <span className="desk-credits-label">credits</span>
+                </p>
+              ) : null}
+            </div>
             <ul className="desk-outreach-grid">
               <li>
                 <span className="desk-stat">{outreach.companiesContacted}</span>
