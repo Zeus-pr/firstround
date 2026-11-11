@@ -66,7 +66,7 @@ export function StartMyRound({
   const button = (
     <button
       type="button"
-      className="wax desk-btn desk-btn-fit desk-round-cta"
+      className={inline ? 'wax desk-refresh-btn' : 'wax desk-btn desk-btn-fit desk-round-cta'}
       disabled={disabled || running || full}
       aria-busy={running}
       onClick={onStart}
