@@ -55,6 +55,7 @@ export function DraftLetters({
             const editing = edit?.id === draft.id;
             const company = draft.company?.trim() || 'Company';
             const role = draft.role?.trim() || 'Role';
+            const to = draft.recipientEmail?.trim() || '';
             return (
               <li key={draft.id} className={`desk-letter${open ? ' is-open' : ''}`}>
                 <button
@@ -69,6 +70,7 @@ export function DraftLetters({
                       {company}
                     </span>
                     <span className="desk-letter-role">{draft.subject?.trim() || role}</span>
+                    {to ? <span className="desk-letter-to">{to}</span> : null}
                   </span>
                   <span className="desk-letter-chevron" aria-hidden="true" />
                 </button>

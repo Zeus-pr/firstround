@@ -2016,6 +2016,12 @@ h1 {
   font-size: 0.92rem;
 }
 
+.desk-letter-to {
+  color: var(--ink);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
 .desk-letter-chevron {
   width: 0.55rem;
   height: 0.55rem;

@@ -32,6 +32,7 @@ export type ReviewDraft = {
   company?: string;
   role?: string;
   subject?: string;
+  recipientEmail?: string | null;
   createdAt?: string;
 };
 
