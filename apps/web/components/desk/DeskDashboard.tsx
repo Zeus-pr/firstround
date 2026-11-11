@@ -86,6 +86,23 @@ export function DeskDashboard({
     roundPhase === 'scanning' ||
     roundPhase === 'scoring' ||
     roundPhase === 'drafting';
+  const todayKey = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const heldToday = drafts.filter((draft) => {
+    if (draft.status !== 'pending_approval' && draft.status !== 'approved') return false;
+    if (!draft.createdAt) return draft.status === 'pending_approval';
+    const key = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(draft.createdAt));
+    return key === todayKey;
+  }).length;
   const roundDisabled = !hasReadiness;
 
   const replyRate =
@@ -261,6 +278,7 @@ export function DeskDashboard({
             <StartMyRound
               inline
               disabled={roundDisabled}
+              heldToday={heldToday}
               phase={roundPhase}
               resultMessage={roundMessage}
               onStart={onStartRound}

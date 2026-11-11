@@ -15,15 +15,19 @@ const BEATS: Record<Exclude<RoundPhase, 'idle' | 'done' | 'error'>, string> = {
 type Props = {
   disabled?: boolean;
   disabledReason?: string;
+  heldToday?: number;
   phase: RoundPhase;
   resultMessage?: string;
   onStart: () => void;
   inline?: boolean;
 };
 
+const DAILY_DRAFTS = 40;
+
 export function StartMyRound({
   disabled = false,
   disabledReason,
+  heldToday = 0,
   phase,
   resultMessage,
   onStart,
@@ -31,15 +35,20 @@ export function StartMyRound({
 }: Props) {
   const running =
     phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
+  const full = heldToday >= DAILY_DRAFTS;
 
   const title =
     phase === 'done'
-      ? 'Letters are in'
+      ? full
+        ? 'Today’s 40 are here'
+        : 'Letters are in'
       : phase === 'error'
         ? 'That didn’t finish'
         : running
           ? 'Choosing the right roles'
-          : '';
+          : full
+            ? 'Today’s 40 are here'
+            : '';
 
   const lead = running
     ? BEATS[phase]
@@ -48,15 +57,19 @@ export function StartMyRound({
         (phase === 'done'
           ? 'Read the letters below. A letter stays until you cancel it.'
           : 'Something got stuck. Try once more.'))
-      : 'Each refresh adds up to 10 more. A letter stays until you cancel it.';
+      : full
+        ? 'A letter stays until you cancel it. Cancel one if you want a different role.'
+        : heldToday > 0
+          ? `You have ${heldToday} of today’s 40. A letter stays until you cancel it.`
+          : 'Up to 40 drafts a day. A letter stays until you cancel it.';
 
-  const buttonLabel = running ? 'Working…' : 'Refresh my drafts';
+  const buttonLabel = running ? 'Working…' : full ? 'Today’s 40' : 'Refresh my drafts';
 
   const button = (
     <button
       type="button"
       className={inline ? 'wax desk-refresh-btn' : 'wax desk-btn desk-btn-fit desk-round-cta'}
-      disabled={disabled || running}
+      disabled={disabled || running || full}
       aria-busy={running}
       onClick={onStart}
     >
