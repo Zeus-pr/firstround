@@ -241,11 +241,6 @@ export function DeskDashboard({
               <span className="desk-toggle-knob" />
             </button>
           </section>
-
-          <section className="desk-pane desk-pane-quiet">
-            <h2 className="desk-pane-title">Referrals</h2>
-            <p className="desk-pane-copy">Not available yet.</p>
-          </section>
         </aside>
 
         <div className="desk-main">

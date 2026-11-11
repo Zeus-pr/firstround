@@ -1681,15 +1681,23 @@ h1 {
 
 /* Desk dashboard + CV modal */
 .desk-shell-dash {
-  padding-inline: 0;
+  padding: 0.75rem 0 0;
   color: var(--ink);
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .desk-dash {
   width: 100%;
   margin: 0;
-  display: grid;
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   padding-inline: clamp(0.75rem, 1.5vw, 1.25rem);
 }
 
@@ -1839,19 +1847,27 @@ h1 {
   display: grid;
   grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
   gap: clamp(0.75rem, 1.4vw, 1rem);
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .desk-rail {
-  position: sticky;
-  top: 4.75rem;
-  align-self: start;
+  position: static;
+  align-self: stretch;
+  overflow: hidden;
 }
 
 .desk-main {
   display: grid;
   gap: 1rem;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 1.25rem;
+  align-content: start;
 }
 
 .desk-rail {
@@ -2561,8 +2577,15 @@ h1 {
   color: var(--ink);
 }
 
-html:has(body[data-surface='desk']),
+html:has(body[data-surface='desk']) {
+  background: #e4d9c8;
+}
+
 body[data-surface='desk'] {
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: #e4d9c8;
   color: var(--ink);
 }
@@ -2570,6 +2593,8 @@ body[data-surface='desk'] {
 body[data-surface='desk'] .desk-shell {
   background: transparent;
   color: var(--ink);
+  min-height: 0;
+  padding-bottom: 0;
 }
 
 body[data-surface='desk'] .desk-pane,
@@ -2606,10 +2631,8 @@ body[data-surface='desk'] .mast-row {
   color: var(--sheet);
 }
 
-body[data-surface='desk'] .site-foot,
-body[data-surface='desk'] .site-foot-copy,
-body[data-surface='desk'] .mast-account-name {
-  color: var(--ink);
+body[data-surface='desk'] .site-foot {
+  display: none;
 }
 
 body[data-surface='desk'] .site-foot-logo {
@@ -2801,6 +2824,32 @@ body[data-surface='desk'] .mast-signout:hover {
 .desk-draft-refresh .desk-btn {
   width: auto;
   margin-left: auto;
+  min-height: 2rem;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.desk-add-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 1rem;
+  background: #fffdf8;
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, #fffdf8);
+  border-radius: 0.9rem;
+  box-shadow: 0 16px 28px -22px rgba(28, 25, 22, 0.55);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-add-row svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
 }
 
 .desk-credits-count {
@@ -2951,12 +3000,33 @@ body[data-surface='desk'] .mast-signout:hover {
 }
 
 @media (max-width: 900px) {
+  body[data-surface='desk'] {
+    height: auto;
+    overflow: auto;
+    display: block;
+  }
+
+  body[data-surface='desk'] .desk-shell-dash,
+  .desk-dash,
+  .desk-dash-grid,
+  .desk-main,
+  .desk-rail {
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+
   .desk-dash-grid {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
   .desk-rail {
-    position: static;
+    display: grid;
+  }
+
+  .desk-main {
+    display: grid;
   }
 
   .desk-outreach-grid {
