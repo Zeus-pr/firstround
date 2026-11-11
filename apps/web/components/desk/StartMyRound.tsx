@@ -59,24 +59,15 @@ export function StartMyRound({
           ? `You have ${heldToday} of today’s 10. A letter stays until you cancel it.`
           : 'Up to 10 roles today, with a letter for each. A letter stays until you cancel it.';
 
-  const buttonLabel = running
-    ? 'Working…'
-    : full
-      ? 'Today’s 10'
-      : phase === 'done'
-        ? 'Look again'
-        : phase === 'error'
-          ? 'Try again'
-          : 'Find my 10';
+  const buttonLabel = running ? 'Working…' : full ? 'Today’s 10' : 'Refresh my drafts';
 
   return (
     <section
-      className={`desk-round${phase === 'error' ? ' is-error' : ''}`}
-      aria-label="Find my 10"
+      className={`desk-round desk-round-rail${phase === 'error' ? ' is-error' : ''}`}
+      aria-label="Refresh my drafts"
     >
       <div className="desk-round-copy">
-        <p className="desk-kicker">Today</p>
-        {title ? <h2 className="desk-round-title">{title}</h2> : null}
+        <h2 className="desk-pane-title">{title || 'Today'}</h2>
         <p className="desk-round-lead" aria-live="polite">
           {lead}
         </p>
@@ -85,7 +76,7 @@ export function StartMyRound({
       <div className="desk-round-action">
         <button
           type="button"
-          className="wax desk-round-cta"
+          className="wax desk-btn desk-round-cta"
           disabled={disabled || running || full}
           aria-busy={running}
           onClick={onStart}

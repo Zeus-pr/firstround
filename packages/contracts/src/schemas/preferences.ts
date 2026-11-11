@@ -23,6 +23,8 @@ export const PreferencesCriteria = z.object({
   maxYearsExperience: z.number().int().min(0).max(50).nullable().optional(),
   /** When on, each letter uses a different subject and opening. Off keeps one shape. */
   letterShuffle: z.boolean().optional(),
+  /** When on, approved letters can leave the next day without another click. */
+  autopilot: z.boolean().optional(),
 });
 export type PreferencesCriteria = z.infer<typeof PreferencesCriteria>;
 
@@ -41,6 +43,7 @@ export const EMPTY_PREFERENCES_CRITERIA: PreferencesCriteria = {
   minYearsExperience: null,
   maxYearsExperience: null,
   letterShuffle: true,
+  autopilot: false,
 };
 
 export const PreferencesPayload = z.object({
