@@ -16,6 +16,7 @@ export type PreferencesCriteria = {
   minYearsExperience?: number | null;
   maxYearsExperience?: number | null;
   letterShuffle?: boolean;
+  autopilot?: boolean;
 };
 
 export type PreferencesPayload = {
@@ -51,6 +52,7 @@ export const EMPTY_CRITERIA: PreferencesCriteria = {
   minYearsExperience: null,
   maxYearsExperience: null,
   letterShuffle: true,
+  autopilot: false,
 };
 
 async function authHeaders(user: User): Promise<HeadersInit> {

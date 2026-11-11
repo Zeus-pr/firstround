@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import type { ReadinessResult } from '@/lib/cv';
-import type { ReviewDraft } from '@/lib/jobs';
+import type { OutreachStats, ReviewDraft } from '@/lib/jobs';
+import { EMPTY_OUTREACH } from '@/lib/jobs';
+import { AddOpening } from './AddOpening';
 import { ChoosingOrb } from './ChoosingOrb';
 import { DraftLetters } from './DraftLetters';
 import { ScoreName } from './ScoreName';
@@ -20,7 +23,6 @@ type Props = {
   roundMessage?: string;
   onOpenCv: () => void;
   onReviewScore: () => void;
-  onOpenPreferences: () => void;
   onConnectGmail?: () => void;
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
@@ -34,6 +36,13 @@ type Props = {
   onDownloadCv?: () => void;
   onDeleteCv?: () => void;
   cvBusy?: boolean;
+  outreach?: OutreachStats;
+  autopilot?: boolean;
+  onAutopilot?: (on: boolean) => void;
+  addBusy?: boolean;
+  onAddLink?: (url: string) => void;
+  onAddScreenshot?: (file: File) => void;
+  hello?: string | null;
 };
 
 export function DeskDashboard({
@@ -49,7 +58,6 @@ export function DeskDashboard({
   roundMessage,
   onOpenCv,
   onReviewScore,
-  onOpenPreferences,
   onConnectGmail,
   onDisconnectGmail,
   onDismissSuggestions,
@@ -63,9 +71,16 @@ export function DeskDashboard({
   onDownloadCv,
   onDeleteCv,
   cvBusy = false,
+  outreach = EMPTY_OUTREACH,
+  autopilot = false,
+  onAutopilot,
+  addBusy = false,
+  onAddLink,
+  onAddScreenshot,
+  hello = null,
 }: Props) {
+  const [scoreOpen, setScoreOpen] = useState(false);
   const hasReadiness = Boolean(readiness);
-  const pendingDrafts = drafts.filter((d) => d.status === 'pending_approval').slice(0, 10);
   const choosing =
     roundPhase === 'thinking' ||
     roundPhase === 'scanning' ||
@@ -90,121 +105,184 @@ export function DeskDashboard({
   }).length;
   const roundDisabled = !hasReadiness;
 
+  const replyRate =
+    outreach.emailsSent > 0
+      ? `${outreach.replyRate}%`
+      : outreach.companiesReplied > 0
+        ? '100%'
+        : '0%';
+
   return (
     <div className="desk-dash">
-      <header className="desk-dash-top">
-        <div>
-          {typeof creditBalance === 'number' ? (
-            <p className="desk-lead desk-dash-lead">{creditBalance} credits</p>
-          ) : null}
-        </div>
-        <div className="desk-dash-actions">
-          {hasReadiness ? (
-            <button className="desk-quiet" type="button" onClick={onOpenCv}>
-              Update CV
-            </button>
-          ) : null}
-          {hasReadiness && onDownloadCv ? (
-            <button className="desk-quiet" type="button" onClick={onDownloadCv}>
-              {cvFilename ? `Download ${cvFilename}` : 'Download CV'}
-            </button>
-          ) : null}
-          <button className="desk-quiet" type="button" onClick={onOpenPreferences}>
-            Preferences
-          </button>
-        </div>
-      </header>
-
-      <StartMyRound
-        disabled={roundDisabled}
-        heldToday={heldToday}
-        phase={roundPhase}
-        resultMessage={roundMessage}
-        onStart={onStartRound}
-      />
-
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
-          <section className="desk-pane">
-            <p className="desk-kicker">
-              <ScoreName />
-            </p>
-            {readiness?.recommendation ? (
-              <>
-                <p className="desk-stat">{readiness.total}</p>
-                <p className="desk-pane-copy">
-                  {readiness.total >= 75
-                    ? 'Good enough to start. A stronger CV gets more replies.'
-                    : 'You can keep going. A stronger CV gets more replies.'}
-                </p>
-                <div className="desk-pane-actions">
-                  <button className="desk-quiet" type="button" onClick={onReviewScore}>
-                    See the breakdown
-                  </button>
-                  {onDeleteCv ? (
-                    <button
-                      className="desk-quiet"
-                      type="button"
-                      disabled={cvBusy}
-                      onClick={onDeleteCv}
-                    >
-                      {cvBusy ? 'Deleting…' : 'Delete CV'}
+          {hello ? <p className="desk-hello">Hi {hello}</p> : null}
+          <section className={`desk-pane desk-score-pane${scoreOpen ? ' is-open' : ''}`}>
+            <button
+              type="button"
+              className="desk-score-toggle"
+              aria-expanded={scoreOpen}
+              onClick={() => setScoreOpen((open) => !open)}
+            >
+              <span className="desk-score-toggle-copy">
+                <span className="desk-score-toggle-main">
+                  <ScoreName />
+                  {readiness?.recommendation ? (
+                    <span className="desk-score-mini">{readiness.total}</span>
+                  ) : (
+                    <span className="desk-pane-file">No CV</span>
+                  )}
+                </span>
+                <span className="desk-score-hint">
+                  {readiness?.recommendation
+                    ? 'Click to update, download, or delete your CV.'
+                    : 'Click to upload a CV.'}
+                </span>
+              </span>
+              <span className="desk-letter-chevron" aria-hidden="true" />
+            </button>
+            <div className="desk-score-fold">
+              <div className="desk-score-fold-inner">
+                {readiness?.recommendation ? (
+                  <>
+                    <p className="desk-pane-copy">
+                      {readiness.total >= 75
+                        ? 'Good enough to start. A stronger CV gets more replies.'
+                        : 'You can keep going. A stronger CV gets more replies.'}
+                    </p>
+                    {cvFilename ? <p className="desk-pane-file">{cvFilename}</p> : null}
+                    <div className="desk-score-actions">
+                      <button className="desk-btn" type="button" onClick={onOpenCv}>
+                        Update CV
+                      </button>
+                      {onDownloadCv ? (
+                        <button className="desk-btn" type="button" onClick={onDownloadCv}>
+                          Download CV
+                        </button>
+                      ) : null}
+                      <button className="desk-btn" type="button" onClick={onReviewScore}>
+                        See the breakdown
+                      </button>
+                      {onDeleteCv ? (
+                        <button
+                          className="desk-btn"
+                          type="button"
+                          disabled={cvBusy}
+                          onClick={onDeleteCv}
+                        >
+                          {cvBusy ? 'Deleting…' : 'Delete CV'}
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="desk-score-actions">
+                    <button className="wax desk-btn" type="button" onClick={onOpenCv}>
+                      Upload CV
                     </button>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="desk-pane-copy">No CV uploaded yet.</p>
-                <button className="wax desk-rail-btn" type="button" onClick={onOpenCv}>
-                  Upload CV
-                </button>
-              </>
-            )}
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
 
-          <section className="desk-pane">
-            <p className="desk-kicker">Gmail</p>
-            {gmailConnected ? (
-              <>
-                <p className="desk-pane-copy">Connected.</p>
-                {onDisconnectGmail ? (
-                  <button
-                    className="text-button"
-                    type="button"
-                    disabled={gmailBusy}
-                    onClick={onDisconnectGmail}
-                  >
-                    {gmailBusy ? 'Working…' : 'Disconnect'}
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <p className="desk-pane-copy">Not connected. Letters send from this inbox.</p>
-                {onConnectGmail ? (
-                  <button
-                    className="wax desk-rail-btn"
-                    type="button"
-                    disabled={gmailBusy || onboardingStep === 'account' || onboardingStep === 'cv'}
-                    onClick={onConnectGmail}
-                  >
-                    {gmailBusy ? 'Opening Google…' : 'Connect Gmail'}
-                  </button>
-                ) : null}
-              </>
-            )}
+          {onAddLink && onAddScreenshot ? (
+            <AddOpening busy={addBusy} onLink={onAddLink} onScreenshot={onAddScreenshot} />
+          ) : null}
+
+          <section className="desk-pane desk-autopilot">
+            <div>
+              <h2 className="desk-pane-title">Autopilot</h2>
+              <p className="desk-pane-copy">
+                {autopilot
+                  ? 'On. We send the letters the next day.'
+                  : 'Off. Turn it on and we send the letters the next day.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`desk-toggle${autopilot ? ' is-on' : ''}`}
+              aria-pressed={autopilot}
+              aria-label={autopilot ? 'Turn autopilot off' : 'Turn autopilot on'}
+              onClick={() => onAutopilot?.(!autopilot)}
+            >
+              <span className="desk-toggle-knob" />
+            </button>
           </section>
 
-          <section className="desk-pane desk-pane-quiet">
-            <p className="desk-kicker">Referrals</p>
-            <p className="desk-pane-copy">Not available yet.</p>
+          <section className="desk-pane desk-autopilot">
+            <div>
+              <h2 className="desk-pane-title">Gmail</h2>
+              <p className="desk-pane-copy">
+                {gmailConnected
+                  ? 'On. Letters send from this inbox.'
+                  : 'Off. Turn it on to connect Gmail.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`desk-toggle${gmailConnected ? ' is-on' : ''}`}
+              aria-pressed={gmailConnected}
+              aria-label={gmailConnected ? 'Disconnect Gmail' : 'Connect Gmail'}
+              disabled={
+                gmailBusy ||
+                (!gmailConnected && (onboardingStep === 'account' || onboardingStep === 'cv'))
+              }
+              onClick={() => (gmailConnected ? onDisconnectGmail?.() : onConnectGmail?.())}
+            >
+              <span className="desk-toggle-knob" />
+            </button>
           </section>
         </aside>
 
         <div className="desk-main">
-          <section className="desk-pane desk-letters-pane" aria-label="Your drafts">
-            <p className="desk-kicker">Your drafts</p>
+          <section className="desk-outreach" aria-label="Your outreach">
+            <div className="desk-outreach-head">
+              <h2 className="desk-pane-title">Your outreach</h2>
+              {typeof creditBalance === 'number' ? (
+                <p className="desk-credits" id="desk-credits">
+                  <img src="/brand/firstround-mark-ink.svg" alt="" className="desk-credits-mark" />
+                  <span className="desk-credits-count">
+                    {creditBalance.toLocaleString('en-IN')}
+                  </span>
+                  <span className="desk-credits-label">credits</span>
+                </p>
+              ) : null}
+            </div>
+            <ul className="desk-outreach-grid">
+              <li>
+                <span className="desk-stat">{outreach.companiesContacted}</span>
+                <span>Companies contacted</span>
+              </li>
+              <li>
+                <span className="desk-stat">{outreach.emailsSent}</span>
+                <span>Emails sent</span>
+              </li>
+              <li>
+                <span className="desk-stat">{outreach.companiesReplied}</span>
+                <span>Companies replied</span>
+              </li>
+              <li>
+                <span className="desk-stat">{replyRate}</span>
+                <span>Reply rate</span>
+              </li>
+            </ul>
+          </section>
+
+          <section
+            className="desk-pane desk-letters-pane"
+            id="your-drafts"
+            aria-label="Your drafts"
+          >
+            <h2 className="desk-pane-title">Your drafts</h2>
+            <StartMyRound
+              inline
+              disabled={roundDisabled}
+              heldToday={heldToday}
+              phase={roundPhase}
+              resultMessage={roundMessage}
+              onStart={onStartRound}
+            />
             {choosing ? <ChoosingOrb /> : null}
             <DraftLetters
               hideEmpty={choosing}
@@ -219,47 +297,20 @@ export function DeskDashboard({
           </section>
 
           <section className="desk-pane" aria-label="Replies">
-            <p className="desk-kicker">Replies</p>
+            <h2 className="desk-pane-title">Replies</h2>
             <p className="desk-pane-copy">Nothing to review yet.</p>
-          </section>
-
-          <section className="desk-pane desk-autopilot">
-            <div>
-              <p className="desk-kicker">Autopilot</p>
-              <p className="desk-pane-copy">Off.</p>
-            </div>
-          </section>
-
-          <section className="desk-pane">
-            <p className="desk-kicker">Applications</p>
-            <ul className="desk-stats" aria-label="Application stats">
-              <li>
-                <span className="desk-stat">{pendingDrafts.length}</span>
-                <span>Pending approvals</span>
-              </li>
-              <li>
-                <span className="desk-stat">
-                  {drafts.filter((d) => d.status === 'approved').length}
-                </span>
-                <span>Approved</span>
-              </li>
-              <li>
-                <span className="desk-stat">0</span>
-                <span>Sent</span>
-              </li>
-              <li>
-                <span className="desk-stat">—</span>
-                <span>Reply rate</span>
-              </li>
-            </ul>
           </section>
 
           {suggestions.length > 0 ? (
             <section className="desk-pane desk-suggestions" aria-label="CV suggestions">
               <div className="desk-suggestions-top">
-                <p className="desk-kicker">CV suggestions</p>
+                <h2 className="desk-pane-title">CV suggestions</h2>
                 {onDismissSuggestions ? (
-                  <button className="text-button" type="button" onClick={onDismissSuggestions}>
+                  <button
+                    className="desk-btn desk-btn-fit"
+                    type="button"
+                    onClick={onDismissSuggestions}
+                  >
                     Dismiss
                   </button>
                 ) : null}

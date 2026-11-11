@@ -24,7 +24,11 @@ import {
   saveDraftBody,
   fetchDeskRun,
   startDeskRun,
+  EMPTY_OUTREACH,
+  type OutreachStats,
   type ReviewDraft,
+  addOpening,
+  fetchOutreach,
 } from '@/lib/jobs';
 import { fetchPreferences, savePreferences } from '@/lib/preferences';
 import { CvModal, type CvModalStage } from './CvModal';
@@ -77,6 +81,9 @@ export function DeskOnboarding() {
   const [drafts, setDrafts] = useState<ReviewDraft[]>([]);
   const [draftBusyId, setDraftBusyId] = useState<string | null>(null);
   const [letterShuffle, setLetterShuffle] = useState(true);
+  const [autopilot, setAutopilot] = useState(false);
+  const [outreach, setOutreach] = useState<OutreachStats>(EMPTY_OUTREACH);
+  const [addBusy, setAddBusy] = useState(false);
   const [roundPhase, setRoundPhase] = useState<RoundPhase>('idle');
   const [roundMessage, setRoundMessage] = useState<string | undefined>();
 
@@ -91,6 +98,24 @@ export function DeskOnboarding() {
       setNote(reason ? `Gmail connect failed: ${reason}` : 'Gmail connect failed. Try again.');
     }
     window.history.replaceState({}, '', '/desk');
+  }, []);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('fr-open-preferences') === '1') {
+      sessionStorage.removeItem('fr-open-preferences');
+      setPrefsOpen(true);
+    }
+    const openPrefs = () => setPrefsOpen(true);
+    const onGmail = (event: Event) => {
+      const connected = (event as CustomEvent<{ connected?: boolean }>).detail?.connected;
+      if (typeof connected === 'boolean') setGmailConnected(connected);
+    };
+    window.addEventListener('firstround:preferences', openPrefs);
+    window.addEventListener('firstround:gmail', onGmail);
+    return () => {
+      window.removeEventListener('firstround:preferences', openPrefs);
+      window.removeEventListener('firstround:gmail', onGmail);
+    };
   }, []);
 
   useEffect(() => {
@@ -112,6 +137,8 @@ export function DeskOnboarding() {
         setReadiness(null);
         setGmailConnected(false);
         setDrafts([]);
+        setOutreach(EMPTY_OUTREACH);
+        setAutopilot(false);
         setRoundPhase('idle');
         setRoundMessage(undefined);
         return;
@@ -128,15 +155,20 @@ export function DeskOnboarding() {
             setModalStage('upload');
           }
 
-          const [credits, latest, gmail, todayDrafts, prefs] = await Promise.all([
+          const [credits, latest, gmail, todayDrafts, prefs, outreachStats] = await Promise.all([
             fetchCredits(next).catch(() => null),
             fetchLatestReadiness(next).catch(() => null),
             fetchGmailStatus(next).catch(() => null),
             fetchTodayDrafts(next).catch(() => []),
             fetchPreferences(next).catch(() => null),
+            fetchOutreach(next).catch(() => EMPTY_OUTREACH),
           ]);
           setDrafts(todayDrafts);
-          if (prefs) setLetterShuffle(prefs.preferences.criteria.letterShuffle !== false);
+          setOutreach(outreachStats);
+          if (prefs) {
+            setLetterShuffle(prefs.preferences.criteria.letterShuffle !== false);
+            setAutopilot(prefs.preferences.criteria.autopilot === true);
+          }
           if (credits) setCreditBalance(credits.balance);
           if (gmail) {
             setGmailConnected(gmail.connected);
@@ -259,6 +291,7 @@ export function DeskOnboarding() {
   return (
     <main className="desk-shell desk-shell-dash">
       <DeskDashboard
+        hello={user.email?.split('@')[0] || null}
         onboardingStep={session?.onboardingStep ?? 'account'}
         readiness={readiness}
         suggestions={modalOpen ? [] : suggestions}
@@ -280,7 +313,70 @@ export function DeskOnboarding() {
           setModalStage(readiness ? 'result' : 'upload');
           setModalOpen(true);
         }}
-        onOpenPreferences={() => setPrefsOpen(true)}
+        outreach={outreach}
+        autopilot={autopilot}
+        onAutopilot={(on) => {
+          setAutopilot(on);
+          if (!user) return;
+          void fetchPreferences(user)
+            .then((payload) =>
+              savePreferences(user, {
+                ...payload.preferences,
+                criteria: { ...payload.preferences.criteria, autopilot: on },
+              }),
+            )
+            .catch(() => {
+              setAutopilot(!on);
+              setNote('Could not save autopilot.');
+            });
+        }}
+        addBusy={addBusy}
+        onAddLink={(url) => {
+          if (!user || addBusy) return;
+          setAddBusy(true);
+          setNote('');
+          void addOpening(user, { url })
+            .then(async (result) => {
+              setDrafts(await fetchTodayDrafts(user).catch(() => []));
+              setOutreach(await fetchOutreach(user).catch(() => outreach));
+              setNote(result.message);
+            })
+            .catch((error) =>
+              setNote(error instanceof Error ? error.message : 'Could not add that role.'),
+            )
+            .finally(() => setAddBusy(false));
+        }}
+        onAddScreenshot={(file) => {
+          if (!user || addBusy) return;
+          if (file.size > 4_000_000) {
+            setNote('That screenshot is too large. Use one under 4 MB.');
+            return;
+          }
+          const type =
+            file.type === 'image/png' || file.type === 'image/webp' ? file.type : 'image/jpeg';
+          setAddBusy(true);
+          setNote('');
+          const reader = new FileReader();
+          reader.onload = () => {
+            const raw = typeof reader.result === 'string' ? reader.result : '';
+            const imageBase64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
+            void addOpening(user, { imageBase64, imageType: type })
+              .then(async (result) => {
+                setDrafts(await fetchTodayDrafts(user).catch(() => []));
+                setOutreach(await fetchOutreach(user).catch(() => outreach));
+                setNote(result.message);
+              })
+              .catch((error) =>
+                setNote(error instanceof Error ? error.message : 'Could not read that screenshot.'),
+              )
+              .finally(() => setAddBusy(false));
+          };
+          reader.onerror = () => {
+            setAddBusy(false);
+            setNote('Could not read that screenshot.');
+          };
+          reader.readAsDataURL(file);
+        }}
         cvFilename={cvFilename}
         onDownloadCv={() => {
           if (!user || !cvDocumentId) return;

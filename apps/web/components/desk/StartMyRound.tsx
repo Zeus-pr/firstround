@@ -19,6 +19,7 @@ type Props = {
   phase: RoundPhase;
   resultMessage?: string;
   onStart: () => void;
+  inline?: boolean;
 };
 
 export function StartMyRound({
@@ -28,6 +29,7 @@ export function StartMyRound({
   phase,
   resultMessage,
   onStart,
+  inline = false,
 }: Props) {
   const running =
     phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
@@ -59,44 +61,48 @@ export function StartMyRound({
           ? `You have ${heldToday} of today’s 10. A letter stays until you cancel it.`
           : 'Up to 10 roles today, with a letter for each. A letter stays until you cancel it.';
 
-  const buttonLabel = running
-    ? 'Working…'
-    : full
-      ? 'Today’s 10'
-      : phase === 'done'
-        ? 'Look again'
-        : phase === 'error'
-          ? 'Try again'
-          : 'Find my 10';
+  const buttonLabel = running ? 'Working…' : full ? 'Today’s 10' : 'Refresh my drafts';
+
+  const button = (
+    <button
+      type="button"
+      className={inline ? 'wax desk-refresh-btn' : 'wax desk-btn desk-btn-fit desk-round-cta'}
+      disabled={disabled || running || full}
+      aria-busy={running}
+      onClick={onStart}
+    >
+      {running ? (
+        <span className="desk-round-orb" aria-hidden="true">
+          <Orb state="working" size={22} label={lead} />
+        </span>
+      ) : null}
+      <span>{buttonLabel}</span>
+    </button>
+  );
+
+  if (inline) {
+    return (
+      <div className="desk-draft-refresh">
+        <p aria-live="polite">{lead}</p>
+        {button}
+      </div>
+    );
+  }
 
   return (
     <section
-      className={`desk-round${phase === 'error' ? ' is-error' : ''}`}
-      aria-label="Find my 10"
+      className={`desk-round desk-round-rail${phase === 'error' ? ' is-error' : ''}`}
+      aria-label="Refresh my drafts"
     >
       <div className="desk-round-copy">
-        <p className="desk-kicker">Today</p>
-        {title ? <h2 className="desk-round-title">{title}</h2> : null}
+        <h2 className="desk-pane-title">{title || 'Today'}</h2>
         <p className="desk-round-lead" aria-live="polite">
           {lead}
         </p>
       </div>
 
       <div className="desk-round-action">
-        <button
-          type="button"
-          className="wax desk-round-cta"
-          disabled={disabled || running || full}
-          aria-busy={running}
-          onClick={onStart}
-        >
-          {running ? (
-            <span className="desk-round-orb" aria-hidden="true">
-              <Orb state="working" size={22} label={lead} />
-            </span>
-          ) : null}
-          <span>{buttonLabel}</span>
-        </button>
+        {button}
         {disabled && disabledReason && phase === 'idle' ? (
           <p className="desk-round-hint">{disabledReason}</p>
         ) : null}

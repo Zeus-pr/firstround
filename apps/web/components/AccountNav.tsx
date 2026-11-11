@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
+import { ProfileMenu } from '@/components/ProfileMenu';
 
 export function AccountNav() {
   const [user, setUser] = useState<User | null>(null);
+  const path = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const auth = firebaseAuth();
@@ -17,20 +21,24 @@ export function AccountNav() {
   if (user) {
     return (
       <nav className="mast-nav" aria-label="Account">
-        <span className="mast-account-name">{user.email}</span>
         <Link className="mast-signup" href="/desk">
           Dashboard
         </Link>
         <button
-          className="mast-signout"
           type="button"
+          className="mast-profile"
           onClick={() => {
-            const auth = firebaseAuth();
-            if (auth) void signOut(auth);
+            if (path?.startsWith('/desk')) {
+              window.dispatchEvent(new Event('firstround:preferences'));
+              return;
+            }
+            sessionStorage.setItem('fr-open-preferences', '1');
+            router.push('/desk');
           }}
         >
-          Sign out
+          Preferences
         </button>
+        <ProfileMenu user={user} />
       </nav>
     );
   }

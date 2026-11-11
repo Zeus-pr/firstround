@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DeskOnboarding } from '@/components/desk/DeskOnboarding';
+import { DeskSurface } from '@/components/desk/DeskSurface';
 
 export const metadata: Metadata = {
   title: 'Dashboard · First Round',
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function DeskPage() {
-  return <DeskOnboarding />;
+  return (
+    <DeskSurface>
+      <DeskOnboarding />
+    </DeskSurface>
+  );
 }

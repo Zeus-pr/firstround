@@ -36,12 +36,16 @@ export function DraftLetters({
         <p>Use a different subject line on each letter.</p>
         <button
           type="button"
-          className={`desk-switch${shuffle ? ' is-on' : ''}`}
+          className={`desk-toggle${shuffle ? ' is-on' : ''}`}
           aria-pressed={shuffle}
+          aria-label={
+            shuffle
+              ? 'Use the same subject line on each letter'
+              : 'Use a different subject line on each letter'
+          }
           onClick={() => onShuffle?.(!shuffle)}
         >
-          <span className="desk-switch-knob" aria-hidden="true" />
-          {shuffle ? 'On' : 'Off'}
+          <span className="desk-toggle-knob" />
         </button>
       </div>
       {pending.length === 0 ? (
@@ -55,6 +59,7 @@ export function DraftLetters({
             const editing = edit?.id === draft.id;
             const company = draft.company?.trim() || 'Company';
             const role = draft.role?.trim() || 'Role';
+            const to = draft.recipientEmail?.trim() || '';
             return (
               <li key={draft.id} className={`desk-letter${open ? ' is-open' : ''}`}>
                 <button
@@ -69,6 +74,7 @@ export function DraftLetters({
                       {company}
                     </span>
                     <span className="desk-letter-role">{draft.subject?.trim() || role}</span>
+                    {to ? <span className="desk-letter-to">{to}</span> : null}
                   </span>
                   <span className="desk-letter-chevron" aria-hidden="true" />
                 </button>
