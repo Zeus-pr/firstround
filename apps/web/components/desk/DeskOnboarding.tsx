@@ -273,6 +273,7 @@ export function DeskOnboarding() {
   return (
     <main className="desk-shell desk-shell-dash">
       <DeskDashboard
+        hello={user.email?.split('@')[0] || null}
         onboardingStep={session?.onboardingStep ?? 'account'}
         readiness={readiness}
         suggestions={modalOpen ? [] : suggestions}

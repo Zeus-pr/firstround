@@ -2446,8 +2446,12 @@ body[data-surface='desk'] .desk-shell {
 }
 
 body[data-surface='desk'] .desk-pane,
-body[data-surface='desk'] .desk-round {
+body[data-surface='desk'] .desk-round,
+body[data-surface='desk'] .desk-outreach-grid li {
   background: #fffdf8;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, #fffdf8);
+  border-radius: 0.9rem;
+  box-shadow: 0 16px 28px -22px rgba(28, 25, 22, 0.55);
 }
 
 body[data-surface='desk']::-webkit-scrollbar-track {
@@ -2587,7 +2591,7 @@ body[data-surface='desk'] .mast-signout:hover {
 .desk-score-toggle {
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0;
@@ -2599,13 +2603,37 @@ body[data-surface='desk'] .mast-signout:hover {
   cursor: pointer;
 }
 
+.desk-hello {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 520;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.desk-score-toggle-copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.desk-score-hint {
+  color: var(--quiet);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.desk-score-toggle .desk-letter-chevron {
+  margin-top: 0.35rem;
+}
+
 .desk-score-toggle-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   min-width: 0;
-  flex: 1;
 }
 
 .desk-score-mini {
@@ -2709,6 +2737,11 @@ body[data-surface='desk'] .mast-signout:hover {
 .desk-toggle.is-on .desk-toggle-knob {
   transform: translateX(1.16rem);
   background: var(--wax-ink);
+}
+
+.desk-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 @media (max-width: 900px) {

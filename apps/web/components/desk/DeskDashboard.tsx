@@ -43,6 +43,7 @@ type Props = {
   addBusy?: boolean;
   onAddLink?: (url: string) => void;
   onAddScreenshot?: (file: File) => void;
+  hello?: string | null;
 };
 
 export function DeskDashboard({
@@ -78,6 +79,7 @@ export function DeskDashboard({
   addBusy = false,
   onAddLink,
   onAddScreenshot,
+  hello = null,
 }: Props) {
   const [scoreOpen, setScoreOpen] = useState(false);
   const hasReadiness = Boolean(readiness);
@@ -116,72 +118,7 @@ export function DeskDashboard({
     <div className="desk-dash">
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
-          <StartMyRound
-            disabled={roundDisabled}
-            heldToday={heldToday}
-            phase={roundPhase}
-            resultMessage={roundMessage}
-            onStart={onStartRound}
-          />
-
-          <section className="desk-pane desk-autopilot">
-            <div>
-              <h2 className="desk-pane-title">Autopilot</h2>
-              <p className="desk-pane-copy">
-                {autopilot
-                  ? 'On. We send the letters the next day.'
-                  : 'Off. Turn it on and we send the letters the next day.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              className={`desk-toggle${autopilot ? ' is-on' : ''}`}
-              aria-pressed={autopilot}
-              aria-label={autopilot ? 'Turn autopilot off' : 'Turn autopilot on'}
-              onClick={() => onAutopilot?.(!autopilot)}
-            >
-              <span className="desk-toggle-knob" />
-            </button>
-          </section>
-
-          <section className="desk-pane">
-            <h2 className="desk-pane-title">Gmail</h2>
-            {gmailConnected ? (
-              <>
-                <p className="desk-pane-copy">Connected. Letters send from this inbox.</p>
-                {onDisconnectGmail ? (
-                  <button
-                    className="desk-btn"
-                    type="button"
-                    disabled={gmailBusy}
-                    onClick={onDisconnectGmail}
-                  >
-                    {gmailBusy ? 'Working…' : 'Disconnect'}
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <p className="desk-pane-copy">Not connected. Letters send from this inbox.</p>
-                {onConnectGmail ? (
-                  <button
-                    className="wax desk-btn"
-                    type="button"
-                    disabled={gmailBusy || onboardingStep === 'account' || onboardingStep === 'cv'}
-                    onClick={onConnectGmail}
-                  >
-                    {gmailBusy ? 'Opening Google…' : 'Connect Gmail'}
-                  </button>
-                ) : null}
-              </>
-            )}
-          </section>
-
-          <section className="desk-pane desk-pane-quiet">
-            <h2 className="desk-pane-title">Referrals</h2>
-            <p className="desk-pane-copy">Not available yet.</p>
-          </section>
-
+          {hello ? <p className="desk-hello">Hi {hello}</p> : null}
           <section className={`desk-pane desk-score-pane${scoreOpen ? ' is-open' : ''}`}>
             <button
               type="button"
@@ -189,13 +126,20 @@ export function DeskDashboard({
               aria-expanded={scoreOpen}
               onClick={() => setScoreOpen((open) => !open)}
             >
-              <span className="desk-score-toggle-main">
-                <ScoreName />
-                {readiness?.recommendation ? (
-                  <span className="desk-score-mini">{readiness.total}</span>
-                ) : (
-                  <span className="desk-pane-file">No CV</span>
-                )}
+              <span className="desk-score-toggle-copy">
+                <span className="desk-score-toggle-main">
+                  <ScoreName />
+                  {readiness?.recommendation ? (
+                    <span className="desk-score-mini">{readiness.total}</span>
+                  ) : (
+                    <span className="desk-pane-file">No CV</span>
+                  )}
+                </span>
+                <span className="desk-score-hint">
+                  {readiness?.recommendation
+                    ? 'Click to update, download, or delete your CV.'
+                    : 'Click to upload a CV or set preferences.'}
+                </span>
               </span>
               <span className="desk-letter-chevron" aria-hidden="true" />
             </button>
@@ -251,6 +195,63 @@ export function DeskDashboard({
                 )}
               </div>
             </div>
+          </section>
+
+          <StartMyRound
+            disabled={roundDisabled}
+            heldToday={heldToday}
+            phase={roundPhase}
+            resultMessage={roundMessage}
+            onStart={onStartRound}
+          />
+
+          <section className="desk-pane desk-autopilot">
+            <div>
+              <h2 className="desk-pane-title">Autopilot</h2>
+              <p className="desk-pane-copy">
+                {autopilot
+                  ? 'On. We send the letters the next day.'
+                  : 'Off. Turn it on and we send the letters the next day.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`desk-toggle${autopilot ? ' is-on' : ''}`}
+              aria-pressed={autopilot}
+              aria-label={autopilot ? 'Turn autopilot off' : 'Turn autopilot on'}
+              onClick={() => onAutopilot?.(!autopilot)}
+            >
+              <span className="desk-toggle-knob" />
+            </button>
+          </section>
+
+          <section className="desk-pane desk-autopilot">
+            <div>
+              <h2 className="desk-pane-title">Gmail</h2>
+              <p className="desk-pane-copy">
+                {gmailConnected
+                  ? 'On. Letters send from this inbox.'
+                  : 'Off. Turn it on to connect Gmail.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`desk-toggle${gmailConnected ? ' is-on' : ''}`}
+              aria-pressed={gmailConnected}
+              aria-label={gmailConnected ? 'Disconnect Gmail' : 'Connect Gmail'}
+              disabled={
+                gmailBusy ||
+                (!gmailConnected && (onboardingStep === 'account' || onboardingStep === 'cv'))
+              }
+              onClick={() => (gmailConnected ? onDisconnectGmail?.() : onConnectGmail?.())}
+            >
+              <span className="desk-toggle-knob" />
+            </button>
+          </section>
+
+          <section className="desk-pane desk-pane-quiet">
+            <h2 className="desk-pane-title">Referrals</h2>
+            <p className="desk-pane-copy">Not available yet.</p>
           </section>
         </aside>
 
