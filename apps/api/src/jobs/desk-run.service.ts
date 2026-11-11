@@ -25,7 +25,6 @@ import {
 import { DB } from '../db/db.module.js';
 import { createGrokClient } from '../cv/grok-extract.js';
 import { scoreSpecificity } from './draft.js';
-import { judgeJobFit } from './fit-review.js';
 import { writeRoleInterest } from './interest.js';
 import { renderLetter } from './letter-templates.js';
 import {
@@ -45,10 +44,21 @@ const EMPTY_PREFS: PreferencesPayload = {
   criteria: EMPTY_PREFERENCES_CRITERIA,
 };
 
-const DAILY_LETTER_CAP = 10;
+const DAILY_LETTER_CAP = 40;
 
 function eveningCutoff(now = new Date()): Date {
   return new Date(now.getTime() + 12 * 60 * 60_000);
+}
+
+/** Midnight in India. The daily draft cap follows that day, not UTC. */
+function startOfIndiaDay(now = new Date()): Date {
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  return new Date(`${day}T00:00:00+05:30`);
 }
 
 function prefsFromRow(row: {
@@ -261,11 +271,30 @@ export class DeskRunService {
     const candidateFirst = titleCase((facts?.fullName ?? '').trim().split(/\s+/)[0] ?? '');
 
     const held = await db
-      .select({ jobId: campaigns.jobCanonicalId, state: campaigns.state })
+      .select({
+        jobId: campaigns.jobCanonicalId,
+        state: campaigns.state,
+        createdAt: campaigns.createdAt,
+      })
       .from(campaigns)
       .where(eq(campaigns.userId, user.id));
     const heldIds = held.map((row) => row.jobId);
+    const dayStart = startOfIndiaDay();
+    const madeToday = held.filter(
+      (row) => row.state !== 'cancelled_by_user' && row.createdAt >= dayStart,
+    ).length;
     const priorCount = held.filter((row) => row.state !== 'cancelled_by_user').length;
+    const room = DAILY_LETTER_CAP - madeToday;
+    if (room <= 0) {
+      return {
+        ok: true as const,
+        created: 0,
+        considered: 0,
+        drafts: [] as Array<{ draftId: string; campaignId: string; company: string; role: string }>,
+        message: 'Today’s 40 are already here. Cancel a letter if you want a different role.',
+        readinessTotal: latestScore.total,
+      };
+    }
 
     const profession = candidateProfession((extraction?.facts ?? {}) as ProfessionCv);
     const pool = professionPool(profession);
@@ -294,7 +323,7 @@ export class DeskRunService {
         ),
       )
       .orderBy(desc(canonicalJobs.lastSeenAt), desc(canonicalJobs.trustScore))
-      .limit(80);
+      .limit(500);
 
     const matchable: MatchableJob[] = rows.map((r) => ({
       id: r.id,
@@ -322,47 +351,13 @@ export class DeskRunService {
       };
     }
 
-    const room = DAILY_LETTER_CAP;
-
     const ranked = rankMatches(
       prefs,
       matchable.filter((job) => profession === 'other' || sameProfession(profession, job.title)),
-      { minMatch: 48, limit: 80 },
+      { minMatch: 48, limit: room },
     );
     const grok = createGrokClient();
-    const cvLines = [
-      ...(((extraction?.facts as { roles?: Array<{ title?: string }> } | undefined)?.roles ?? [])
-        .map((role) => role.title)
-        .filter(Boolean) as string[]),
-      ...((extraction?.facts as { skills?: string[] } | undefined)?.skills ?? []).slice(0, 12),
-    ];
-    const accepted = [];
-    let modelDown = false;
-    for (const hit of ranked) {
-      if (profession !== 'other' && !sameProfession(profession, hit.job.title)) continue;
-      if (!grok || modelDown) {
-        accepted.push(hit);
-        continue;
-      }
-      let verdict = null;
-      try {
-        verdict = await judgeJobFit(grok, {
-          profession,
-          cvLines,
-          title: hit.job.title,
-          company: hit.job.companyName,
-          skills: hit.job.skills,
-          description: hit.job.descriptionText,
-        });
-      } catch {
-        modelDown = true;
-        accepted.push(hit);
-        continue;
-      }
-      if (verdict?.sameProfession && verdict.fit >= 70) accepted.push(hit);
-      if (accepted.length >= room) break;
-    }
-    const chosen = (grok ? accepted : ranked).slice(0, room);
+    const chosen = ranked;
     if (chosen.length === 0) {
       return {
         ok: true as const,
