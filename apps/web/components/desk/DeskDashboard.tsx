@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { ReadinessResult } from '@/lib/cv';
 import type { OutreachStats, ReviewDraft } from '@/lib/jobs';
 import { EMPTY_OUTREACH } from '@/lib/jobs';
@@ -78,6 +79,7 @@ export function DeskDashboard({
   onAddLink,
   onAddScreenshot,
 }: Props) {
+  const [scoreOpen, setScoreOpen] = useState(false);
   const hasReadiness = Boolean(readiness);
   const choosing =
     roundPhase === 'thinking' ||
@@ -114,64 +116,6 @@ export function DeskDashboard({
     <div className="desk-dash">
       <div className="desk-dash-grid">
         <aside className="desk-rail" aria-label="Sidebar">
-          <section className="desk-pane">
-            <h2 className="desk-pane-title">
-              <ScoreName />
-            </h2>
-            {readiness?.recommendation ? (
-              <>
-                <p className="desk-stat">{readiness.total}</p>
-                <p className="desk-pane-copy">
-                  {readiness.total >= 75
-                    ? 'Good enough to start. A stronger CV gets more replies.'
-                    : 'You can keep going. A stronger CV gets more replies.'}
-                </p>
-                {cvFilename ? <p className="desk-pane-file">{cvFilename}</p> : null}
-                {typeof creditBalance === 'number' ? (
-                  <p className="desk-pane-file">{creditBalance} credits</p>
-                ) : null}
-                <div className="desk-score-actions">
-                  <button className="desk-btn" type="button" onClick={onOpenCv}>
-                    Update CV
-                  </button>
-                  {onDownloadCv ? (
-                    <button className="desk-btn" type="button" onClick={onDownloadCv}>
-                      Download CV
-                    </button>
-                  ) : null}
-                  <button className="desk-btn" type="button" onClick={onOpenPreferences}>
-                    Preferences
-                  </button>
-                  <button className="desk-btn" type="button" onClick={onReviewScore}>
-                    See the breakdown
-                  </button>
-                  {onDeleteCv ? (
-                    <button
-                      className="desk-btn"
-                      type="button"
-                      disabled={cvBusy}
-                      onClick={onDeleteCv}
-                    >
-                      {cvBusy ? 'Deleting…' : 'Delete CV'}
-                    </button>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="desk-pane-copy">No CV uploaded yet.</p>
-                <div className="desk-score-actions">
-                  <button className="wax desk-btn" type="button" onClick={onOpenCv}>
-                    Upload CV
-                  </button>
-                  <button className="desk-btn" type="button" onClick={onOpenPreferences}>
-                    Preferences
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
-
           <StartMyRound
             disabled={roundDisabled}
             heldToday={heldToday}
@@ -237,6 +181,77 @@ export function DeskDashboard({
             <h2 className="desk-pane-title">Referrals</h2>
             <p className="desk-pane-copy">Not available yet.</p>
           </section>
+
+          <section className={`desk-pane desk-score-pane${scoreOpen ? ' is-open' : ''}`}>
+            <button
+              type="button"
+              className="desk-score-toggle"
+              aria-expanded={scoreOpen}
+              onClick={() => setScoreOpen((open) => !open)}
+            >
+              <span className="desk-score-toggle-main">
+                <ScoreName />
+                {readiness?.recommendation ? (
+                  <span className="desk-score-mini">{readiness.total}</span>
+                ) : (
+                  <span className="desk-pane-file">No CV</span>
+                )}
+              </span>
+              <span className="desk-letter-chevron" aria-hidden="true" />
+            </button>
+            <div className="desk-score-fold">
+              <div className="desk-score-fold-inner">
+                {readiness?.recommendation ? (
+                  <>
+                    <p className="desk-pane-copy">
+                      {readiness.total >= 75
+                        ? 'Good enough to start. A stronger CV gets more replies.'
+                        : 'You can keep going. A stronger CV gets more replies.'}
+                    </p>
+                    {cvFilename ? <p className="desk-pane-file">{cvFilename}</p> : null}
+                    {typeof creditBalance === 'number' ? (
+                      <p className="desk-pane-file">{creditBalance} credits</p>
+                    ) : null}
+                    <div className="desk-score-actions">
+                      <button className="desk-btn" type="button" onClick={onOpenCv}>
+                        Update CV
+                      </button>
+                      {onDownloadCv ? (
+                        <button className="desk-btn" type="button" onClick={onDownloadCv}>
+                          Download CV
+                        </button>
+                      ) : null}
+                      <button className="desk-btn" type="button" onClick={onOpenPreferences}>
+                        Preferences
+                      </button>
+                      <button className="desk-btn" type="button" onClick={onReviewScore}>
+                        See the breakdown
+                      </button>
+                      {onDeleteCv ? (
+                        <button
+                          className="desk-btn"
+                          type="button"
+                          disabled={cvBusy}
+                          onClick={onDeleteCv}
+                        >
+                          {cvBusy ? 'Deleting…' : 'Delete CV'}
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="desk-score-actions">
+                    <button className="wax desk-btn" type="button" onClick={onOpenCv}>
+                      Upload CV
+                    </button>
+                    <button className="desk-btn" type="button" onClick={onOpenPreferences}>
+                      Preferences
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </aside>
 
         <div className="desk-main">
@@ -291,7 +306,11 @@ export function DeskDashboard({
               <div className="desk-suggestions-top">
                 <h2 className="desk-pane-title">CV suggestions</h2>
                 {onDismissSuggestions ? (
-                  <button className="desk-btn" type="button" onClick={onDismissSuggestions}>
+                  <button
+                    className="desk-btn desk-btn-fit"
+                    type="button"
+                    onClick={onDismissSuggestions}
+                  >
                     Dismiss
                   </button>
                 ) : null}
