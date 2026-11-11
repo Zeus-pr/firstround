@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, ilike, ne, not, or } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, ne, not, or, sql } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -140,6 +140,7 @@ export class DeskRunService {
     if (invitedEmail) return { email: invitedEmail, name: recruiterFirst(invitedEmail) };
     const key = companyKey(companyName);
     if (!key) return { email: null, name: null };
+    const folded = key.replace(/ /g, '');
     const db = this.ready();
     const rows = await db
       .select({
@@ -149,7 +150,14 @@ export class DeskRunService {
         email: hrContacts.email,
       })
       .from(hrContacts)
-      .where(eq(hrContacts.companyKey, key));
+      .where(
+        or(
+          eq(hrContacts.companyKey, key),
+          sql`replace(${hrContacts.companyKey}, ' ', '') = ${folded}`,
+          sql`${hrContacts.companyKey} like ${`${key} %`}`,
+          sql`${key} like (${hrContacts.companyKey} || ' %')`,
+        ),
+      );
     const picked = pickHrContact(companyName, rows as HrContact[]);
     const first = picked?.fullName.trim().split(/\s+/)[0] ?? '';
     return {
