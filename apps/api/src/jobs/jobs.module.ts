@@ -6,13 +6,14 @@ import { DeskRunService } from './desk-run.service.js';
 import { GatesController } from './gates.controller.js';
 import { JobsController } from './jobs.controller.js';
 import { JobsService } from './jobs.service.js';
+import { OpeningService } from './opening.service.js';
 import { ReviewController } from './review.controller.js';
 import { ReviewService } from './review.service.js';
 
 @Module({
   imports: [AuthModule, SessionModule],
   controllers: [JobsController, GatesController, ReviewController, DeskRunController],
-  providers: [JobsService, ReviewService, DeskRunService],
+  providers: [JobsService, ReviewService, DeskRunService, OpeningService],
   exports: [JobsService, ReviewService, DeskRunService],
 })
 export class JobsModule {}

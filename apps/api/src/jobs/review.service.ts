@@ -93,6 +93,48 @@ export class ReviewService {
     return { ok: true as const, drafts };
   }
 
+  async outreach(user: SessionUser) {
+    const db = this.ready();
+    const sentStates = [
+      'sent',
+      'uncertain_send',
+      'awaiting_followup_1',
+      'followup_1_sent',
+      'awaiting_followup_2',
+      'followup_2_sent',
+      'closed_no_reply',
+      'replied',
+    ] as const;
+    const rows = await db
+      .select({ state: campaigns.state, evidence: campaignDrafts.evidence })
+      .from(campaigns)
+      .innerJoin(campaignDrafts, eq(campaignDrafts.campaignId, campaigns.id))
+      .where(and(eq(campaigns.userId, user.id), inArray(campaigns.state, [...sentStates])));
+    const companies = new Set<string>();
+    const repliedCompanies = new Set<string>();
+    let emailsSent = 0;
+    let replied = 0;
+    for (const row of rows) {
+      emailsSent += 1;
+      const evidence = (row.evidence ?? {}) as { company?: string };
+      const company = evidence.company?.trim() || row.state;
+      companies.add(company);
+      if (row.state === 'replied') {
+        replied += 1;
+        repliedCompanies.add(company);
+      }
+    }
+    return {
+      ok: true as const,
+      outreach: {
+        companiesContacted: companies.size,
+        emailsSent,
+        companiesReplied: repliedCompanies.size,
+        replyRate: emailsSent === 0 ? 0 : Math.round((replied / emailsSent) * 100),
+      },
+    };
+  }
+
   async saveBody(user: SessionUser, draftId: string, body: string, subject?: string) {
     const db = this.ready();
     const [row] = await db
