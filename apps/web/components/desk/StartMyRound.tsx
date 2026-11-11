@@ -22,6 +22,8 @@ type Props = {
   inline?: boolean;
 };
 
+const DAILY_DRAFTS = 40;
+
 export function StartMyRound({
   disabled = false,
   disabledReason,
@@ -33,19 +35,19 @@ export function StartMyRound({
 }: Props) {
   const running =
     phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
-  const full = heldToday >= 10;
+  const full = heldToday >= DAILY_DRAFTS;
 
   const title =
     phase === 'done'
       ? full
-        ? 'Today’s 10 are here'
+        ? 'Today’s 40 are here'
         : 'Letters are in'
       : phase === 'error'
         ? 'That didn’t finish'
         : running
           ? 'Choosing the right roles'
           : full
-            ? 'Today’s 10 are here'
+            ? 'Today’s 40 are here'
             : '';
 
   const lead = running
@@ -58,10 +60,10 @@ export function StartMyRound({
       : full
         ? 'A letter stays until you cancel it. Cancel one if you want a different role.'
         : heldToday > 0
-          ? `You have ${heldToday} of today’s 10. A letter stays until you cancel it.`
-          : 'Up to 10 roles today, with a letter for each. A letter stays until you cancel it.';
+          ? `You have ${heldToday} of today’s 40. A letter stays until you cancel it.`
+          : 'Up to 40 drafts a day. A letter stays until you cancel it.';
 
-  const buttonLabel = running ? 'Working…' : full ? 'Today’s 10' : 'Refresh my drafts';
+  const buttonLabel = running ? 'Working…' : full ? 'Today’s 40' : 'Refresh my drafts';
 
   const button = (
     <button
