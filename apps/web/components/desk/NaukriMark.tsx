@@ -11,7 +11,11 @@ export function GoogleMark() {
 }
 
 export function JobSourceMark({ body }: { body: string }) {
-  if (/careers\.google\.com|jobs\.google\.com|google\.com\/about\/careers/i.test(body)) {
+  if (
+    /careers\.google\.com|jobs\.google\.com|google\.com\/about\/careers|google\.com\/search\?[^)\s]*ibp=htl;jobs/i.test(
+      body,
+    )
+  ) {
     return <GoogleMark />;
   }
   if (/linkedin\.com/i.test(body)) return <LinkedInMark />;
