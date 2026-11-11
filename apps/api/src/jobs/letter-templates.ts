@@ -77,8 +77,8 @@ export function renderLetter(input: LetterInput): {
   if (interest) lines.push(interest, '');
   lines.push('If you are still hiring, can we talk?', '');
   if (input.candidateName) lines.push(input.candidateName);
-  if (input.phone) lines.push(input.phone);
   if (input.linkedin) lines.push(input.linkedin);
+  if (input.phone) lines.push(input.phone);
   return {
     templateId,
     subject: subjectFor(templateId, input),

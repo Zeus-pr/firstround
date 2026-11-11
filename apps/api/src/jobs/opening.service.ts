@@ -37,7 +37,6 @@ import {
   type ParsedOpening,
 } from './opening-parse.js';
 
-const DAILY_LETTER_CAP = 10;
 const MODEL_PROMPT =
   'Read this job posting. Return JSON only: {"isJob":boolean,"company":string,"title":string,"location":string,"description":string,"email":string,"url":string}. isJob is false when this is not one job opening. Use only words that are present. email is a work address printed on the posting, or empty.';
 
@@ -169,9 +168,9 @@ export class OpeningService {
           ne(campaigns.state, 'cancelled_by_user'),
         ),
       );
-    if (madeToday.length >= DAILY_LETTER_CAP) {
+    if (madeToday.length >= 40) {
       throw new BadRequestException(
-        'Today’s 10 are already here. Cancel a letter if you want a different role.',
+        'Today’s 40 are already here. Cancel a letter if you want a different role.',
       );
     }
 
@@ -220,7 +219,10 @@ export class OpeningService {
       candidateName: facts?.fullName?.trim() || null,
       recruiterName: recipient.name,
       phone: facts?.phones?.find((phone) => phone.trim())?.trim() ?? null,
-      linkedin: facts?.links?.linkedin?.trim() || null,
+      linkedin:
+        facts?.links?.linkedin?.trim() ||
+        (typeof prefs.links?.linkedin === 'string' ? prefs.links.linkedin.trim() : '') ||
+        null,
       bullets,
       interest,
       shuffle: prefs.criteria.letterShuffle !== false,
