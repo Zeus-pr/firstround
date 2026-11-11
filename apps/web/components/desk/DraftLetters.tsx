@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ReviewDraft } from '@/lib/jobs';
-import { NaukriMark } from './NaukriMark';
+import { JobSourceMark } from './NaukriMark';
 
 type Props = {
   drafts: ReviewDraft[];
@@ -65,7 +65,7 @@ export function DraftLetters({
                 >
                   <span className="desk-letter-meta">
                     <span className="desk-letter-company">
-                      <NaukriMark />
+                      <JobSourceMark body={draft.body} />
                       {company}
                     </span>
                     <span className="desk-letter-role">{draft.subject?.trim() || role}</span>
