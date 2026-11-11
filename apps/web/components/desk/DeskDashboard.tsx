@@ -23,7 +23,6 @@ type Props = {
   roundMessage?: string;
   onOpenCv: () => void;
   onReviewScore: () => void;
-  onOpenPreferences: () => void;
   onConnectGmail?: () => void;
   onDisconnectGmail?: () => void;
   onDismissSuggestions?: () => void;
@@ -59,7 +58,6 @@ export function DeskDashboard({
   roundMessage,
   onOpenCv,
   onReviewScore,
-  onOpenPreferences,
   onConnectGmail,
   onDisconnectGmail,
   onDismissSuggestions,
@@ -138,7 +136,7 @@ export function DeskDashboard({
                 <span className="desk-score-hint">
                   {readiness?.recommendation
                     ? 'Click to update, download, or delete your CV.'
-                    : 'Click to upload a CV or set preferences.'}
+                    : 'Click to upload a CV.'}
                 </span>
               </span>
               <span className="desk-letter-chevron" aria-hidden="true" />
@@ -162,9 +160,6 @@ export function DeskDashboard({
                           Download CV
                         </button>
                       ) : null}
-                      <button className="desk-btn" type="button" onClick={onOpenPreferences}>
-                        Preferences
-                      </button>
                       <button className="desk-btn" type="button" onClick={onReviewScore}>
                         See the breakdown
                       </button>
@@ -184,9 +179,6 @@ export function DeskDashboard({
                   <div className="desk-score-actions">
                     <button className="wax desk-btn" type="button" onClick={onOpenCv}>
                       Upload CV
-                    </button>
-                    <button className="desk-btn" type="button" onClick={onOpenPreferences}>
-                      Preferences
                     </button>
                   </div>
                 )}

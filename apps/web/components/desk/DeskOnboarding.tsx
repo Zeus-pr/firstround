@@ -313,7 +313,6 @@ export function DeskOnboarding() {
           setModalStage(readiness ? 'result' : 'upload');
           setModalOpen(true);
         }}
-        onOpenPreferences={() => setPrefsOpen(true)}
         outreach={outreach}
         autopilot={autopilot}
         onAutopilot={(on) => {

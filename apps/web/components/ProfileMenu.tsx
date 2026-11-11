@@ -73,16 +73,6 @@ export function ProfileMenu({ user }: Props) {
     setOpen(false);
   }, [path]);
 
-  function openPreferences() {
-    setOpen(false);
-    if (path?.startsWith('/desk')) {
-      window.dispatchEvent(new Event('firstround:preferences'));
-      return;
-    }
-    sessionStorage.setItem('fr-open-preferences', '1');
-    router.push('/desk');
-  }
-
   function openEmails() {
     setOpen(false);
     if (path?.startsWith('/desk')) {
@@ -156,10 +146,6 @@ export function ProfileMenu({ user }: Props) {
                 <small>{credits.toLocaleString('en-IN')} credits</small>
               ) : null}
             </span>
-          </button>
-          <button type="button" role="menuitem" onClick={openPreferences}>
-            <Icon d="M4 7h6M14 7h6M4 12h16M4 17h10" />
-            <span>Preferences</span>
           </button>
           <button type="button" role="menuitem" onClick={openEmails}>
             <Icon d="M4 7h16v10H4zM4 7l8 6 8-6" />
