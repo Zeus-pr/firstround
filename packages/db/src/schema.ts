@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -421,3 +422,21 @@ export const preferences = pgTable('preferences', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Published HR and talent contacts. A company match can fill To. No match stays blank. */
+export const hrContacts = pgTable(
+  'hr_contacts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    fullName: text('full_name').notNull(),
+    title: text('title'),
+    companyName: text('company_name').notNull(),
+    companyKey: text('company_key').notNull(),
+    email: text('email').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('hr_contacts_email_uidx').on(table.email),
+    index('hr_contacts_company_key_idx').on(table.companyKey),
+  ],
+);

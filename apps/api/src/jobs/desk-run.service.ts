@@ -12,6 +12,7 @@ import {
   cvExtractions,
   cvReadinessScores,
   deskRuns,
+  hrContacts,
   preferences,
   type Db,
 } from '@firstround/db';
@@ -32,6 +33,7 @@ import {
   sameProfession,
   type ProfessionCv,
 } from './profession.js';
+import { companyKey, pickHrContact, type HrContact } from './hr-contacts.js';
 import { rankMatches, type MatchableJob } from './match.js';
 
 const EMPTY_PREFS: PreferencesPayload = {
@@ -131,6 +133,29 @@ export class DeskRunService {
   private ready(): Db {
     if (!this.db) throw new ServiceUnavailableException('Database is not configured');
     return this.db;
+  }
+
+  /** Printed job address wins. Otherwise one HR contact from the company pool. */
+  private async recipientFor(companyName: string, invitedEmail: string | null) {
+    if (invitedEmail) return { email: invitedEmail, name: recruiterFirst(invitedEmail) };
+    const key = companyKey(companyName);
+    if (!key) return { email: null, name: null };
+    const db = this.ready();
+    const rows = await db
+      .select({
+        fullName: hrContacts.fullName,
+        title: hrContacts.title,
+        companyName: hrContacts.companyName,
+        email: hrContacts.email,
+      })
+      .from(hrContacts)
+      .where(eq(hrContacts.companyKey, key));
+    const picked = pickHrContact(companyName, rows as HrContact[]);
+    const first = picked?.fullName.trim().split(/\s+/)[0] ?? '';
+    return {
+      email: picked?.email ?? null,
+      name: first ? titleCase(first) : null,
+    };
   }
 
   async runToday(user: SessionUser) {
@@ -373,12 +398,13 @@ export class DeskRunService {
         .limit(1);
       if (existing[0]) continue;
 
+      const recipient = await this.recipientFor(hit.job.companyName, hit.job.invitedEmail);
       const letter = renderLetter({
         company: hit.job.companyName,
         role: hit.job.title,
         sourceUrl: hit.job.sourceUrl,
         candidateName: candidateFirst || facts?.fullName?.trim() || null,
-        recruiterName: recruiterFirst(hit.job.invitedEmail),
+        recruiterName: recipient.name,
         phone: facts?.phones?.find((p) => p.trim())?.trim() ?? null,
         linkedin: facts?.links?.linkedin?.trim() || null,
         bullets,
@@ -393,7 +419,7 @@ export class DeskRunService {
           userId: user.id,
           state: 'pending_approval',
           jobCanonicalId: hit.job.id,
-          recipientEmail: hit.job.invitedEmail,
+          recipientEmail: recipient.email,
           policyVersions: {
             match: 'desk-match-2',
             readiness: String(latestScore.total),
