@@ -2775,11 +2775,32 @@ body[data-surface='desk'] .mast-signout:hover {
 }
 
 .desk-credits-mark {
-  width: 0.72rem;
-  height: 0.72rem;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, #c45a45, var(--wax) 55%, #7a2b1d);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.desk-draft-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.desk-draft-refresh p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: var(--quiet);
+  line-height: 1.4;
+}
+
+.desk-draft-refresh .desk-btn {
+  width: auto;
+  margin-left: auto;
 }
 
 .desk-credits-count {

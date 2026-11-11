@@ -194,13 +194,9 @@ export function DeskDashboard({
             </div>
           </section>
 
-          <StartMyRound
-            disabled={roundDisabled}
-            heldToday={heldToday}
-            phase={roundPhase}
-            resultMessage={roundMessage}
-            onStart={onStartRound}
-          />
+          {onAddLink && onAddScreenshot ? (
+            <AddOpening busy={addBusy} onLink={onAddLink} onScreenshot={onAddScreenshot} />
+          ) : null}
 
           <section className="desk-pane desk-autopilot">
             <div>
@@ -258,7 +254,7 @@ export function DeskDashboard({
               <h2 className="desk-pane-title">Your outreach</h2>
               {typeof creditBalance === 'number' ? (
                 <p className="desk-credits" id="desk-credits">
-                  <span className="desk-credits-mark" aria-hidden="true" />
+                  <img src="/brand/firstround-mark-ink.svg" alt="" className="desk-credits-mark" />
                   <span className="desk-credits-count">
                     {creditBalance.toLocaleString('en-IN')}
                   </span>
@@ -286,16 +282,20 @@ export function DeskDashboard({
             </ul>
           </section>
 
-          {onAddLink && onAddScreenshot ? (
-            <AddOpening busy={addBusy} onLink={onAddLink} onScreenshot={onAddScreenshot} />
-          ) : null}
-
           <section
             className="desk-pane desk-letters-pane"
             id="your-drafts"
             aria-label="Your drafts"
           >
             <h2 className="desk-pane-title">Your drafts</h2>
+            <StartMyRound
+              inline
+              disabled={roundDisabled}
+              heldToday={heldToday}
+              phase={roundPhase}
+              resultMessage={roundMessage}
+              onStart={onStartRound}
+            />
             {choosing ? <ChoosingOrb /> : null}
             <DraftLetters
               hideEmpty={choosing}

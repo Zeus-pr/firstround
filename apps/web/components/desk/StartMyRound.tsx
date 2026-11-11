@@ -19,6 +19,7 @@ type Props = {
   phase: RoundPhase;
   resultMessage?: string;
   onStart: () => void;
+  inline?: boolean;
 };
 
 export function StartMyRound({
@@ -28,6 +29,7 @@ export function StartMyRound({
   phase,
   resultMessage,
   onStart,
+  inline = false,
 }: Props) {
   const running =
     phase === 'thinking' || phase === 'scanning' || phase === 'scoring' || phase === 'drafting';
@@ -61,6 +63,32 @@ export function StartMyRound({
 
   const buttonLabel = running ? 'Working…' : full ? 'Today’s 10' : 'Refresh my drafts';
 
+  const button = (
+    <button
+      type="button"
+      className="wax desk-btn desk-btn-fit desk-round-cta"
+      disabled={disabled || running || full}
+      aria-busy={running}
+      onClick={onStart}
+    >
+      {running ? (
+        <span className="desk-round-orb" aria-hidden="true">
+          <Orb state="working" size={22} label={lead} />
+        </span>
+      ) : null}
+      <span>{buttonLabel}</span>
+    </button>
+  );
+
+  if (inline) {
+    return (
+      <div className="desk-draft-refresh">
+        <p aria-live="polite">{lead}</p>
+        {button}
+      </div>
+    );
+  }
+
   return (
     <section
       className={`desk-round desk-round-rail${phase === 'error' ? ' is-error' : ''}`}
@@ -74,20 +102,7 @@ export function StartMyRound({
       </div>
 
       <div className="desk-round-action">
-        <button
-          type="button"
-          className="wax desk-btn desk-round-cta"
-          disabled={disabled || running || full}
-          aria-busy={running}
-          onClick={onStart}
-        >
-          {running ? (
-            <span className="desk-round-orb" aria-hidden="true">
-              <Orb state="working" size={22} label={lead} />
-            </span>
-          ) : null}
-          <span>{buttonLabel}</span>
-        </button>
+        {button}
         {disabled && disabledReason && phase === 'idle' ? (
           <p className="desk-round-hint">{disabledReason}</p>
         ) : null}
