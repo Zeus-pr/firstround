@@ -1,15 +1,31 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { z } from 'zod';
 import type { AuthUser } from '../auth/auth-user.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard.js';
 import { ZodPipe } from '../common/zod.pipe.js';
 import { SessionService } from '../session/session.service.js';
+import { OpeningService } from './opening.service.js';
 import { ReviewService } from './review.service.js';
 
 const SaveBody = z.object({
   body: z.string().min(1).max(20_000),
   subject: z.string().trim().min(1).max(180).optional(),
+});
+
+const OpeningBody = z.object({
+  url: z.string().trim().max(2000).optional(),
+  imageBase64: z.string().trim().max(4_000_000).optional(),
+  imageType: z.enum(['image/png', 'image/jpeg', 'image/webp']).optional(),
 });
 
 const ApproveBody = z.object({
@@ -24,8 +40,29 @@ const ApproveBody = z.object({
 export class ReviewController {
   constructor(
     private readonly review: ReviewService,
+    private readonly openings: OpeningService,
     private readonly sessions: SessionService,
   ) {}
+
+  @Get('outreach')
+  @UseGuards(FirebaseAuthGuard)
+  async outreach(@CurrentUser() auth: AuthUser) {
+    const user = await this.sessions.ensureUser(auth);
+    return this.review.outreach(user);
+  }
+
+  @Post('openings')
+  @UseGuards(FirebaseAuthGuard)
+  async addOpening(
+    @CurrentUser() auth: AuthUser,
+    @Body(new ZodPipe(OpeningBody)) body: z.infer<typeof OpeningBody>,
+  ) {
+    if (!body.url && !body.imageBase64) {
+      throw new BadRequestException('Add a link or a screenshot.');
+    }
+    const user = await this.sessions.ensureUser(auth);
+    return this.openings.add(user, body);
+  }
 
   @Get('today')
   @UseGuards(FirebaseAuthGuard)
