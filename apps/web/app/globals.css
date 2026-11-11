@@ -1681,23 +1681,13 @@ h1 {
 
 /* Desk dashboard + CV modal */
 .desk-shell-dash {
-  padding: 0.75rem 0 0;
+  padding: 0.75rem 0 1.5rem;
   color: var(--ink);
-  min-height: 0;
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .desk-dash {
   width: 100%;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
   padding-inline: clamp(0.75rem, 1.5vw, 1.25rem);
 }
 
@@ -1847,26 +1837,20 @@ h1 {
   display: grid;
   grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
   gap: clamp(0.75rem, 1.4vw, 1rem);
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
+  align-items: start;
 }
 
 .desk-rail {
-  position: static;
-  align-self: stretch;
-  overflow: hidden;
+  position: sticky;
+  top: 4.75rem;
+  align-self: start;
+  overflow: visible;
 }
 
 .desk-main {
   display: grid;
   gap: 1rem;
   min-width: 0;
-  min-height: 0;
-  height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: 1.25rem;
   align-content: start;
 }
 
@@ -2582,10 +2566,6 @@ html:has(body[data-surface='desk']) {
 }
 
 body[data-surface='desk'] {
-  height: 100svh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   background: #e4d9c8;
   color: var(--ink);
 }
@@ -2594,7 +2574,6 @@ body[data-surface='desk'] .desk-shell {
   background: transparent;
   color: var(--ink);
   min-height: 0;
-  padding-bottom: 0;
 }
 
 body[data-surface='desk'] .desk-pane,
@@ -3006,33 +2985,12 @@ body[data-surface='desk'] .mast-signout:hover {
 }
 
 @media (max-width: 900px) {
-  body[data-surface='desk'] {
-    height: auto;
-    overflow: auto;
-    display: block;
-  }
-
-  body[data-surface='desk'] .desk-shell-dash,
-  .desk-dash,
-  .desk-dash-grid,
-  .desk-main,
-  .desk-rail {
-    height: auto;
-    overflow: visible;
-    display: block;
-  }
-
   .desk-dash-grid {
-    display: grid;
     grid-template-columns: 1fr;
   }
 
   .desk-rail {
-    display: grid;
-  }
-
-  .desk-main {
-    display: grid;
+    position: static;
   }
 
   .desk-outreach-grid {
