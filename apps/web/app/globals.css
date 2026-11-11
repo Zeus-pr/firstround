@@ -2126,7 +2126,8 @@ h1 {
   flex: 0 0 auto;
 }
 
-.linkedin-mark {
+.linkedin-mark,
+.google-mark {
   height: 0.95rem;
   width: 0.95rem;
   border-radius: 0.2rem;
