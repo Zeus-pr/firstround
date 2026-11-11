@@ -17,6 +17,16 @@ describe('role interest', () => {
     expect(text?.startsWith("I'm interested because")).toBe(true);
   });
 
+  it('keeps a sentence that uses Rs. as an abbreviation', () => {
+    expect(
+      acceptInterest(
+        "I'm interested because Amazon treats in-stock as a daily problem. I owned a Rs. 250 Cr portfolio with 22% growth.",
+        `${source}\n250\n22`,
+        'Amazon',
+      ),
+    ).toBeTruthy();
+  });
+
   it('drops a sentence that invents a number or flatters', () => {
     expect(
       acceptInterest(

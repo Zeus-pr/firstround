@@ -423,7 +423,10 @@ export class DeskRunService {
         candidateName: candidateFirst || facts?.fullName?.trim() || null,
         recruiterName: recipient.name,
         phone: facts?.phones?.find((p) => p.trim())?.trim() ?? null,
-        linkedin: facts?.links?.linkedin?.trim() || null,
+        linkedin:
+          facts?.links?.linkedin?.trim() ||
+          (typeof prefs.links?.linkedin === 'string' ? prefs.links.linkedin.trim() : '') ||
+          null,
         bullets,
         interest,
         shuffle: prefs.criteria.letterShuffle !== false,

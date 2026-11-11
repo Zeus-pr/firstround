@@ -18,7 +18,10 @@ export function acceptInterest(text: string, source: string, company: string): s
   if (!/^i'm interested because\b/i.test(clean)) return null;
   if (FLATTERY.test(clean)) return null;
   if (!clean.toLowerCase().includes(company.toLowerCase())) return null;
-  const sentences = clean.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const sentences = clean
+    .replace(/\b(?:Rs|Mr|Ms|Dr|Inc|Ltd)\./g, (mark) => mark.replace('.', '·'))
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean);
   if (sentences.length < 1 || sentences.length > 2) return null;
   if (clean.split(/\s+/).length > 80) return null;
   if (!letterIsGrounded(clean, source)) return null;
