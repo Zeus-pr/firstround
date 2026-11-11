@@ -257,7 +257,7 @@ export function DeskDashboard({
             <div className="desk-outreach-head">
               <h2 className="desk-pane-title">Your outreach</h2>
               {typeof creditBalance === 'number' ? (
-                <p className="desk-credits">
+                <p className="desk-credits" id="desk-credits">
                   <span className="desk-credits-mark" aria-hidden="true" />
                   <span className="desk-credits-count">
                     {creditBalance.toLocaleString('en-IN')}
@@ -290,7 +290,11 @@ export function DeskDashboard({
             <AddOpening busy={addBusy} onLink={onAddLink} onScreenshot={onAddScreenshot} />
           ) : null}
 
-          <section className="desk-pane desk-letters-pane" aria-label="Your drafts">
+          <section
+            className="desk-pane desk-letters-pane"
+            id="your-drafts"
+            aria-label="Your drafts"
+          >
             <h2 className="desk-pane-title">Your drafts</h2>
             {choosing ? <ChoosingOrb /> : null}
             <DraftLetters

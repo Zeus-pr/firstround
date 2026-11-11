@@ -101,6 +101,24 @@ export function DeskOnboarding() {
   }, []);
 
   useEffect(() => {
+    if (sessionStorage.getItem('fr-open-preferences') === '1') {
+      sessionStorage.removeItem('fr-open-preferences');
+      setPrefsOpen(true);
+    }
+    const openPrefs = () => setPrefsOpen(true);
+    const onGmail = (event: Event) => {
+      const connected = (event as CustomEvent<{ connected?: boolean }>).detail?.connected;
+      if (typeof connected === 'boolean') setGmailConnected(connected);
+    };
+    window.addEventListener('firstround:preferences', openPrefs);
+    window.addEventListener('firstround:gmail', onGmail);
+    return () => {
+      window.removeEventListener('firstround:preferences', openPrefs);
+      window.removeEventListener('firstround:gmail', onGmail);
+    };
+  }, []);
+
+  useEffect(() => {
     const auth = firebaseAuth();
     if (!auth) {
       setBoot(false);
