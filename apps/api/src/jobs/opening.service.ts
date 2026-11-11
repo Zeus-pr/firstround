@@ -25,6 +25,7 @@ import { DB } from '../db/db.module.js';
 import { createGrokClient } from '../cv/grok-extract.js';
 import { scoreSpecificity } from './draft.js';
 import { companyKey, pickHrContact, type HrContact } from './hr-contacts.js';
+import { writeRoleInterest } from './interest.js';
 import { renderLetter } from './letter-templates.js';
 import { fingerprintJob, parseInvitedEmail } from './normalize.js';
 import {
@@ -203,6 +204,15 @@ export class OpeningService {
       .map((bullet) => bullet.trim())
       .filter(Boolean)
       .slice(0, 2);
+    const grok = createGrokClient();
+    const interest = grok
+      ? await writeRoleInterest(grok, {
+          company: opening.company,
+          role: opening.title,
+          description: opening.description,
+          bullets,
+        })
+      : null;
     const letter = renderLetter({
       company: opening.company,
       role: opening.title,
@@ -212,6 +222,7 @@ export class OpeningService {
       phone: facts?.phones?.find((phone) => phone.trim())?.trim() ?? null,
       linkedin: facts?.links?.linkedin?.trim() || null,
       bullets,
+      interest,
       shuffle: prefs.criteria.letterShuffle !== false,
       seed: job.id,
     });

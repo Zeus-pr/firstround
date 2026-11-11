@@ -9,6 +9,8 @@ export type LetterInput = {
   phone: string | null;
   linkedin: string | null;
   bullets: string[];
+  /** Two sentences on why this posting, grounded in the CV. Omitted when the model cannot ground them. */
+  interest?: string | null;
   shuffle: boolean;
   seed: string;
 };
@@ -71,6 +73,8 @@ export function renderLetter(input: LetterInput): {
     lines.push('A bit about me:', '');
     for (const bullet of bullets) lines.push(bullet, '');
   }
+  const interest = input.interest?.trim();
+  if (interest) lines.push(interest, '');
   lines.push('If you are still hiring, can we talk?', '');
   if (input.candidateName) lines.push(input.candidateName);
   if (input.phone) lines.push(input.phone);
