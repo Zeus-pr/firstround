@@ -27,6 +27,19 @@ describe('role interest', () => {
     ).toBeTruthy();
   });
 
+  it('drops a paragraph that pastes the proof line again', () => {
+    const bullet =
+      'Owned P&L for a Rs. 250 Cr annualized TV and Audio portfolio, delivering 22% YoY revenue growth across 18 models.';
+    expect(
+      acceptInterest(
+        `I'm interested because the Senior Category Manager role at Zepto owns category margin. ${bullet}`,
+        `Zepto\nSenior Category Manager\ncategory margin\n${bullet}`,
+        'Zepto',
+        [bullet],
+      ),
+    ).toBeNull();
+  });
+
   it('drops a sentence that invents a number or flatters', () => {
     expect(
       acceptInterest(

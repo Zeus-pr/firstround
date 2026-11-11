@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, ne, or, sql } from 'drizzle-orm';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -37,7 +37,6 @@ import {
   type ParsedOpening,
 } from './opening-parse.js';
 
-const DAILY_LETTER_CAP = 10;
 const MODEL_PROMPT =
   'Read this job posting. Return JSON only: {"isJob":boolean,"company":string,"title":string,"location":string,"description":string,"email":string,"url":string}. isJob is false when this is not one job opening. Use only words that are present. email is a work address printed on the posting, or empty.';
 
@@ -151,28 +150,6 @@ export class OpeningService {
         created: 0,
         message: 'That role is already in your drafts.',
       };
-    }
-
-    const day = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-    const madeToday = await db
-      .select({ id: campaigns.id })
-      .from(campaigns)
-      .where(
-        and(
-          eq(campaigns.userId, user.id),
-          gte(campaigns.createdAt, new Date(`${day}T00:00:00+05:30`)),
-          ne(campaigns.state, 'cancelled_by_user'),
-        ),
-      );
-    if (madeToday.length >= DAILY_LETTER_CAP) {
-      throw new BadRequestException(
-        'Today’s 10 are already here. Cancel a letter if you want a different role.',
-      );
     }
 
     const recipient = await this.recipientFor(opening.company, printed);

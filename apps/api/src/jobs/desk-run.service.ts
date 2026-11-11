@@ -4,7 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { and, desc, eq, gte, ilike, ne, not, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, not, or, sql } from 'drizzle-orm';
 import {
   campaignDrafts,
   campaigns,
@@ -49,17 +49,6 @@ const DAILY_LETTER_CAP = 10;
 
 function eveningCutoff(now = new Date()): Date {
   return new Date(now.getTime() + 12 * 60 * 60_000);
-}
-
-/** Midnight in India. The daily letter cap follows that day, not UTC. */
-function startOfIndiaDay(now = new Date()): Date {
-  const day = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-  return new Date(`${day}T00:00:00+05:30`);
 }
 
 function prefsFromRow(row: {
@@ -271,6 +260,13 @@ export class DeskRunService {
     const bullets = proofBullets(facts);
     const candidateFirst = titleCase((facts?.fullName ?? '').trim().split(/\s+/)[0] ?? '');
 
+    const held = await db
+      .select({ jobId: campaigns.jobCanonicalId, state: campaigns.state })
+      .from(campaigns)
+      .where(eq(campaigns.userId, user.id));
+    const heldIds = held.map((row) => row.jobId);
+    const priorCount = held.filter((row) => row.state !== 'cancelled_by_user').length;
+
     const profession = candidateProfession((extraction?.facts ?? {}) as ProfessionCv);
     const pool = professionPool(profession);
     const titleFilter = pool
@@ -288,6 +284,12 @@ export class DeskRunService {
             eq(canonicalJobs.quarantined, false),
             eq(canonicalJobs.stale, false),
             titleFilter,
+            heldIds.length > 0
+              ? sql`${canonicalJobs.id}::text not in (${sql.join(
+                  heldIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )})`
+              : undefined,
           ].filter((clause) => clause != null),
         ),
       )
@@ -320,32 +322,12 @@ export class DeskRunService {
       };
     }
 
-    const madeToday = await db
-      .select({ id: campaigns.id })
-      .from(campaigns)
-      .where(
-        and(
-          eq(campaigns.userId, user.id),
-          gte(campaigns.createdAt, startOfIndiaDay()),
-          ne(campaigns.state, 'cancelled_by_user'),
-        ),
-      );
-    const room = DAILY_LETTER_CAP - madeToday.length;
-    if (room <= 0) {
-      return {
-        ok: true as const,
-        created: 0,
-        considered: matchable.length,
-        drafts: [],
-        message: 'Today’s 10 are already here. Cancel a letter if you want a different role.',
-        readinessTotal: latestScore.total,
-      };
-    }
+    const room = DAILY_LETTER_CAP;
 
     const ranked = rankMatches(
       prefs,
       matchable.filter((job) => profession === 'other' || sameProfession(profession, job.title)),
-      { minMatch: 48, limit: room },
+      { minMatch: 48, limit: 80 },
     );
     const grok = createGrokClient();
     const cvLines = [
@@ -388,7 +370,7 @@ export class DeskRunService {
         considered: matchable.length,
         drafts: [],
         message:
-          madeToday.length > 0
+          priorCount > 0
             ? 'No new roles this time. The letters already here stay until you cancel them.'
             : 'Nothing was close enough to your work.',
         readinessTotal: latestScore.total,
@@ -488,7 +470,7 @@ export class DeskRunService {
       drafts: created,
       message:
         created.length > 0
-          ? madeToday.length > 0
+          ? priorCount > 0
             ? `Added ${created.length} more. The earlier letters stay until you cancel them.`
             : `Found ${created.length} fit${created.length === 1 ? '' : 's'} for you to review.`
           : 'No new roles this time. The letters already here stay until you cancel them.',
